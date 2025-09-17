@@ -1,0 +1,336 @@
+/*    MMM-MyTeams-LeagueTableCSS Styles
+ * 
+ * This file contains all the styling for the SPFL League Table module - can be used for other Scottis Leauges as is
+ * Includes responsive design and color coding for different league positions
+ */
+
+/* Main container styling */
+.spfl-league-table {
+    font-family: "Roboto Condensed", Arial, sans-serif;
+    color: #fff;
+    line-height: 1.2;
+}
+
+/* Table header styling */
+.spfl-header {
+    font-size: 12px;
+    font-weight: bold;
+    text-align: left;
+    margin-bottom: 10px;
+    color: #ccc;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    border-bottom: 2px solid #555;
+    padding-bottom: 5px;
+}
+
+/* Main table styling */
+.spfl-table {
+    border-collapse: collapse;
+    width: 100%;
+    margin: 0 auto;
+    background: rgba(0, 0, 0, 0.3);
+    border-radius: 5px;
+    overflow: hidden;
+}
+
+/* Table header row styling */
+.spfl-table thead tr {
+    background: rgba(255, 255, 255, 0.1);
+    border-bottom: 1px solid #555;
+}
+
+.spfl-table th {
+    padding: 6px 6px; /* Increased horizontal and vertical padding to 5px to gove better column spacing */
+    text-align: left;
+    font-weight: bold;
+    font-size: 12px;
+    color: #ccc;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+/* Header column specific styling */
+.position-header {
+    width: 5px;
+}
+
+/* Ensure Form header text aligns with centered tokens below */
+.form-header {
+    text-align: center;
+    width: 60px;
+}
+
+/* Footer styling */
+.spfl-table tfoot .spfl-footer {
+    padding: 6px 8px;
+    font-size: 10px;
+    color: #aaa;
+    text-align: center;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.team-header {
+    text-align: left; /* !important; */
+    width: auto;
+    min-width: 80px; /* Increased to prevent squashing team names */
+}
+
+.played-header,
+.won-header,
+.drawn-header,
+.lost-header,
+.gf-header,
+.ga-header,
+.gd-header,
+.points-header {
+    width: 5px;
+    min-width: 2px;
+}
+
+.form-header {
+    width: 60px;
+    text-align: left;
+}
+
+/* Table body row styling */
+.spfl-table tbody tr {
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    transition: background-color 0.3s ease;
+}
+
+.spfl-table tbody tr:hover {
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.spfl-table tbody tr:last-child {
+    border-bottom: none;
+}
+
+/* Table cell styling */
+.spfl-table td {
+    padding: 8px 5px; /* Increased horizontal padding from 24px to 28px for better spacing and readability */
+    text-align: center;
+    font-size: 11px;
+    vertical-align: middle;
+}
+
+/* Position cell styling */
+.position-cell {
+    font-weight: bold;
+    color: #fff;
+    background: rgba(255, 255, 255, 0.1);
+    width: 10px;
+}
+
+/* Team name cell styling */
+.team-cell {
+    display: flex;               /* allow logo + name inline */
+    align-items: center;
+    gap: 6px;
+    text-align: left; /* !important; */
+    font-weight: 500;
+    color: #fff;
+    padding-left: 5px; /* Increased padding to align with header */
+    padding-right: 5px; /* Match padding with other cells */
+}
+.team-cell .team-name {
+    flex: 1;                     /* let name take remaining space */
+    overflow: hidden;
+    text-overflow: ellipsis;     /* Prevents overflow while keeping layout tidy */
+    white-space: nowrap;
+    min-width: 0;                /* enable ellipsis within flex item */
+}
+/* Small team logo next to name */
+.team-logo {
+    height: 24px;
+    width: auto;
+    border-radius: 2px;
+    display: inline-block;
+}
+
+/* Statistics cell styling */
+.played-cell,
+.won-cell,
+.drawn-cell,
+.lost-cell,
+.gf-cell,
+.ga-cell {
+    color: #ccc;
+    font-size: 11px;
+    font-weight: 500;
+    min-width: 5px;
+}
+
+/* Points cell styling */
+.points-cell {
+    font-weight: bold;
+    color: #fff;
+}
+
+/* Goal difference cell styling */
+.gd-cell.positive {
+    color: #4CAF50; /* Green for positive GD */
+}
+
+.gd-cell.negative {
+    color: #f44336; /* Red for negative GD */
+}
+
+/* Form cell styling */
+.form-cell {
+  /*  font-family: monospace; */
+    font-size: 10px;
+    text-align: right;
+    /* Remove letter-spacing; use centered flex tokens for perfect alignment */
+    padding: 5px 5px;
+}
+/* Centered, spaced W/D/L tokens */
+.form-cell .form-tokens {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 6px;
+}
+.form-cell .form-tokens > span {
+    width: 12px; /* fixed token width ensures consistent centering */
+    text-align: center;
+    display: inline-block;
+}
+
+/* Position-based row coloring */
+.team-row.champions-league {
+    border-left: 4px solid #4CAF50; /* Green for Champions League spots */
+}
+
+.team-row.europa-league {
+    border-left: 4px solid #FF9800; /* Orange for Europa League spots */
+}
+
+.team-row.relegation {
+    border-left: 4px solid #f44336; /* Red for relegation zone */
+}
+
+/* Highlighted teams styling */
+.team-row.highlighted {
+    background: rgba(219, 198, 2, 0.2) !important; /* Blue highlight */
+    border-left: 4px solid #2196F3 !important;
+}
+
+.team-row.highlighted .team-cell {
+    color: #018749 ;
+    font-weight: bold;
+}
+
+/* Loading and error states */
+.spfl-league-table.dimmed {
+    opacity: 0.9;
+}
+
+.spfl-league-table.light {
+    color: #999;
+}
+
+.spfl-league-table.small {
+    font-size: 12px;
+}
+
+/* Responsive design for smaller screens */
+@media (max-width: 800px) {
+    .spfl-table {
+        font-size: 10px;
+    }
+    
+    .spfl-table th,
+    .spfl-table td {
+        padding: 4px 5px; /* Increased horizontal padding from 3px to 8px for mobile readability */
+    }
+    
+    .spfl-header {
+        font-size: 14px;
+       
+    }
+    
+    .team-cell {
+        padding-left: 6px; /* Increased mobile team cell left padding from 6px to 10px */
+        padding-right: 6px; /* Added right padding for consistency */
+    }
+}
+
+/* Animation for updates */
+.spfl-league-table {
+    transition: opacity 0.5s ease-in-out;
+}
+
+/* Form indicators styling (W/D/L) */
+.form-cell .form-win {
+    color: #4CAF50;
+    font-weight: normal;
+}
+
+.form-cell .form-draw {
+    color: #FFFFFF;
+    font-weight: normal;
+}
+
+.form-cell .form-loss {
+    color: #f44336;
+    font-weight: normal;
+}
+
+/* Alternating row colors for better readability */
+.spfl-table tbody tr:nth-child(even) {
+    background: rgba(255, 255, 255, 0.02);
+}
+
+.spfl-table tbody tr:nth-child(odd) {
+    background: rgba(0, 0, 0, 0.02);
+}
+
+/* Special styling for top teams */
+.team-row:first-child .position-cell {
+    background: linear-gradient(45deg, #FFD700, #FFA500);
+    color: #000;
+    font-weight: bold;
+}
+
+/* Fade in animation for new data */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.spfl-table tbody tr {
+    animation: fadeIn 0.5s ease-in-out;
+}
+
+/* Scrollable table for many teams */
+.spfl-league-table {
+    max-height: 560px;
+    overflow-y: auto;
+}
+
+/* Custom scrollbar styling */
+.spfl-league-table::-webkit-scrollbar {
+    width: 6px;
+}
+
+.spfl-league-table::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 3px;
+}
+
+.spfl-league-table::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.3);
+    border-radius: 3px;
+}
+
+.spfl-league-table::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.5);
+}
