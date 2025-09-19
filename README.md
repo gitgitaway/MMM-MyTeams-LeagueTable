@@ -3,7 +3,7 @@
 A MagicMirror² module that displays the current SPFL (Scottish Professional Football League) standings sourced from BBC Sport with robust fallback data.
 
 ## Screenshots
-![SPFL Table](./screenshots/screenshot1.png)
+![SPFL Table](./screenshots/Screenshot1.png)
 
 ## Features
 
@@ -112,6 +112,7 @@ Thanks to the MagicMirror community for inspiration and guidance! Special thanks
 
 ## License
 MIT
+
 
 
 
