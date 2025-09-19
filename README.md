@@ -19,9 +19,18 @@ A MagicMirror² module that displays the current SPFL (Scottish Professional Foo
 
 ## Installation
 
-1. Go to your MagicMirror modules folder.
-2. Clone or copy this module into `MagicMirror/modules/MMM-MyTeams-LeagueTable`.
-3. Restart MagicMirror.
+1. Navigate to your MagicMirror modules folder:
+   ```bash
+   cd ~/MagicMirror/modules
+   ```
+2. Clone or copy this module into `MMM-MyTeams-LeaugeTable`:
+
+   ```bash
+   git clone https://github.com/gitgitaway/MMM-MyTeams-LeagueTable`.
+   ```
+3. Add the config to ~/MagicMirror/config/config.js`
+
+4. Restart MagicMirror.
 
 ## Configuration
 
@@ -112,6 +121,7 @@ Thanks to the MagicMirror community for inspiration and guidance! Special thanks
 
 ## License
 MIT
+
 
 
 
