@@ -2,6 +2,9 @@
 
 A MagicMirror² module that displays the current SPFL (Scottish Professional Football League) standings sourced from BBC Sport with robust fallback data.
 
+## Screenshots
+![SPFL Table](./screenshots/screenshot1.png)
+
 ## Features
 
 - **Real-time Data**: Fetches SPFL Premiership standings from BBC Sport
@@ -95,7 +98,7 @@ Add to `~/MagicMirror/config/config.js`:
 ## Notes
 
 This is the 2nd  module in my Celtic themed man cave mirror.  
-- ![Screenshot 1](./screenshots/screenshot-1.png)
+- ![Screenshot 1](./screenshots/CelticMM-Screenshot.png)
 
  The other modules can be found here:- 
 - Module 1:   https://github.com/gitgitaway/MMM-MyTeams-Clock
@@ -109,4 +112,5 @@ Thanks to the MagicMirror community for inspiration and guidance! Special thanks
 
 ## License
 MIT
+
 
