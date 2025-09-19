@@ -12,7 +12,7 @@ A MagicMirror² module that displays the current SPFL (Scottish Professional Foo
 - **Team Highlighting**: Highlight specific teams
 - **Responsive Design**: Works on different screen sizes
 - **Error Handling**: Retries and fallback data when live parsing fails
-- **Multi-language Support**: EN, DE, ES, FR
+
 
 ## Installation
 
@@ -94,7 +94,19 @@ Add to `~/MagicMirror/config/config.js`:
 
 ## Notes
 
-- Data source: https://www.bbc.co.uk/sport/football/scottish-premiership/table
-- Logos: Place PNG files in `modules/MMM-MyTeams-LeagueTable/images/` named after team slug (lowercase, non-alphanumeric -> `-`). Examples: `celtic.png`, `rangers.png`, `st-mirren.png`, `heart-of-midlothian.png`.
-- Form: W/D/L tokens are centered and color-coded; if no form is available, a dash is shown.
-- This project uses no external runtime dependencies.
+This is the 2nd  module in my Celtic themed man cave mirror.  
+- ![Screenshot 1](./screenshots/screenshot-1.png)
+
+ The other modules can be found here:- 
+- Module 1:   https://github.com/gitgitaway/MMM-MyTeams-Clock
+- Module 3:   https://github.com/gitgitaway/MMM-MyTeams-Fixtures
+- Module 4:   https://github.com/gitgitaway/MMM-JukeBox
+
+---
+## Acknowledgments
+Thanks to the MagicMirror community for inspiration and guidance! Special thanks to @jasonacox for his work on MMM-MusicPlayer which served as a starting point. 
+
+
+## License
+MIT
+
