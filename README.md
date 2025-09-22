@@ -107,12 +107,13 @@ Add to `~/MagicMirror/config/config.js`:
 ## Notes
 
 This is the 2nd  module in my Celtic themed man cave mirror.  
-- ![Screenshot 1](./screenshots/CelticMM-Screenshot.png)
+- ![Screenshot 1](./screenshots/celticMM-screenshot.png)
 
  The other modules can be found here:- 
 - Module 1:   https://github.com/gitgitaway/MMM-MyTeams-Clock
 - Module 3:   https://github.com/gitgitaway/MMM-MyTeams-Fixtures
 - Module 4:   https://github.com/gitgitaway/MMM-JukeBox
+- Module 5:   https://github.com/gitgitaway/MMM-Celtic-OnThisDay
 
 ---
 ## Acknowledgments
@@ -121,6 +122,7 @@ Thanks to the MagicMirror community for inspiration and guidance! Special thanks
 
 ## License
 MIT
+
 
 
 
