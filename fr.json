@@ -1,0 +1,13 @@
+{
+  "LOADING": "Chargement du tableau SPFL...",
+  "ERROR": "Erreur lors du chargement des données SPFL",
+  "RETRYING": "Nouvelle tentative...",
+  "NO_DATA": "Aucune donnée de ligue disponible",
+  "LAST_UPDATED": "Dernière mise à jour",
+  "POSITION": "Position",
+  "TEAM": "Équipe",
+  "PLAYED": "Joués",
+  "GOAL_DIFFERENCE": "Différence de Buts",
+  "POINTS": "Points",
+  "FORM": "Forme"
+}
