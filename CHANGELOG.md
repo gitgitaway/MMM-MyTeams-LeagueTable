@@ -12,10 +12,10 @@
 ### League Expansion
 - Added support for English Premier League (EPL)
 - Added support for Scottish Championship (SPFLC)
-- Updated documentation with comprehensive league configuration options
+- Updated documentation with comprehensive league configuration options 
 
 ### Documentation Improvements
-- Added "showLeague" column to bbcLeaguesPages.md with unique configuration IDs
+- Added "showLeague" column to "usefull_Info/bbcPages" with unique configuration IDs
 - Updated README.md to reflect new leagues and configuration options
 - Enhanced CHANGELOG with detailed descriptions of all changes
 
@@ -56,4 +56,5 @@
 - Back to Top button for long tables
 - Auto-cycling between enabled leagues
 - Team highlighting functionality
+
 - Responsive design with scrolling support
