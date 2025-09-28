@@ -1,11 +1,12 @@
 # MMM-MyTeams-LeagueTable
+Author "gitgitaway"
 
-A MagicMirror² module that displays football league standings from multiple competitions including SPFL (Scottish Professional Football League), UEFA Champions League (UCL), UEFA Europa League (UEL), UEFA Europa Conference League (ECL), English Premier League (EPL), and Scottish Championship (SPFLC), and a number of other European and Workd wide leagues sourced from the official website of the BBC Sport with robust fallback data and detailed error handling.
+A MagicMirror² module that displays football league standings from multiple competitions including SPFL (Scottish Professional Football League), Scottish Championship (SPFLC), UEFA Champions League (UCL), UEFA Europa League (UEL), UEFA Europa Conference League (ECL), English Premier League (EPL), and a number of other European and World wide leagues sourced from the official website of the BBC Sport with robust fallback data and detailed error handling.
 
 ## Features
 
 - **Multiple Competitions**: Toggle between SPFL, UCL, UEL, ECL, EPL, and SPFLC standings with on-screen buttons
-- **Auto-Cycling**: Optional automatically rotating between enabled leagues at configurable intervals
+- **Auto-Cycling**: Optional automatically rotation of enabled leagues at configurable intervals
 - **Periodic Data Fetch**: Pulls standings from BBC Sport at a configurable interval
 - **Customizable Display**: Toggle columns (position, team, played, W/D/L, F/A, GD, Pts, form)
 - **Team Logos**: Optional add your own team logos or official club crests to `modules/MMM-MyTeams-LeagueTable/images/`
@@ -197,4 +198,5 @@ Thanks to the BBC for providing free access to their sports pages.
 
 ## License
 MIT
+
 
