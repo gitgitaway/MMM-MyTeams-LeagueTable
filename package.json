@@ -4,10 +4,10 @@
   "description": "A MagicMirror² module to display the current SPFL (Scottish Professional Football League) standings",
   "main": "MMM-MyTeams-LeagueTable.js",
   "keywords": [
-    "MagicMirror",
+    "European Leagues",
     "module",
     "SPFL",
-    "Scottish Premier League",
+    "EPL",
     "football",
     "soccer",
     "league table",
@@ -45,4 +45,5 @@
     "moduleVersion": "1.0.0",
     "requiredVersion": "2.1.0"
   }
+
 }
