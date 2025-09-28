@@ -3,6 +3,11 @@ Author "gitgitaway"
 
 A MagicMirror² module that displays football league standings from multiple competitions including SPFL (Scottish Professional Football League), Scottish Championship (SPFLC), UEFA Champions League (UCL), UEFA Europa League (UEL), UEFA Europa Conference League (ECL), English Premier League (EPL), and a number of other European and World wide leagues sourced from the official website of the BBC Sport with robust fallback data and detailed error handling.
 
+## Screenshots
+- ![Screenshot 1](./screenshots/screenshot1.png)
+- ![Screenshot 2](./screenshots/screenshot2.png)
+- ![Screenshot 3](./screenshots/screenshot3.png)
+
 ## Features
 
 - **Multiple Competitions**: Toggle between SPFL, UCL, UEL, ECL, EPL, and SPFLC standings with on-screen buttons
@@ -182,7 +187,7 @@ If its not listed search the BBC Sports pages for your league or use a local sit
 ## Notes
 
 This is the 2nd module in my Celtic‑themed man‑cave MagicMirror.
-- ![Screenshot 1](./screenshots/screenshot-1.png)
+- ![Screenshot 1](./screenshots/celticmm-screenshot.png)
 
 Other related modules:
 - MMM-MyTeams-Clock  https://github.com/gitgitaway/MMM-MyTeams-Clock
@@ -198,5 +203,6 @@ Thanks to the BBC for providing free access to their sports pages.
 
 ## License
 MIT
+
 
 
