@@ -1,0 +1,197 @@
+{
+  "timestamp": "JPG City Photos Backup",
+  "total_moved": 29,
+  "total_skipped": 0,
+  "total_failed": 0,
+  "backup_location": "C:\\Users\\junkp\\MagicMirror\\modules\\MMM-MyTeams-LeagueTable\\images\\crests_city_photos_backup",
+  "files_moved": [
+    {
+      "country": "Belgium",
+      "filename": "Anderlecht.jpg",
+      "source": "C:\\Users\\junkp\\MagicMirror\\modules\\MMM-MyTeams-LeagueTable\\images\\crests\\Belgium\\Anderlecht.jpg",
+      "destination": "C:\\Users\\junkp\\MagicMirror\\modules\\MMM-MyTeams-LeagueTable\\images\\crests_city_photos_backup\\Belgium\\Anderlecht.jpg"
+    },
+    {
+      "country": "Belgium",
+      "filename": "Mechelen.jpg",
+      "source": "C:\\Users\\junkp\\MagicMirror\\modules\\MMM-MyTeams-LeagueTable\\images\\crests\\Belgium\\Mechelen.jpg",
+      "destination": "C:\\Users\\junkp\\MagicMirror\\modules\\MMM-MyTeams-LeagueTable\\images\\crests_city_photos_backup\\Belgium\\Mechelen.jpg"
+    },
+    {
+      "country": "Belgium",
+      "filename": "Sint-Truiden.jpg",
+      "source": "C:\\Users\\junkp\\MagicMirror\\modules\\MMM-MyTeams-LeagueTable\\images\\crests\\Belgium\\Sint-Truiden.jpg",
+      "destination": "C:\\Users\\junkp\\MagicMirror\\modules\\MMM-MyTeams-LeagueTable\\images\\crests_city_photos_backup\\Belgium\\Sint-Truiden.jpg"
+    },
+    {
+      "country": "Bosnia and Herzegovina",
+      "filename": "Posusje.jpg",
+      "source": "C:\\Users\\junkp\\MagicMirror\\modules\\MMM-MyTeams-LeagueTable\\images\\crests\\Bosnia and Herzegovina\\Posusje.jpg",
+      "destination": "C:\\Users\\junkp\\MagicMirror\\modules\\MMM-MyTeams-LeagueTable\\images\\crests_city_photos_backup\\Bosnia and Herzegovina\\Posusje.jpg"
+    },
+    {
+      "country": "Bosnia and Herzegovina",
+      "filename": "Sarajevo.jpg",
+      "source": "C:\\Users\\junkp\\MagicMirror\\modules\\MMM-MyTeams-LeagueTable\\images\\crests\\Bosnia and Herzegovina\\Sarajevo.jpg",
+      "destination": "C:\\Users\\junkp\\MagicMirror\\modules\\MMM-MyTeams-LeagueTable\\images\\crests_city_photos_backup\\Bosnia and Herzegovina\\Sarajevo.jpg"
+    },
+    {
+      "country": "Bosnia and Herzegovina",
+      "filename": "Siroki Brijeg.jpg",
+      "source": "C:\\Users\\junkp\\MagicMirror\\modules\\MMM-MyTeams-LeagueTable\\images\\crests\\Bosnia and Herzegovina\\Siroki Brijeg.jpg",
+      "destination": "C:\\Users\\junkp\\MagicMirror\\modules\\MMM-MyTeams-LeagueTable\\images\\crests_city_photos_backup\\Bosnia and Herzegovina\\Siroki Brijeg.jpg"
+    },
+    {
+      "country": "Croatia",
+      "filename": "Osijek.jpg",
+      "source": "C:\\Users\\junkp\\MagicMirror\\modules\\MMM-MyTeams-LeagueTable\\images\\crests\\Croatia\\Osijek.jpg",
+      "destination": "C:\\Users\\junkp\\MagicMirror\\modules\\MMM-MyTeams-LeagueTable\\images\\crests_city_photos_backup\\Croatia\\Osijek.jpg"
+    },
+    {
+      "country": "Croatia",
+      "filename": "Rijeka.jpg",
+      "source": "C:\\Users\\junkp\\MagicMirror\\modules\\MMM-MyTeams-LeagueTable\\images\\crests\\Croatia\\Rijeka.jpg",
+      "destination": "C:\\Users\\junkp\\MagicMirror\\modules\\MMM-MyTeams-LeagueTable\\images\\crests_city_photos_backup\\Croatia\\Rijeka.jpg"
+    },
+    {
+      "country": "Croatia",
+      "filename": "Sibenik.jpg",
+      "source": "C:\\Users\\junkp\\MagicMirror\\modules\\MMM-MyTeams-LeagueTable\\images\\crests\\Croatia\\Sibenik.jpg",
+      "destination": "C:\\Users\\junkp\\MagicMirror\\modules\\MMM-MyTeams-LeagueTable\\images\\crests_city_photos_backup\\Croatia\\Sibenik.jpg"
+    },
+    {
+      "country": "Croatia",
+      "filename": "Varazdin.jpg",
+      "source": "C:\\Users\\junkp\\MagicMirror\\modules\\MMM-MyTeams-LeagueTable\\images\\crests\\Croatia\\Varazdin.jpg",
+      "destination": "C:\\Users\\junkp\\MagicMirror\\modules\\MMM-MyTeams-LeagueTable\\images\\crests_city_photos_backup\\Croatia\\Varazdin.jpg"
+    },
+    {
+      "country": "Czech Republic",
+      "filename": "Opava.jpg",
+      "source": "C:\\Users\\junkp\\MagicMirror\\modules\\MMM-MyTeams-LeagueTable\\images\\crests\\Czech Republic\\Opava.jpg",
+      "destination": "C:\\Users\\junkp\\MagicMirror\\modules\\MMM-MyTeams-LeagueTable\\images\\crests_city_photos_backup\\Czech Republic\\Opava.jpg"
+    },
+    {
+      "country": "Czech Republic",
+      "filename": "Trinec.jpg",
+      "source": "C:\\Users\\junkp\\MagicMirror\\modules\\MMM-MyTeams-LeagueTable\\images\\crests\\Czech Republic\\Trinec.jpg",
+      "destination": "C:\\Users\\junkp\\MagicMirror\\modules\\MMM-MyTeams-LeagueTable\\images\\crests_city_photos_backup\\Czech Republic\\Trinec.jpg"
+    },
+    {
+      "country": "England",
+      "filename": "Wolves.jpg",
+      "source": "C:\\Users\\junkp\\MagicMirror\\modules\\MMM-MyTeams-LeagueTable\\images\\crests\\England\\Wolves.jpg",
+      "destination": "C:\\Users\\junkp\\MagicMirror\\modules\\MMM-MyTeams-LeagueTable\\images\\crests_city_photos_backup\\England\\Wolves.jpg"
+    },
+    {
+      "country": "Finland",
+      "filename": "FC Lahti.jpg",
+      "source": "C:\\Users\\junkp\\MagicMirror\\modules\\MMM-MyTeams-LeagueTable\\images\\crests\\Finland\\FC Lahti.jpg",
+      "destination": "C:\\Users\\junkp\\MagicMirror\\modules\\MMM-MyTeams-LeagueTable\\images\\crests_city_photos_backup\\Finland\\FC Lahti.jpg"
+    },
+    {
+      "country": "Finland",
+      "filename": "Turku.jpg",
+      "source": "C:\\Users\\junkp\\MagicMirror\\modules\\MMM-MyTeams-LeagueTable\\images\\crests\\Finland\\Turku.jpg",
+      "destination": "C:\\Users\\junkp\\MagicMirror\\modules\\MMM-MyTeams-LeagueTable\\images\\crests_city_photos_backup\\Finland\\Turku.jpg"
+    },
+    {
+      "country": "Georgia",
+      "filename": "FC Sioni Bolnisi.jpg",
+      "source": "C:\\Users\\junkp\\MagicMirror\\modules\\MMM-MyTeams-LeagueTable\\images\\crests\\Georgia\\FC Sioni Bolnisi.jpg",
+      "destination": "C:\\Users\\junkp\\MagicMirror\\modules\\MMM-MyTeams-LeagueTable\\images\\crests_city_photos_backup\\Georgia\\FC Sioni Bolnisi.jpg"
+    },
+    {
+      "country": "Iceland",
+      "filename": "Grindavik.jpg",
+      "source": "C:\\Users\\junkp\\MagicMirror\\modules\\MMM-MyTeams-LeagueTable\\images\\crests\\Iceland\\Grindavik.jpg",
+      "destination": "C:\\Users\\junkp\\MagicMirror\\modules\\MMM-MyTeams-LeagueTable\\images\\crests_city_photos_backup\\Iceland\\Grindavik.jpg"
+    },
+    {
+      "country": "North Macedonia",
+      "filename": "Borec.jpg",
+      "source": "C:\\Users\\junkp\\MagicMirror\\modules\\MMM-MyTeams-LeagueTable\\images\\crests\\North Macedonia\\Borec.jpg",
+      "destination": "C:\\Users\\junkp\\MagicMirror\\modules\\MMM-MyTeams-LeagueTable\\images\\crests_city_photos_backup\\North Macedonia\\Borec.jpg"
+    },
+    {
+      "country": "Northern Ireland",
+      "filename": "Newry City.jpg",
+      "source": "C:\\Users\\junkp\\MagicMirror\\modules\\MMM-MyTeams-LeagueTable\\images\\crests\\Northern Ireland\\Newry City.jpg",
+      "destination": "C:\\Users\\junkp\\MagicMirror\\modules\\MMM-MyTeams-LeagueTable\\images\\crests_city_photos_backup\\Northern Ireland\\Newry City.jpg"
+    },
+    {
+      "country": "Scotland",
+      "filename": "Peterhead.jpg",
+      "source": "C:\\Users\\junkp\\MagicMirror\\modules\\MMM-MyTeams-LeagueTable\\images\\crests\\Scotland\\Peterhead.jpg",
+      "destination": "C:\\Users\\junkp\\MagicMirror\\modules\\MMM-MyTeams-LeagueTable\\images\\crests_city_photos_backup\\Scotland\\Peterhead.jpg"
+    },
+    {
+      "country": "Scotland",
+      "filename": "Stenhousemuir.jpg",
+      "source": "C:\\Users\\junkp\\MagicMirror\\modules\\MMM-MyTeams-LeagueTable\\images\\crests\\Scotland\\Stenhousemuir.jpg",
+      "destination": "C:\\Users\\junkp\\MagicMirror\\modules\\MMM-MyTeams-LeagueTable\\images\\crests_city_photos_backup\\Scotland\\Stenhousemuir.jpg"
+    },
+    {
+      "country": "Serbia",
+      "filename": "Novi Pazar.jpg",
+      "source": "C:\\Users\\junkp\\MagicMirror\\modules\\MMM-MyTeams-LeagueTable\\images\\crests\\Serbia\\Novi Pazar.jpg",
+      "destination": "C:\\Users\\junkp\\MagicMirror\\modules\\MMM-MyTeams-LeagueTable\\images\\crests_city_photos_backup\\Serbia\\Novi Pazar.jpg"
+    },
+    {
+      "country": "Slovakia",
+      "filename": "Podbrezova.jpg",
+      "source": "C:\\Users\\junkp\\MagicMirror\\modules\\MMM-MyTeams-LeagueTable\\images\\crests\\Slovakia\\Podbrezova.jpg",
+      "destination": "C:\\Users\\junkp\\MagicMirror\\modules\\MMM-MyTeams-LeagueTable\\images\\crests_city_photos_backup\\Slovakia\\Podbrezova.jpg"
+    },
+    {
+      "country": "Slovakia",
+      "filename": "Senica.jpg",
+      "source": "C:\\Users\\junkp\\MagicMirror\\modules\\MMM-MyTeams-LeagueTable\\images\\crests\\Slovakia\\Senica.jpg",
+      "destination": "C:\\Users\\junkp\\MagicMirror\\modules\\MMM-MyTeams-LeagueTable\\images\\crests_city_photos_backup\\Slovakia\\Senica.jpg"
+    },
+    {
+      "country": "Slovakia",
+      "filename": "Trencin.jpg",
+      "source": "C:\\Users\\junkp\\MagicMirror\\modules\\MMM-MyTeams-LeagueTable\\images\\crests\\Slovakia\\Trencin.jpg",
+      "destination": "C:\\Users\\junkp\\MagicMirror\\modules\\MMM-MyTeams-LeagueTable\\images\\crests_city_photos_backup\\Slovakia\\Trencin.jpg"
+    },
+    {
+      "country": "Slovakia",
+      "filename": "Zilina.jpg",
+      "source": "C:\\Users\\junkp\\MagicMirror\\modules\\MMM-MyTeams-LeagueTable\\images\\crests\\Slovakia\\Zilina.jpg",
+      "destination": "C:\\Users\\junkp\\MagicMirror\\modules\\MMM-MyTeams-LeagueTable\\images\\crests_city_photos_backup\\Slovakia\\Zilina.jpg"
+    },
+    {
+      "country": "Slovenia",
+      "filename": "Celje.jpg",
+      "source": "C:\\Users\\junkp\\MagicMirror\\modules\\MMM-MyTeams-LeagueTable\\images\\crests\\Slovenia\\Celje.jpg",
+      "destination": "C:\\Users\\junkp\\MagicMirror\\modules\\MMM-MyTeams-LeagueTable\\images\\crests_city_photos_backup\\Slovenia\\Celje.jpg"
+    },
+    {
+      "country": "Slovenia",
+      "filename": "Domzale.jpg",
+      "source": "C:\\Users\\junkp\\MagicMirror\\modules\\MMM-MyTeams-LeagueTable\\images\\crests\\Slovenia\\Domzale.jpg",
+      "destination": "C:\\Users\\junkp\\MagicMirror\\modules\\MMM-MyTeams-LeagueTable\\images\\crests_city_photos_backup\\Slovenia\\Domzale.jpg"
+    },
+    {
+      "country": "Spain",
+      "filename": "Las Palmas.jpg",
+      "source": "C:\\Users\\junkp\\MagicMirror\\modules\\MMM-MyTeams-LeagueTable\\images\\crests\\Spain\\Las Palmas.jpg",
+      "destination": "C:\\Users\\junkp\\MagicMirror\\modules\\MMM-MyTeams-LeagueTable\\images\\crests_city_photos_backup\\Spain\\Las Palmas.jpg"
+    }
+  ],
+  "files_kept": [
+    {
+      "country": "Azerbaijan",
+      "filename": "Qarabag.jpg"
+    },
+    {
+      "country": "The Netherlands",
+      "filename": "Groningen.jpg"
+    },
+    {
+      "country": "The Netherlands",
+      "filename": "Heerenveen.jpg"
+    }
+  ]
+}
