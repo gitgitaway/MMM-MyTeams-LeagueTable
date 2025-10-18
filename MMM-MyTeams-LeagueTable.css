@@ -1,0 +1,582 @@
+/*    MMM-MyTeams-LeagueTableCSS Styles
+ * 
+ * This file contains all the styling for the Football League Table module
+ * Includes responsive design, color coding for different league positions,
+ * and support for multiple leagues (SPFL, UCL, UEL, ECL)
+ */
+
+/* Main container styling */
+.spfl-league-table {
+    font-family: "Roboto Condensed", Arial, sans-serif;
+    color: #fff;
+    line-height: 1.0;
+    position: relative;
+    width: 100%;
+    max-width: 550px; /* Added max-width to prevent table from expanding too much */
+    min-width:  500px; /* Set a minimum width for all tables */
+}
+
+/* League header container with buttons */
+.league-header-container {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+    padding-bottom: 5px;
+    border-bottom: 2px solid #555;
+    max-width: 550px; /* Added max-width to prevent header from expanding too much */
+}
+
+/* League title styling */
+.league-title {
+    font-size: 14px;
+    font-weight: bold;
+    color: #ccc;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    flex: 1;
+}
+
+/* League buttons container */
+.league-buttons-container {
+    display: flex;
+    gap: 5px;
+}
+
+/* League button styling */
+.league-btn {
+    background: rgba(255, 255, 255, 0.1);
+    border: none;
+    color: #ccc;
+    padding: 4px 8px;
+    font-size: 10px;
+    border-radius: 3px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.league-btn:hover {
+    background: rgba(255, 255, 255, 0.2);
+}
+
+.league-btn.active {
+    color: #fff;
+    font-weight: bold;
+}
+
+/* Different colors for each league button when active */
+.league-btn[data-league="SPFL"].active {
+    background: rgba(0, 135, 73, 0.7); /* Celtic green */
+}
+
+.league-btn[data-league="UCL"].active {
+    background: rgba(30, 144, 255, 0.7); /* Champions League blue */
+}
+
+.league-btn[data-league="UEL"].active {
+    background: rgba(255, 140, 0, 0.7); /* Europa League orange */
+}
+
+.league-btn[data-league="ECL"].active {
+    background: rgba(50, 205, 50, 0.7); /* Conference League green */
+}
+
+.league-btn[data-league="EPL"].active {
+    background: rgba(63, 16, 126, 0.7); /* Premier League purple */
+}
+
+.league-btn[data-league="SPFLC"].active {
+    background: rgba(220, 20, 60, 0.7); /* Scottish Championship red */
+}
+
+/* Back to top button control container - sticky at bottom of scroll area */
+.back-to-top-controls {
+    position: sticky !important;    /* stick to bottom of scroll container */
+    bottom: 0 !important;           /* align to bottom edge of scrollable area */
+    display: flex !important;
+    justify-content: flex-end !important; /* align button to the right */
+    padding: 8px 8px !important;    /* padding around button */
+    background: rgba(0, 0, 0, 0.3) !important; /* semi-transparent background for contrast */
+    border-top: 1px solid rgba(255, 255, 255, 0.1) !important; /* subtle top border */
+    z-index: 50 !important;         /* above table content, below header */
+    opacity: 0 !important;          /* hidden by default - MUST be hidden */
+    transition: opacity 0.2s ease-in-out !important;
+    pointer-events: none !important; /* don't block scroll when hidden */
+    visibility: visible !important; /* ensure element exists in DOM */
+}
+
+.back-to-top-controls.visible {
+    opacity: 1 !important;          /* show when scrolled */
+    pointer-events: auto !important; /* clickable when visible */
+}
+
+/* Back to top button - styled to match original but positioned within scroll container */
+.back-to-top-btn {
+    background: #018749;            /* Celtic green */
+    color: #fff;
+    border: 1px solid rgba(255, 255, 255, 0.25);
+    border-radius: 4px;
+    padding: 6px 8px;
+    font-size: 11px;
+    line-height: 1.0;
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 3px 8px rgba(0, 0, 0, 0.4);
+}
+
+.back-to-top-btn:hover {
+    opacity: 1;                     /* full opacity on hover */
+    transform: translateY(-3px);    /* lift effect on hover */
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5);
+}
+
+/* Content container for scrollable table */
+.league-content-container {
+    min-height: 450px; /* Increased minimum height to ensure footer visibility */
+    max-width: 530px; /* Added max-width to prevent container from expanding too much */
+    overflow-y: auto;
+    position: relative;
+    max-height: var(--mtlt-max-table-height, 450px); /* default fallback, overridden via inline style */
+    scrollbar-width: thin;
+    scrollbar-color: rgba(255, 255, 255, 0.2) rgba(0, 0, 0, 0.1);
+    scroll-behavior: smooth; /* Enable smooth scrolling */
+    display: flex;
+    flex-direction: column;
+}
+
+/* Table header styling */
+.spfl-header {
+    font-size: 12px;
+    font-weight: bold;
+    text-align: left;
+    margin-bottom: 10px;
+    color: #ccc;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    border-bottom: 2px solid #555;
+    padding-bottom: 5px;
+}
+
+/* Main table styling */
+.spfl-table {
+    border-collapse: separate; /* Changed from collapse to support sticky elements better */
+    border-spacing: 0;
+    width: 100%;
+    max-width: 530px; /* Added max-width to prevent table from expanding too much */
+    margin: 0 auto;
+    background: rgba(0, 0, 0, 0.3);
+    border-radius: 5px;
+    overflow: hidden;
+    display: table;
+    table-layout: fixed; /* Helps with column width consistency */
+}
+
+/* Table header row styling */
+.spfl-table thead {
+    position: sticky;
+    top: 0;
+    z-index: 100; /* Much higher z-index to ensure it stays on top of everything */
+    background: rgba(20, 20, 20, 0.98); /* More opaque background for better visibility */
+    border-bottom: 2px solid #555;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.5); /* Stronger shadow for better visibility */
+}
+
+.spfl-table thead tr {
+    background: rgba(20, 20, 20, 0.98); /* Darker, more opaque background for better readability */
+    border-bottom: 1px solid #555;
+}
+/* Keep header cells visible (sticky) */
+.spfl-table thead th {
+    position: sticky;
+    top: 0;
+    z-index: 101;
+    background: rgba(20, 20, 20, 0.98);
+}
+
+.spfl-table th {
+    padding: 5px 5px; /* Increased horizontal and vertical padding to 5px/5px to gove better column spacing */
+    text-align: left;
+    font-weight: bold;
+    font-size: 12px;
+    color: #ccc;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    transition: background-color 0.3s ease; /* Smooth transition for hover effects */
+}
+
+/* Header column specific styling */
+.position-header {
+    width: 5px;
+    padding-right: 0; /* to achieve exact 30px gap via team-cell padding */
+}
+
+/* Ensure Form header text aligns with centered tokens below */
+.form-header {
+    text-align: center;
+    width: 100px;
+}
+
+/* Footer styling */
+.spfl-table tfoot {
+    position: sticky;
+    bottom: 0;
+    z-index: 90; /* High z-index but below header */
+    background: rgba(20, 20, 20, 0.98); /* Darker, more opaque background for better visibility */
+    box-shadow: 0 -4px 8px rgba(0, 0, 0, 0.5); /* Stronger shadow for better visibility */
+    /* Removed width: 100% and display: block which were causing the table to expand */
+}
+
+.spfl-table tfoot .spfl-footer {
+    padding: 8px 10px;
+    font-size: 10px;
+    color: #aaa;
+    text-align: center;
+    border-top: 2px solid rgba(255, 255, 255, 0.15);
+    font-weight: bold;
+    max-width: 550px; /* Added max-width to prevent footer from expanding too much */
+}
+
+.team-header {
+    text-align: left; /* !important; */
+    width: 100px;
+    max-width: 120px;
+    min-width: 15px; /* Increased to prevent squashing team names */
+    padding-left: 30px; /* Ensure 30px gap from position column */
+}
+
+.played-header,
+.won-header,
+.drawn-header,
+.lost-header,
+.gf-header,
+.ga-header,
+.gd-header {
+    width: 5px;
+    min-width: 2px;
+    padding-right: 15px; /* Add padding to push PTS text to the right */
+}
+
+/* Override: double gap between GD and PTS */
+.gd-header { padding-right: 5px; }
+.gd-cell { padding-right: 5px; }
+
+.points-header {
+    width: 10px;
+    min-width: 2px;
+    padding-right: 5px; 
+}
+
+.form-header {
+    width: 50px;
+     font-size: 5px;
+    text-align: center;
+}
+
+/* Table body row styling */
+.spfl-table tbody tr {
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    transition: background-color 0.3s ease;
+}
+
+.spfl-table tbody tr:hover {
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.spfl-table tbody tr:last-child {
+    border-bottom: none;
+}
+
+/* Table cell styling */
+.spfl-table td {
+    padding: 3px 3px; /* Decreased vertical/horizontal padding from 8px/5px to 3px/3px for better row spacing and readability */
+    text-align: center;
+    font-size: 12px;
+    vertical-align: middle;
+}
+
+/* Position cell styling */
+.position-cell {
+    font-weight: bold;
+    color: #fff;
+    background: rgba(255, 255, 255, 0.1);
+    width: 10px;
+    padding-right: 0; /* to achieve exact 30px gap via team-cell padding */
+}
+
+/* Team name cell styling */
+.team-cell {
+    display: flex; 
+    max-width: 100px;              /* allow logo + name inline */
+    align-items: center;
+    gap: 6px;
+    text-align: left; /* !important; */
+    font-weight: 500;
+    color: #fff;
+    padding-left: 5px; /* 30px gap from position column */
+    padding-right: 5px; /* Match padding with other cells */
+}
+.team-cell .team-name {
+    flex: 1;                     /* let name take remaining space */
+    overflow: hidden;
+    text-overflow: ellipsis;     /* Prevents overflow while keeping layout tidy */
+    white-space: nowrap;
+    max-width: 100px;  
+    min-width: 0;                /* enable ellipsis within flex item */
+    text-align: left;            /* explicitly left-align names */
+}
+/* Small team logo next to name */
+.team-logo {
+    height: 24px;
+    width: auto;
+    border-radius: 2px;
+    display: inline-block;
+}
+
+/* Statistics cell styling */
+.played-cell,
+.won-cell,
+.drawn-cell,
+.lost-cell,
+.gf-cell,
+.ga-cell {
+    color: #ccc;
+    font-size: 12px;
+    font-weight: 500;
+    min-width: 5px;
+}
+
+/* Points cell styling */
+.points-cell {
+    font-weight: bold;
+    color: #68acec;
+    padding-right: 330px; /* Doubled from 165px */
+}
+
+/* Goal difference cell styling */
+.gd-cell.positive {
+    color: #4CAF50; /* Green for positive GD */
+}
+
+.gd-cell.negative {
+    color: #f44336; /* Red for negative GD */
+}
+
+/* Form cell styling */
+.form-cell {
+  /*  font-family: monospace; */
+    font-size: 5px;
+    text-align: right;
+    /* Remove letter-spacing; use centered flex tokens for perfect alignment */
+    padding: 5px 4px;
+}
+/* Centered, spaced W/D/L tokens */
+.form-cell .form-tokens {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 5px;
+}
+.form-cell .form-tokens > span {
+    width: 5px; /* fixed token width ensures consistent centering */
+    text-align: center;
+    display: inline-block;
+}
+
+/* Position-based row coloring */
+.team-row.champions-league {
+    border-left: 4px solid #4CAF50; /* Green for Champions League spots */
+}
+
+.team-row.europa-league {
+    border-left: 4px solid #FF9800; /* Orange for Europa League spots */
+}
+
+.team-row.relegation {
+    border-left: 4px solid #f44336; /* Red for relegation zone */
+}
+
+/* Highlighted teams styling */
+.team-row.highlighted {
+    background: rgba(219, 198, 2, 0.2) !important; /* Blue highlight */
+    border-left: 4px solid #2196F3 !important;
+}
+
+.team-row.highlighted .team-cell {
+    color: #018749 ;
+    font-weight: bold;
+}
+
+/* Loading and error states */
+.spfl-league-table.dimmed {
+    opacity: 0.9;
+}
+
+.spfl-league-table.light {
+    color: #999;
+}
+
+.spfl-league-table.small {
+    font-size: 12px;
+}
+
+/* Responsive design for smaller screens */
+@media (max-width: 380px) {
+    .spfl-table {
+        font-size: 10px;
+    }
+    
+    .spfl-table th,
+    .spfl-table td {
+        padding: 4px 5px; /* Increased horizontal padding from 3px to 5px for mobile readability */
+    }
+    
+    .spfl-header {
+        font-size: 14px;
+       
+    }
+    
+    .team-cell {
+        padding-left: 6px; /* Increased mobile team cell left padding from 6px to 10px */
+        padding-right: 6px; /* Added right padding for consistency */
+    }
+}
+
+/* Animation for updates */
+.spfl-league-table {
+    transition: all 0.5s ease-in-out;
+}
+
+/* League transition animations */
+@keyframes fadeInTable {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.league-content-container {
+    animation: fadeInTable 0.5s ease-in-out;
+}
+
+/* Button transition effects */
+.league-btn {
+    transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+}
+
+.league-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+}
+
+/* Form indicators styling (W/D/L) */
+.form-cell .form-win {
+    color: #4CAF50;
+    font-weight: normal;
+   
+}
+
+.form-cell .form-draw {
+    color: #FFFFFF;
+    font-weight: normal;
+}
+
+.form-cell .form-loss {
+    color: #f44336;
+    font-weight: normal;
+}
+
+/* Alternating row colors for better readability */
+.spfl-table tbody tr:nth-child(even) {
+    background: rgba(255, 255, 255, 0.02);
+}
+
+.spfl-table tbody tr:nth-child(odd) {
+    background: rgba(0, 0, 0, 0.02);
+}
+
+/* Special styling for top teams */
+.team-row:first-child .position-cell {
+    background: linear-gradient(45deg, #FFD700, #FFA500);
+    color: #000;
+    font-weight: bold;
+}
+
+/* Fade in animation for new data */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.spfl-table tbody tr {
+    animation: fadeIn 0.5s ease-in-out;
+}
+
+/* Scrollable table for many teams - this is a duplicate definition kept for compatibility */
+/* The values are updated to match the main definition above */
+.league-content-container {
+    min-height: 450px;
+    max-height: 450px;
+    max-width: 500px; /* Added max-width to prevent container from expanding too much */
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+}
+
+/* Sticky header and footer - these styles are applied in addition to the ones above */
+/* This section is kept for compatibility but the values are updated to match */
+.spfl-table thead {
+    position: sticky;
+    top: 0;
+    z-index: 100; /* Much higher z-index to ensure it stays on top */
+    background: rgba(20, 20, 20, 0.98); /* Darker, more opaque background */
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.5); /* Stronger shadow for better visibility */
+}
+
+.spfl-table tfoot {
+    position: sticky;
+    bottom: 0;
+    z-index: 90; /* High z-index but below header */
+    background: rgba(20, 20, 20, 0.98); /* Darker, more opaque background */
+    box-shadow: 0 -4px 8px rgba(0, 0, 0, 0.5); /* Stronger shadow for better visibility */
+    /* Removed width: 100% and display: block which were causing the table to expand */
+}
+
+/* Custom scrollbar styling */
+.league-content-container::-webkit-scrollbar {
+    width: 6px;
+}
+
+.league-content-container::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 3px;
+}
+
+.league-content-container::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.3);
+    border-radius: 3px;
+}
+
+.league-content-container::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.5);
+}
+
+/* Group header styling for UCL/UEL/ECL */
+.team-row.group-header td {
+    background: rgba(255, 255, 255, 0.15);
+    font-weight: bold;
+    text-align: left;
+    padding: 5px 10px;
+    color: #ddd;
+    font-size: 11px;
+}

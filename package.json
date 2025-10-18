@@ -1,0 +1,51 @@
+{
+  "name": "MMM-MyTeams-LeagueTable",
+  "version": "1.0.0",
+  "description": "A MagicMirror² module to display the current SPFL (Scottish Professional Football League) standings",
+  "main": "MMM-MyTeams-LeagueTable.js",
+  "keywords": [
+    "MagicMirror",
+    "module",
+    "SPFL",
+    "Scottish Premier League",
+    "football",
+    "soccer",
+    "league table",
+    "standings",
+    "sports",
+    "Celtic"
+  ],
+  "author": {
+    "name": "gitgitaway",
+    "email": " "
+  },
+  "license": "MIT",
+  "homepage": "https://github.com/gitgitaway/MMM-MyTeams-LeagueTable",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/gitgitaway/MMM-MyTeams-LeagueTable.git"
+  },
+  "bugs": {
+    "url": "https://github.com/gitgitaway/MMM-MyTeams-LeagueTable/issues"
+  },
+  "engines": {
+    "node": ">=14.0.0"
+  },
+  "dependencies": {
+    "node-fetch": "^2.7.0"
+  },
+  "devDependencies": {
+    "eslint": "^8.0.0",
+    "prettier": "^2.0.0"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "lint": "eslint *.js",
+    "format": "prettier --write *.js *.json *.md"
+  },
+  "magicmirror": {
+    "moduleName": "MMM-MyTeams-LeagueTable",
+    "moduleVersion": "1.0.0",
+    "requiredVersion": "2.1.0"
+  }
+}
