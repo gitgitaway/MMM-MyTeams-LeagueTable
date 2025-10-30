@@ -206,7 +206,7 @@ Add to `~/MagicMirror/config/config.js`:
 
 # How to add your teams national league
 
-**For further details of the relevant URL and show league codes for most major leagues** See [bbcLeaguePages.md](./documentation/bbcLeaguePages.md) 
+**For further details of the relevant URL and league codes for most major leagues** See [bbcLeaguePages.md](./documentation/bbcLeaguePages.md) and [EUROPEAN_LEAGUES_CONFIG.md](./EUROPEAN_LEAGUES_CONFIG.md) 
 If its not listed search the BBC Sports web pages for your league or use a local site.
 - Add the league code to the config file under "League Options".
 - You will need to create a new translation file for your language if its not already included. See translations/en.json for an example.
@@ -459,5 +459,6 @@ Thanks to the BBC for providing free access to their sports pages.
 
 ## License
 MIT
+
 
 
