@@ -1,0 +1,13 @@
+{
+  "LOADING": "SPFL-tabel laden...",
+  "ERROR": "Fout bij laden van SPFL-gegevens",
+  "RETRYING": "Opnieuw proberen...",
+  "NO_DATA": "Geen competitiegegevens beschikbaar",
+  "LAST_UPDATED": "Laatst bijgewerkt",
+  "POSITION": "Positie",
+  "TEAM": "Team",
+  "PLAYED": "Gespeeld",
+  "GOAL_DIFFERENCE": "Doelsaldo",
+  "POINTS": "Punten",
+  "FORM": "Vorm"
+}

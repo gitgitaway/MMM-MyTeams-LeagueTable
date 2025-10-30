@@ -1,0 +1,13 @@
+{
+  "LOADING": "A' luchdachadh clàr SPFL...",
+  "ERROR": "Mearachd a' luchdachadh dàta SPFL",
+  "RETRYING": "A' feuchainn a-rithist...",
+  "NO_DATA": "Chan eil dàta lìog rim faighinn",
+  "LAST_UPDATED": "Air an ùrachadh mu dheireadh",
+  "POSITION": "Inbhe",
+  "TEAM": "Sgioba",
+  "PLAYED": "Air an cluich",
+  "GOAL_DIFFERENCE": "Eadar-dhealachadh Gheal",
+  "POINTS": "Puingean",
+  "FORM": "Cruth"
+}

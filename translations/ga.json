@@ -1,0 +1,13 @@
+{
+  "LOADING": "Ag lódáil tábla SPFL...",
+  "ERROR": "Earráid agus sonraí SPFL á n-uachtar",
+  "RETRYING": "Ag atriail...",
+  "NO_DATA": "Níl aon sonraí sraithe ar fáil",
+  "LAST_UPDATED": "Nuashonraithe go deireanach",
+  "POSITION": "Suíomh",
+  "TEAM": "Foireann",
+  "PLAYED": "Imeartha",
+  "GOAL_DIFFERENCE": "Difríochtaí Sprice",
+  "POINTS": "Pointí",
+  "FORM": "Foirm"
+}
