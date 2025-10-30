@@ -53,18 +53,57 @@
     border-radius: 3px;
     cursor: pointer;
     transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-weight: 500;
+    opacity: 0.7; /* Inactive buttons have reduced opacity */
 }
 
 .league-btn:hover {
     background: rgba(255, 255, 255, 0.2);
+    transform: scale(1.05);
 }
 
 .league-btn.active {
     color: #fff;
     font-weight: bold;
+    box-shadow: 0 0 8px rgba(255, 255, 255, 0.3);
+    opacity: 1.0; /* Active buttons fully opaque */
+    background-color: #999999 !important; /* Active buttons use light green background - !important overrides league-specific colors */
+}
+
+/* Flag image styling - replaces emoji flags with actual PNG images */
+.league-btn .flag-image {
+    width: 16px;
+    height: 12px;
+    display: inline-block;
+    object-fit: contain;
+    margin: 0;
+    padding: 0;
+    border-radius: 2px;
+}
+
+/* Fallback for emoji flags (if image fails to load) */
+.league-btn .flag-emoji {
+    font-size: 16px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    line-height: 1;
+}
+
+/* League abbreviation text */
+.league-btn .league-abbr {
+    font-size: 9px;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    display: inline-block;
 }
 
 /* Different colors for each league button when active */
+/* Legacy codes */
 .league-btn[data-league="SPFL"].active {
     background: rgba(0, 135, 73, 0.7); /* Celtic green */
 }
@@ -87,6 +126,123 @@
 
 .league-btn[data-league="SPFLC"].active {
     background: rgba(220, 20, 60, 0.7); /* Scottish Championship red */
+}
+
+/* New league codes with country-based colors */
+/* Scotland */
+.league-btn[data-league="SCOTLAND_PREMIERSHIP"].active,
+.league-btn[data-league="SCOTLAND_CHAMPIONSHIP"].active {
+    background: rgba(0, 135, 73, 0.7); /* Scottish green */
+}
+
+/* England */
+.league-btn[data-league="ENGLAND_PREMIER_LEAGUE"].active {
+    background: rgba(63, 16, 126, 0.7); /* Premier League purple */
+}
+
+/* Germany */
+.league-btn[data-league="GERMANY_BUNDESLIGA"].active {
+    background: rgba(200, 16, 46, 0.7); /* German red */
+}
+
+/* France */
+.league-btn[data-league="FRANCE_LIGUE1"].active {
+    background: rgba(0, 85, 164, 0.7); /* French blue */
+}
+
+/* Spain */
+.league-btn[data-league="SPAIN_LA_LIGA"].active {
+    background: rgba(255, 196, 0, 0.7); /* Spanish gold */
+}
+
+/* Italy */
+.league-btn[data-league="ITALY_SERIE_A"].active {
+    background: rgba(0, 87, 184, 0.7); /* Italian blue */
+}
+
+/* Netherlands */
+.league-btn[data-league="NETHERLANDS_EREDIVISIE"].active {
+    background: rgba(255, 112, 67, 0.7); /* Dutch orange */
+}
+
+/* Belgium */
+.league-btn[data-league="BELGIUM_PRO_LEAGUE"].active {
+    background: rgba(255, 197, 0, 0.7); /* Belgian yellow */
+}
+
+/* Portugal */
+.league-btn[data-league="PORTUGAL_PRIMEIRA_LIGA"].active {
+    background: rgba(0, 119, 55, 0.7); /* Portuguese green */
+}
+
+/* Greece */
+.league-btn[data-league="GREECE_SUPER_LEAGUE"].active {
+    background: rgba(0, 112, 192, 0.7); /* Greek blue */
+}
+
+/* Turkey */
+.league-btn[data-league="TURKEY_SUPER_LIG"].active {
+    background: rgba(206, 17, 38, 0.7); /* Turkish red */
+}
+
+/* Ukraine */
+.league-btn[data-league="UKRAINE_PREMIER_LEAGUE"].active {
+    background: rgba(0, 91, 187, 0.7); /* Ukrainian blue */
+}
+
+/* Romania */
+.league-btn[data-league="ROMANIA_LIGA_I"].active {
+    background: rgba(0, 150, 136, 0.7); /* Romanian teal */
+}
+
+/* Croatia */
+.league-btn[data-league="CROATIA_HNL"].active {
+    background: rgba(255, 0, 0, 0.7); /* Croatian red */
+}
+
+/* Serbia */
+.league-btn[data-league="SERBIA_SUPER_LIGA"].active {
+    background: rgba(0, 56, 147, 0.7); /* Serbian blue */
+}
+
+/* Austria */
+.league-btn[data-league="AUSTRIA_BUNDESLIGA"].active {
+    background: rgba(237, 27, 36, 0.7); /* Austrian red */
+}
+
+/* Czech Republic */
+.league-btn[data-league="CZECH_LIGA"].active {
+    background: rgba(17, 35, 126, 0.7); /* Czech blue */
+}
+
+/* Hungary */
+.league-btn[data-league="HUNGARY_NBI"].active {
+    background: rgba(206, 17, 38, 0.7); /* Hungarian red */
+}
+
+/* Poland */
+.league-btn[data-league="POLAND_EKSTRAKLASA"].active {
+    background: rgba(255, 0, 0, 0.7); /* Polish red */
+}
+
+/* Switzerland */
+.league-btn[data-league="SWITZERLAND_SUPER_LEAGUE"].active {
+    background: rgba(255, 0, 0, 0.7); /* Swiss red */
+}
+
+/* Sweden */
+.league-btn[data-league="SWEDEN_ALLSVENSKAN"].active {
+    background: rgba(0, 85, 152, 0.7); /* Swedish blue */
+}
+
+/* Norway */
+.league-btn[data-league="NORWAY_ELITESERIEN"].active {
+    background: rgba(186, 12, 47, 0.7); /* Norwegian red */
+}
+
+/* Denmark */
+.league-btn[data-league="DENMARK_SUPERLIGAEN"].active {
+    background: rgba(196, 0, 0, 0.7); /* Danish red */
 }
 
 /* Back to top button control container - sticky at bottom of scroll area */

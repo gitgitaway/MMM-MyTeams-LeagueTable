@@ -1,304 +1,109 @@
 /* MagicMirror²
  * Module:  MMM-MyTeams-LeagueTable
  * 
- * By: Assistantz
+ * Author: gitgitaway with assistance from AI Assistant
  * MIT Licensed.
  * 
- * This module displays football league standings from various competitions
- * sourced from BBC Sport website, including SPFL, UEFA Champions League,
- * UEFA Europa League, and UEFA Europa Conference League.
+ * This module displays football league standings from multiple European competitions
+ * sourced from BBC Sport website, including all top-tier European football leagues,
+ * UEFA Champions League, UEFA Europa League, and UEFA Europa Conference League.
+ * 
+ * Enhanced with configurable league selection supporting 20+ European nations.
  */
 
 Module.register("MMM-MyTeams-LeagueTable", {
+    
+    // Load external scripts
+    getScripts: function() {
+        return ["modules/" + this.name + "/team-logo-mappings.js"];
+    },
     // Default module config
     defaults: {
        updateInterval: 30 * 60 * 1000,              // How often to refresh (ms) – default: 30 min
-				retryDelay: 15000,                           // Delay between retry attempts after an error (ms)
-				maxRetries: 3,                               // Stop retrying after this many failures
-				animationSpeed: 2000,                        // DOM update animation speed (ms)
-				fadeSpeed: 4000,                             // Fade animation speed (ms)
-				colored: true,                               // Color rows by standing (top/UEFA/relegation)
-				maxTeams: 36,    							 // 0 = show all teams
-				highlightTeams: ["Celtic", "Hearts"],        // Emphasize teams by exact name
-				scrollable: true,                            // Enable vertical scrolling if max height exceeded
-				
-				// League toggles - set true to show, false to hide
-				showSPFL: true,                              // Show Scottish Premiership
-				showSPFLC: true,      			             // Show Scottish Premiership
-				showEPL: true,                               // Show English Premier League                          // Show Scottish Championship                          // Show Scottish Premier League
-				showUCL: true,                               // Show UEFA Champions League
-				showUEL: true,                               // Show UEFA Europa League
-				showECL: false,                              // Show UEFA Europa Conference League
-				
-				// Show League Data                         showPosition: true, 
-				showPosition: true,                         // Show table position
-				showTeamLogos: true, // Show team logos
-				showPlayedGames: true,
-				showWon: true,
-				showDrawn: true,
-				showLost: true,
-				showGoalsFor: true,
-				showGoalsAgainst: true,
-				showGoalDifference: true,
-				showPoints: true,
-				showForm: true,                            // Show recent form tokens (W/D/L)
-				formMaxGames: 5, // Max number of form games to display (pads with "-" if fewer)
-	
-				// Auto-cycling options
-				autoCycle: false,                            // Enable auto-cycling between leagues
-				cycleInterval: 15 * 1000,                   // Time to display each league (15 seconds)
-				
-				//Map club names to image files
-				// Maps team names (as fetched from BBC Sport) to their corresponding logo image files
-				// Format: "Team Name": "filename.png"
-				// If no logo exists, uses "placeholder.svg" (a question mark icon)
-				teamLogoMap: {
-					// Scottish Premiership (SPFL)
-					"Hearts": "heart-of-midlothian.png",
-					"Celtic": "celtic.png",
-					"Rangers": "rangers.png",
-					"Aberdeen": "aberdeen.png",
-					"Hibernian": "hibernian.png",
-					"Kilmarnock": "kilmarnock.png",
-					"Dundee": "dundee.png",
-					"Dundee United": "dundee-united.png",
-					"Motherwell": "motherwell.png",
-					"Ross County": "ross-county.png",
-					"St Mirren": "st-mirren.png",
-					"St. Mirren": "st-mirren.png",
-					"St Johnstone": "st-johnstone.png",
-					"Livingston": "livingston.png",
-					
-					// Scottish Championship (SPFLC)
-					"Falkirk": "falkirk.png",
-					"Ayr United": "ayr-united.png",
-					"Partick Thistle": "partick-thistle.png",
-					"Raith Rovers": "raith-rovers.png",
-					"Dunfermline Athletic": "dunfermline-athletic.png",
-					"Queen's Park": "queens-park.png",
-					"Queens Park": "queens-park.png",
-					"Greenock Morton": "greenock-morton.png",
-					"Airdrieonians": "airdrieonians.png",
-					"Arbroath": "arbroath.png",
-					
-					// English Premier League (EPL)
-					"Arsenal": "arsenal.png",
-					"Aston Villa": "aston-villa.png",
-					"Brighton": "brighton-and-hove-albion.png",
-					"Brighton & Hove Albion": "brighton-and-hove-albion.png",
-					"Brighton And Hove Albion": "brighton-and-hove-albion.png",
-					"Chelsea": "chelsea.png",
-					"Crystal Palace": "crystal-palace.png",
-					"Everton": "everton.png",
-					"Fulham": "fulham.png",
-					"Leicester City": "leicester-city.png",
-					"Liverpool": "liverpool.png",
-					"Manchester City": "manchester-city.png",
-					"Man City": "manchester-city.png",
-					"Manchester United": "manchester-united.png",
-					"Man Utd": "manchester-united.png",
-					"Newcastle United": "newcastle-united.png",
-					"Newcastle": "newcastle-united.png",
-					"Nottingham Forest": "nottingham-forest.png",
-					"Southampton": "southampton.png",
-					"Tottenham Hotspur": "tottenham-hotspur.png",
-					"Tottenham": "tottenham-hotspur.png",
-					"West Ham United": "west-ham-united.png",
-					"West Ham": "west-ham-united.png",
-					"Ipswich Town": "placeholder.svg",
-					"Bournemouth": "placeholder.svg",
-					"Brentford": "placeholder.svg",
-					"Wolves": "placeholder.svg",
-					"Wolverhampton": "placeholder.svg",
-					
-					// UEFA Champions League (UCL)
-					"AC Milan": "ac-milan.png",
-					"Ac Milan": "ac-milan.png",
-					"Ajax": "ajax.png",
-					"Atalanta": "atalanta.png",
-					"Atlético Madrid": "atlético-madrid.png",
-					"Atletico Madrid": "atlético-madrid.png",
-					"Barcelona": "barcelona.png",
-					"Bayern Munich": "bayern-munich.png",
-					"Bayern": "bayern-munich.png",
-					"Benfica": "benfica.png",
-					"Bologna": "bologna.png",
-					"Borussia Dortmund": "borussia-dortmund.png",
-					"Dortmund": "borussia-dortmund.png",
-					"Brest": "brest.png",
-					"Club Brugge": "club-brugge.png",
-					"Crvena Zvezda": "crvena-zvezda.png",
-					"Red Star Belgrade": "crvena-zvezda.png",
-					"Dinamo Zagreb": "dinamo-zagreb.png",
-					"Feyenoord": "feyenoord.png",
-					"Girona": "girona.png",
-					"Inter Milan": "inter-milan.png",
-					"Inter": "inter-milan.png",
-					"Internazionale": "inter-milan.png",
-					"Juventus": "juventus.png",
-					"Lille": "lille.png",
-					"Liverpool": "liverpool.png",
-					"Manchester City": "manchester-city.png",
-					"Monaco": "monaco.png",
-					"Paris St Germain": "paris-sg.png",
-					"Paris SG": "paris-sg.png",
-					"Paris Saint Germain": "paris-sg.png",
-					"Paris Saint-Germain": "paris-sg.png",
-					"PSG": "paris-sg.png",
-					"PSV Eindhoven": "psv-eindhoven.png",
-					"PSV": "psv-eindhoven.png",
-					"Qarabag": "qarabağ.png",
-					"Qarabağ": "qarabağ.png",
-					"RB Leipzig": "rb-leipzig.png",
-					"Leipzig": "rb-leipzig.png",
-					"Real Madrid": "real-madrid.png",
-					"Salzburg": "red-bull-salzburg.png",
-					"Red Bull Salzburg": "red-bull-salzburg.png",
-					"Shakhtar Donetsk": "shakhtar-donetsk.png",
-					"Shakhtar": "shakhtar-donetsk.png",
-					"Slovan Bratislava": "slovan-bratislava.png",
-					"Sparta Prague": "sparta-prague.png",
-					"Sparta Praha": "sparta-prague.png",
-					"Sporting CP": "sporting-cp.png",
-					"Sporting Lisbon": "sporting-cp.png",
-					"Sporting": "sporting-cp.png",
-					"Sturm Graz": "sturm-graz.png",
-					"Stuttgart": "stuttgart.png",
-					"Young Boys": "young-boys.png",
-					"Bayer Leverkusen": "bayer-leverkusen.png",
-					"Leverkusen": "bayer-leverkusen.png",
-					"Aston Villa": "aston-villa.png",
-					"Marseille": "placeholder.svg",
-					"Olympique Marseille": "placeholder.svg",
-					"Napoli": "placeholder.svg",
-					"SSC Napoli": "placeholder.svg",
-					"Villarreal": "placeholder.svg",
-					"Villarreal CF": "placeholder.svg",
-					"FC Copenhagen": "placeholder.svg",
-					"Copenhagen": "placeholder.svg",
-					"Kobenhavn": "placeholder.svg",
-					"Kairat": "placeholder.svg",
-					"FC Kairat": "placeholder.svg",
-					
-					// UEFA Europa League (UEL)
-					"Ajax": "ajax.png",
-					"Anderlecht": "anderlecht.png",
-					"Athletic Bilbao": "athletic-bilbao.png",
-					"Athletic Club": "athletic-bilbao.png",
-					"AZ Alkmaar": "az-alkmaar.png",
-					"AZ": "az-alkmaar.png",
-					"Beşiktaş": "beşiktaş.png",
-					"Besiktas": "beşiktaş.png",
-					"Bodø/Glimt": "bodøglimt.png",
-					"Bodø Glimt": "bodøglimt.png",
-					"Bodo/Glimt": "bodøglimt.png",
-					"Bodo Glimt": "bodøglimt.png",
-					"Braga": "braga.png",
-					"Dynamo Kyiv": "dynamo-kyiv.png",
-					"Dynamo Kiev": "dynamo-kyiv.png",
-					"Eintracht Frankfurt": "eintracht-frankfurt.png",
-					"Frankfurt": "eintracht-frankfurt.png",
-					"Elfsborg": "elfsborg.png",
-					"Fenerbahçe": "fenerbahçe.png",
-					"Fenerbahce": "fenerbahçe.png",
-					"Ferencváros": "ferencváros.png",
-					"Ferencvaros": "ferencváros.png",
-					"FCSB": "fcsb.png",
-					"Galatasaray": "galatasaray.png",
-					"Hoffenheim": "hoffenheim.png",
-					"Lazio": "lazio.png",
-					"Ludogorets": "placeholder.svg",
-					"Lyon": "lyon.png",
-					"Maccabi Tel Aviv": "maccabi-tel-aviv.png",
-					"M. Tel Aviv": "maccabi-tel-aviv.png",
-					"M. Tel-Aviv": "maccabi-tel-aviv.png",
-					"Malmö": "malmö-redhawks.png",
-					"Malmo": "malmö-redhawks.png",
-					"Manchester United": "manchester-united.png",
-					"Man Utd": "manchester-united.png",
-					"Midtjylland": "fc-midtjylland.png",
-					"FC Midtjylland": "fc-midtjylland.png",
-					"Nice": "nice.png",
-					"Olympiacos": "olympiacos.png",
-					"Olympiakos": "olympiacos.png",
-					"Olympiacos Piraeus": "olympiacos.png",
-					"Olympiakos Piraeus": "olympiacos.png",
-					"PAOK": "paok.png",
-					"Porto": "fc-porto.png",
-					"FC Porto": "fc-porto.png",
-					"Qarabağ": "qarabağ.png",
-					"Qarabag": "qarabağ.png",
-					"Rangers": "rangers.png",
-					"Real Sociedad": "real-sociedad.png",
-					"Roma": "roma.png",
-					"AS Roma": "roma.png",
-					"Slavia Prague": "slavia-prague.png",
-					"Slavia Praha": "slavia-prague.png",
-					"Tottenham Hotspur": "tottenham-hotspur.png",
-					"Tottenham": "tottenham-hotspur.png",
-					"Twente": "twente.png",
-					"FC Twente": "twente.png",
-					"Union SG": "placeholder.svg",
-					"Union St Gilloise": "placeholder.svg",
-					"Union Saint Gilloise": "placeholder.svg",
-					"Viktoria Plzeň": "viktoria-plzeň.png",
-					"Viktoria Plzen": "viktoria-plzeň.png",
-					
-					// UEFA Europa Conference League (ECL)
-					"Borac Banja Luka": "borac-banja-luka.png",
-					"Borac": "borac-banja-luka.png",
-					"Celje": "celje.png",
-					"Chelsea": "chelsea.png",
-					"Cercle Brugge": "cercle-brugge.png",
-					"Dinamo Minsk": "dinamo-minsk.png",
-					"Fiorentina": "fiorentina.png",
-					"Gent": "gent.png",
-					"HJK Helsinki": "hjk-helsinki.png",
-					"HJK": "hjk-helsinki.png",
-					"Istanbul Başakşehir": "istanbul-başakşehir.png",
-					"Istanbul Basaksehir": "istanbul-başakşehir.png",
-					"Başakşehir": "istanbul-başakşehir.png",
-					"Larne": "larne.png",
-					"LASK": "lask.png",
-					"Legia Warsaw": "legia-warsaw.png",
-					"Legia": "legia-warsaw.png",
-					"Lugano": "lugano.png",
-					"Mladá Boleslav": "mladá-boleslav.png",
-					"Mlada Boleslav": "mladá-boleslav.png",
-					"Molde": "molde.png",
-					"Noah": "noah.png",
-					"Olimpija Ljubljana": "olimpija-ljubljana.png",
-					"Olimpija": "olimpija-ljubljana.png",
-					"Pafos": "pafos.png",
-					"Panathinaikos": "panathinaikos.png",
-					"Rapid Vienna": "rapid-vienna.png",
-					"Rapid Wien": "rapid-vienna.png",
-					"Real Betis": "real-betis.png",
-					"Betis": "real-betis.png",
-					"RFS": "rfs.png",
-					"Shamrock Rovers": "shamrock-rovers.png",
-					"St Gallen": "st-gallen.png",
-					"St. Gallen": "st-gallen.png",
-					"The New Saints": "the-new-saints.png",
-					"TNS": "the-new-saints.png",
-					
-					// Additional teams that may appear
-					"Bristol City": "bristol-city.png",
-					"Portsmouth": "portsmouth.png",
-					"Swansea City": "swansea-city.png",
-					"Swansea": "swansea-city.png",
-					"West Bromwich Albion": "west-bromwich-albion.png",
-					"West Brom": "west-bromwich-albion.png"
-				},
-				
-				// League headers
+       retryDelay: 15000,                           // Delay between retry attempts after an error (ms)
+       maxRetries: 3,                               // Stop retrying after this many failures
+       animationSpeed: 2000,                        // DOM update animation speed (ms)
+       fadeSpeed: 4000,                             // Fade animation speed (ms)
+       colored: true,                               // Color rows by standing (top/UEFA/relegation)
+       maxTeams: 36,                                // 0 = show all teams
+       highlightTeams: ["Celtic", "Hearts"],        // Emphasize teams by exact name
+       scrollable: true,                            // Enable vertical scrolling if max height exceeded
+       
+       // ===== NEW: League Selection System (replaces old individual toggles) =====
+       // Method 1: Use selectedLeagues array to choose specific leagues by code
+       // Leave empty to use legacy showXXX options, or populate with league codes
+       // Example: Scottish Premiership enabled by default
+       // Add more league codes here, e.g., "ENGLAND_PREMIER_LEAGUE", "GERMANY_BUNDESLIGA", etc.
+       selectedLeagues: [
+         "SCOTLAND_PREMIERSHIP" ],
+       
+       // Method 2: Use legacyLeagueToggle = true to enable old config style (for backward compatibility)
+       legacyLeagueToggle: true,                     // If true, uses showSPFL, showEPL, etc. from config
+       
+       // ===== NEW: Automatic button generation from selectedLeagues =====
+       autoGenerateButtons: true,                    // Auto-create buttons for all leagues in selectedLeagues
+       showLeagueButtons: true,                      // Show/hide league selector buttons in header
+       
+       // ===== LEGACY League toggles (used if legacyLeagueToggle: true) =====
+       // Set true to show, false to hide
+       showSPFL: true,                              // Show Scottish Premiership
+       showSPFLC: false,                            // Show Scottish Championship
+       showEPL: false,                              // Show English Premier League
+       showUCL: false,                              // Show UEFA Champions League
+       showUEL: false,                              // Show UEFA Europa League
+       showECL: false,                              // Show UEFA Europa Conference League
+       
+       // ===== Display Options =====
+       showPosition: true,                          // Show table position
+       showTeamLogos: true,                         // Show team logos
+       showPlayedGames: true,                       // Show games played
+       showWon: true,                               // Show wins
+       showDrawn: true,                             // Show draws
+       showLost: true,                              // Show losses
+       showGoalsFor: true,                          // Show goals for
+       showGoalsAgainst: true,                      // Show goals against
+       showGoalDifference: true,                    // Show goal difference
+       showPoints: true,                            // Show points
+       showForm: true,                              // Show recent form tokens (W/D/L)
+       formMaxGames: 5,                             // Max number of form games to display
+       
+       // ===== Auto-cycling options =====
+       autoCycle: false,                            // Enable auto-cycling between leagues
+       cycleInterval: 15 * 1000,                    // Time to display each league (15 seconds)
+       
+       // ===== League Headers =====
+       // Maps league codes to their display names
+       // Dynamically extended at runtime with all configured European leagues
 				leagueHeaders: {
-				"SPFL": "SPFL Premiership",
-				"UCL": "UEFA Champions League",
-				"UEL": "UEFA Europa League",
-				"ECL": "UEFA Europa Conference League",
-				"EPL": "English Premier League",
-				"SPFLC": "Scottish Championship"
+					// Domestic Leagues
+					"SCOTLAND_PREMIERSHIP": "Scottish Premiership",
+					"SCOTLAND_CHAMPIONSHIP": "Scottish Championship",
+					"ENGLAND_PREMIER_LEAGUE": "English Premier League",
+					"GERMANY_BUNDESLIGA": "Bundesliga",
+					"FRANCE_LIGUE1": "Ligue 1",
+					"SPAIN_LA_LIGA": "La Liga",
+					"ITALY_SERIE_A": "Serie A",
+					"NETHERLANDS_EREDIVISIE": "Eredivisie",
+					"BELGIUM_PRO_LEAGUE": "Belgian Pro League",
+					"PORTUGAL_PRIMEIRA_LIGA": "Primeira Liga",
+					"TURKEY_SUPER_LIG": "Turkish Super Lig",
+					"GREECE_SUPER_LEAGUE": "Greek Super League",
+					"AUSTRIA_BUNDESLIGA": "Austrian Bundesliga",
+					"CZECH_LIGA": "Czech Liga",
+					"DENMARK_SUPERLIGAEN": "Superligaen",
+					"NORWAY_ELITESERIEN": "Eliteserien",
+					"SWEDEN_ALLSVENSKAN": "Allsvenskan",
+					"SWITZERLAND_SUPER_LEAGUE": "Swiss Super League",
+					"UKRAINE_PREMIER_LEAGUE": "Ukrainian Premier League",
+					"ROMANIA_LIGA_I": "Liga I",
+					"CROATIA_HNL": "Croatian HNL",
+					"SERBIA_SUPER_LIGA": "Serbian Super Liga",
+					"HUNGARY_NBI": "Hungarian NB I",
+					"POLAND_EKSTRAKLASA": "Ekstraklasa",
+					// European Competitions
+					"UEFA_CHAMPIONS_LEAGUE": "UEFA Champions League",
+					"UEFA_EUROPA_LEAGUE": "UEFA Europa League",
+					"UEFA_EUROPA_CONFERENCE_LEAGUE": "UEFA Europa Conference League"
 				},
 
 				
@@ -319,27 +124,40 @@ Module.register("MMM-MyTeams-LeagueTable", {
     start: function() {
         Log.info("Starting module: " + this.name);
         
-        // Initialize variables
-        this.leagueData = {
-            SPFL: null,
-            UCL: null,
-            UEL: null,
-            ECL: null,
-            EPL: null,
-            SPFLC: null
-        };
-        this.loaded = {
-            SPFL: false,
-            UCL: false,
-            UEL: false,
-            ECL: false,
-            EPL: false,
-            SPFLC: false
-        };
+        // ===== INITIALIZE TEAM LOGO MAPPINGS =====
+        // Merge centralized mappings from team-logo-mappings.js with config overrides
+        // TEAM_LOGO_MAPPINGS is loaded via getScripts() and available globally
+        this.mergedTeamLogoMap = Object.assign({}, window.TEAM_LOGO_MAPPINGS || {}, this.config.teamLogoMap || {});
+        
+        // Build normalized team lookup map for case-insensitive matching
+        this.normalizedTeamLogoMap = {};
+        this.buildNormalizedTeamMap();
+        
+        // ===== INITIALIZE LEAGUE SYSTEM =====
+        // Determine which leagues are enabled based on config
+        this.determineEnabledLeagues();
+        
+        // Initialize data storage - dynamically create entries for each enabled league
+        this.leagueData = {};
+        this.loaded = {};
+        
+        // Populate data structures for each enabled league
+        this.enabledLeagueCodes.forEach(leagueCode => {
+            this.leagueData[leagueCode] = null;
+            this.loaded[leagueCode] = false;
+        });
+        
         this.error = null;
         this.retryCount = 0;
-        this.currentLeague = "SPFL"; // Default to SPFL
+        
+        // Set current league to first enabled league
+        this.currentLeague = this.enabledLeagueCodes.length > 0 ? this.enabledLeagueCodes[0] : "SCOTLAND_PREMIERSHIP";
         this.isScrolling = false;
+        
+        if (this.config.debug) {
+            Log.info(" MMM-MyTeams-LeagueTable: Enabled leagues: " + JSON.stringify(this.enabledLeagueCodes));
+            Log.info(" MMM-MyTeams-LeagueTable: Current league: " + this.currentLeague);
+        }
         
         // Send initial request for data for all enabled leagues
         this.requestAllLeagueData();
@@ -357,55 +175,346 @@ Module.register("MMM-MyTeams-LeagueTable", {
         }
     },
     
-    // Request data for all enabled leagues
+    // ===== NEW: Build normalized team lookup map =====
+    // Creates a case-insensitive, whitespace-normalized lookup for team logo mappings
+    // Handles common naming variations (e.g., "St Mirren" vs "st mirren", "ST. MIRREN", etc.)
+    // Also handles suffix/prefix variations like FC, SC, AC in any case combination
+    // Also handles diacritics (accents, umlauts) - "Atlético" matches "Atletico"
+    buildNormalizedTeamMap: function() {
+        this.normalizedTeamLogoMap = {};
+        
+        // Common football club suffixes/prefixes to handle
+        var commonSuffixes = ["fc", "sc", "ac", "cf", "sk", "if", "bk", "fk", "ik", "aik","afc","vfb","unt","fn"];
+        
+        // Function to remove diacritics (accents, umlauts, etc.)
+        // Converts: é→e, ö→o, ü→u, ñ→n, ç→c, ß→ss, á→a, í→i, ó→o, ú→u, etc.
+        var removeDiacritics = function(str) {
+            if (!str) return str;
+            // Handle special characters explicitly before Unicode normalization
+            str = str.replace(/ß/g, "ss");  // German ß → ss
+            str = str.replace(/ø/g, "o");   // Danish/Norwegian ø → o
+            str = str.replace(/æ/g, "ae");  // Scandinavian æ → ae
+            // Use Unicode normalization to decompose accented characters
+            return str.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+        };
+        
+        // Function to generate alternative diacritics spellings (e.g., Köln → koeln)
+        // Handles common Anglicization variants: ö→oe, ü→ue, ä→ae
+        var getAlternativeDiacriticsSpellings = function(str) {
+            if (!str) return [];
+            var variants = [];
+            // German convention: ö→oe, ü→ue, ä→ae
+            if (str.match(/[öüä]/i)) {
+                var withOe = str.replace(/ö/gi, function(m) { return m === 'ö' ? 'oe' : 'OE'; })
+                              .replace(/ü/gi, function(m) { return m === 'ü' ? 'ue' : 'UE'; })
+                              .replace(/ä/gi, function(m) { return m === 'ä' ? 'ae' : 'AE'; });
+                variants.push(normalize(withOe));
+            }
+            return variants;
+        };
+        
+        // Normalize function: remove diacritics, lowercase, and remove/compress whitespace, remove punctuation
+        var normalize = function(str) {
+            return removeDiacritics((str || "")).toLowerCase().replace(/\s+/g, " ").trim().replace(/[.,]/g, "");
+        };
+        
+        // Function to strip common suffixes/prefixes
+        var stripSuffixes = function(str) {
+            var normalized = normalize(str);
+            var parts = normalized.split(" ");
+            var stripped = normalized;
+            
+            // Check if last word is a common suffix
+            if (parts.length > 1) {
+                var lastWord = parts[parts.length - 1];
+                if (commonSuffixes.indexOf(lastWord) !== -1) {
+                    stripped = parts.slice(0, -1).join(" ");
+                }
+            }
+            // Check if first word is a common prefix (AC, SC, AFC, VFB, etc.)
+            if (parts.length > 1) {
+                var firstWord = parts[0];
+                if (commonSuffixes.indexOf(firstWord) !== -1) {
+                    stripped = parts.slice(1).join(" ");
+                }
+            }
+            
+            return stripped.trim();
+        };
+        
+        // Build map with normalized keys and suffix variations
+        Object.keys(this.mergedTeamLogoMap).forEach(teamName => {
+            var normalized = normalize(teamName);
+            var stripped = stripSuffixes(teamName);
+            
+            if (normalized && normalized.length > 0) {
+                // Add normalized version
+                this.normalizedTeamLogoMap[normalized] = this.mergedTeamLogoMap[teamName];
+                
+                // Add stripped version (without common suffixes/prefixes)
+                if (stripped !== normalized && stripped.length > 0) {
+                    this.normalizedTeamLogoMap[stripped] = this.mergedTeamLogoMap[teamName];
+                }
+                
+                // Also add common suffix variants if they don't already exist
+                // This helps find "Arsenal" even if mapped as "Arsenal FC"
+                commonSuffixes.forEach(suffix => {
+                    var withSuffix = normalized + " " + suffix;
+                    if (!this.normalizedTeamLogoMap[withSuffix]) {
+                        this.normalizedTeamLogoMap[withSuffix] = this.mergedTeamLogoMap[teamName];
+                    }
+                });
+                
+                // Add alternative Anglicization variants (ö→oe, ü→ue, ä→ae)
+                // This helps find "Koeln" when mapped as "Köln"
+                getAlternativeDiacriticsSpellings(teamName).forEach(variant => {
+                    if (variant && !this.normalizedTeamLogoMap[variant]) {
+                        this.normalizedTeamLogoMap[variant] = this.mergedTeamLogoMap[teamName];
+                    }
+                    // Also add stripped version of variant
+                    var strippedVariant = stripSuffixes(variant);
+                    if (strippedVariant && strippedVariant !== variant && !this.normalizedTeamLogoMap[strippedVariant]) {
+                        this.normalizedTeamLogoMap[strippedVariant] = this.mergedTeamLogoMap[teamName];
+                    }
+                });
+            }
+        });
+        
+        if (this.config.debug) {
+            Log.info(" MMM-MyTeams-LeagueTable: Built normalized team map with " + Object.keys(this.normalizedTeamLogoMap).length + " entries (diacritics removed, Anglicization variants added, case/whitespace normalized, suffix/prefix variants, common abbreviations)");
+        }
+    },
+    
+    // ===== NEW: Get team logo mapping with intelligent lookup =====
+    // Tries multiple matching strategies:
+    // 1. Exact match (fastest)
+    // 2. Normalized match (case-insensitive, whitespace-normalized, diacritics removed)
+    // 3. Suffix/prefix variants (handles AFC, VFB, FC, SC, AC in any case, no length restrictions)
+    // 4. Diacritic variants (handles accents/umlauts AND Anglicization: Atlético→Atletico, Köln→Koln or Koeln)
+    getTeamLogoMapping: function(teamName) {
+        if (!teamName) return null;
+        
+        // Try exact match first (fastest)
+        if (this.mergedTeamLogoMap[teamName]) {
+            return this.mergedTeamLogoMap[teamName];
+        }
+        
+        // Function to remove diacritics (accents, umlauts, etc.)
+        var removeDiacritics = function(str) {
+            if (!str) return str;
+            // Handle special characters explicitly before Unicode normalization
+            str = str.replace(/ß/g, "ss");  // German ß → ss
+            str = str.replace(/ø/g, "o");   // Danish/Norwegian ø → o
+            str = str.replace(/æ/g, "ae");  // Scandinavian æ → ae
+            // Use Unicode normalization to decompose accented characters
+            return str.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+        };
+        
+        // Normalize and try lookup with suffix handling
+        var normalize = function(str) {
+            return removeDiacritics((str || "")).toLowerCase().replace(/\s+/g, " ").trim().replace(/[.,]/g, "");
+        };
+        
+        var normalized = normalize(teamName);
+        
+        // Try normalized match (handles case/whitespace/punctuation/diacritics variations and Anglicization variants)
+        if (this.normalizedTeamLogoMap[normalized]) {
+            if (this.config.debug) {
+                Log.info(" MMM-MyTeams-LeagueTable: Found normalized mapping for '" + teamName + "' as '" + normalized + "' (diacritics/case/whitespace normalized, Anglicization variants like Köln→koeln supported)");
+            }
+            return this.normalizedTeamLogoMap[normalized];
+        }
+        
+        // Try stripping common suffixes/prefixes
+        var commonSuffixes = ["fc", "sc", "ac", "cf", "sk", "if", "bk", "fk", "ik", "aik","afc","vfb","unt","fn"];
+        var parts = normalized.split(" ");
+        var stripped = normalized;
+        
+        // Check if last word is a common suffix
+        if (parts.length > 1) {
+            var lastWord = parts[parts.length - 1];
+            if (commonSuffixes.indexOf(lastWord) !== -1) {
+                stripped = parts.slice(0, -1).join(" ");
+            }
+        }
+        // Check if first word is a common prefix (AC, SC, AFC, VFB, etc.)
+        if (parts.length > 1 && stripped === normalized) {
+            var firstWord = parts[0];
+            if (commonSuffixes.indexOf(firstWord) !== -1) {
+                stripped = parts.slice(1).join(" ");
+            }
+        }
+        
+        if (stripped !== normalized && this.normalizedTeamLogoMap[stripped]) {
+            if (this.config.debug) {
+                Log.info(" MMM-MyTeams-LeagueTable: Found suffix/prefix variant mapping for '" + teamName + "' -> '" + stripped + "'");
+            }
+            return this.normalizedTeamLogoMap[stripped];
+        }
+        
+        // Log unmapped teams for debugging
+        if (this.config.debug) {
+            Log.warn(" MMM-MyTeams-LeagueTable: NO MAPPING FOUND for team '" + teamName + "'. Tried: exact, normalized ('" + normalized + "'), stripped ('" + stripped + "')");
+        }
+        
+        return null;
+    },
+    
+    // ===== NEW: Determine which leagues are enabled =====
+    // Handles both new selectedLeagues config and legacy showXXX toggles for backward compatibility
+    // Populates this.enabledLeagueCodes array with league codes to fetch
+    determineEnabledLeagues: function() {
+        this.enabledLeagueCodes = [];
+        
+        // PRIORITY 1: Use selectedLeagues if provided and not empty
+        if (this.config.selectedLeagues && Array.isArray(this.config.selectedLeagues) && this.config.selectedLeagues.length > 0) {
+            // Filter and validate league codes from selectedLeagues
+            this.config.selectedLeagues.forEach(leagueCode => {
+                // Map old codes to new codes for backward compatibility
+                const normalizedCode = this.normalizeLeagueCode(leagueCode);
+                if (normalizedCode && !this.enabledLeagueCodes.includes(normalizedCode)) {
+                    this.enabledLeagueCodes.push(normalizedCode);
+                }
+            });
+            
+            if (this.config.debug) {
+                Log.info(" MMM-MyTeams-LeagueTable: Using selectedLeagues config: " + JSON.stringify(this.enabledLeagueCodes));
+            }
+        }
+        
+        // PRIORITY 2: Fall back to legacy toggles if legacyLeagueToggle is enabled and no selected leagues
+        if (this.enabledLeagueCodes.length === 0 && this.config.legacyLeagueToggle === true) {
+            const legacyMapping = {
+                "showSPFL": "SCOTLAND_PREMIERSHIP",
+                "showSPFLC": "SCOTLAND_CHAMPIONSHIP",
+                "showEPL": "ENGLAND_PREMIER_LEAGUE",
+                "showUCL": "UEFA_CHAMPIONS_LEAGUE",
+                "showUEL": "UEFA_EUROPA_LEAGUE",
+                "showECL": "UEFA_EUROPA_CONFERENCE_LEAGUE"
+            };
+            
+            Object.entries(legacyMapping).forEach(([legacyKey, newCode]) => {
+                if (this.config[legacyKey] === true && !this.enabledLeagueCodes.includes(newCode)) {
+                    this.enabledLeagueCodes.push(newCode);
+                }
+            });
+            
+            if (this.config.debug) {
+                Log.info(" MMM-MyTeams-LeagueTable: Using legacy league toggles: " + JSON.stringify(this.enabledLeagueCodes));
+            }
+        }
+        
+        // Fallback: If still no leagues enabled, default to Scottish Premiership
+        if (this.enabledLeagueCodes.length === 0) {
+            this.enabledLeagueCodes = ["SCOTLAND_PREMIERSHIP"];
+            if (this.config.debug) {
+                Log.warn(" MMM-MyTeams-LeagueTable: No leagues configured, defaulting to SCOTLAND_PREMIERSHIP");
+            }
+        }
+    },
+    
+    // ===== NEW: Normalize league codes =====
+    // Converts old league codes to new format for backward compatibility
+    // Returns null if code is invalid
+    normalizeLeagueCode: function(code) {
+        if (!code || typeof code !== 'string') return null;
+        
+        // Legacy code mappings for backward compatibility
+        const legacyCodeMap = {
+            "SPFL": "SCOTLAND_PREMIERSHIP",
+            "SPFLC": "SCOTLAND_CHAMPIONSHIP",
+            "EPL": "ENGLAND_PREMIER_LEAGUE",
+            "UCL": "UEFA_CHAMPIONS_LEAGUE",
+            "UEL": "UEFA_EUROPA_LEAGUE",
+            "ECL": "UEFA_EUROPA_CONFERENCE_LEAGUE"
+        };
+        
+        return legacyCodeMap[code] || code;
+    },
+    
+    // ===== NEW: Get league URL by code =====
+    // Returns the BBC Sport URL for a given league code
+    getLeagueUrl: function(leagueCode) {
+        // Map of league codes to their BBC Sport URLs
+        const urlMap = {
+            // Domestic Leagues
+            "SCOTLAND_PREMIERSHIP": "https://www.bbc.co.uk/sport/football/scottish-premiership/table",
+            "SCOTLAND_CHAMPIONSHIP": "https://www.bbc.co.uk/sport/football/scottish-championship/table",
+            "ENGLAND_PREMIER_LEAGUE": "https://www.bbc.co.uk/sport/football/premier-league/table",
+            "ENGLAND_CHAMPIONSHIP": "https://www.bbc.co.uk/sport/football/english-championship/table",
+            "GERMANY_BUNDESLIGA": "https://www.bbc.co.uk/sport/football/german-bundesliga/table",
+            "FRANCE_LIGUE1": "https://www.bbc.co.uk/sport/football/french-ligue-one/table",
+            "SPAIN_LA_LIGA": "https://www.bbc.co.uk/sport/football/spanish-la-liga/table",
+            "ITALY_SERIE_A": "https://www.bbc.co.uk/sport/football/italian-serie-a/table",
+            "NETHERLANDS_EREDIVISIE": "https://www.bbc.co.uk/sport/football/dutch-eredivisie/table",
+            "BELGIUM_PRO_LEAGUE": "https://www.bbc.co.uk/sport/football/belgian-pro-league/table",
+            "PORTUGAL_PRIMEIRA_LIGA": "https://www.bbc.co.uk/sport/football/portuguese-primeira-liga/table",
+            "TURKEY_SUPER_LIG": "https://www.bbc.co.uk/sport/football/turkish-super-lig/table",
+            "GREECE_SUPER_LEAGUE": "https://www.bbc.co.uk/sport/football/greek-super-league/table",
+            "AUSTRIA_BUNDESLIGA": "https://www.bbc.co.uk/sport/football/austrian-bundesliga/table",
+            "CZECH_LIGA": "https://www.bbc.co.uk/sport/football/czech-liga/table",
+            "DENMARK_SUPERLIGAEN": "https://www.bbc.co.uk/sport/football/danish-superliga/table",
+            "NORWAY_ELITESERIEN": "https://www.bbc.co.uk/sport/football/norwegian-eliteserien/table",
+            "SWEDEN_ALLSVENSKAN": "https://www.bbc.co.uk/sport/football/swedish-allsvenskan/table",
+            "SWITZERLAND_SUPER_LEAGUE": "https://www.bbc.co.uk/sport/football/swiss-super-league/table",
+            "UKRAINE_PREMIER_LEAGUE": "https://www.bbc.co.uk/sport/football/ukrainian-premier-league/table",
+            "ROMANIA_LIGA_I": "https://www.bbc.co.uk/sport/football/romanian-liga-i/table",
+            "CROATIA_HNL": "https://www.bbc.co.uk/sport/football/croatian-first-league/table",
+            "SERBIA_SUPER_LIGA": "https://www.bbc.co.uk/sport/football/serbian-super-lig/table",
+            "HUNGARY_NBI": "https://www.bbc.co.uk/sport/football/hungarian-nb-i/table",
+            "POLAND_EKSTRAKLASA": "https://www.bbc.co.uk/sport/football/polish-ekstraklasa/table",
+            
+            // UEFA Competitions
+            "UEFA_CHAMPIONS_LEAGUE": "https://www.bbc.co.uk/sport/football/champions-league/table",
+            "UEFA_EUROPA_LEAGUE": "https://www.bbc.co.uk/sport/football/europa-league/table",
+            "UEFA_EUROPA_CONFERENCE_LEAGUE": "https://www.bbc.co.uk/sport/football/europa-conference-league/table",
+            
+            // Legacy code support
+            "UCL": "https://www.bbc.co.uk/sport/football/champions-league/table",
+            "UEL": "https://www.bbc.co.uk/sport/football/europa-league/table",
+            "ECL": "https://www.bbc.co.uk/sport/football/europa-conference-league/table"
+        };
+        
+        const url = urlMap[leagueCode];
+        if (!url && this.config.debug) {
+            Log.warn(" MMM-MyTeams-LeagueTable: Unknown league code: " + leagueCode);
+        }
+        return url;
+    },
+    
+    // ===== NEW: Request data for all enabled leagues (dynamic) =====
+    // Iterates through enabledLeagueCodes and fetches data for each league
+    // Replaces the old hardcoded showXXX conditionals
     requestAllLeagueData: function() {
-        if (this.config.showSPFL) {
-            this.sendSocketNotification("GET_LEAGUE_DATA", {
-                ...this.config,
-                leagueType: "SPFL",
-                url: "https://www.bbc.co.uk/sport/football/scottish-premiership/table"
-            });
+        const self = this;
+        
+        if (!this.enabledLeagueCodes || this.enabledLeagueCodes.length === 0) {
+            if (this.config.debug) {
+                Log.warn(" MMM-MyTeams-LeagueTable: No leagues configured to fetch");
+            }
+            return;
         }
         
-        if (this.config.showSPFLC) {
+        // Iterate through each enabled league code and request its data
+        this.enabledLeagueCodes.forEach(leagueCode => {
+            const url = this.getLeagueUrl(leagueCode);
+            
+            if (!url) {
+                Log.error(" MMM-MyTeams-LeagueTable: Could not find URL for league code: " + leagueCode);
+                return; // Skip this league if no URL found
+            }
+            
+            if (this.config.debug) {
+                Log.info(" MMM-MyTeams-LeagueTable: Requesting data for " + leagueCode + " from " + url);
+            }
+            
+            // Send request to node helper
             this.sendSocketNotification("GET_LEAGUE_DATA", {
                 ...this.config,
-                leagueType: "SPFLC",
-                url: "https://www.bbc.co.uk/sport/football/scottish-championship/table"
+                leagueType: leagueCode,
+                url: url
             });
-        }
-        
-        if (this.config.showEPL) {
-            this.sendSocketNotification("GET_LEAGUE_DATA", {
-                ...this.config,
-                leagueType: "EPL",
-                url: "https://www.bbc.co.uk/sport/football/premier-league/table"
-            });
-        }
-        
-        if (this.config.showUCL) {
-            this.sendSocketNotification("GET_LEAGUE_DATA", {
-                ...this.config,
-                leagueType: "UCL",
-                url: "https://www.bbc.co.uk/sport/football/champions-league/table"
-            });
-        }
-        
-        if (this.config.showUEL) {
-            this.sendSocketNotification("GET_LEAGUE_DATA", {
-                ...this.config,
-                leagueType: "UEL",
-                url: "https://www.bbc.co.uk/sport/football/europa-league/table"
-            });
-        }
-
-        if (this.config.showECL) {
-            this.sendSocketNotification("GET_LEAGUE_DATA", {
-                ...this.config,
-                leagueType: "ECL",
-                url: "https://www.bbc.co.uk/sport/football/europa-conference-league/table"
-            });
-        }
+        });
     },
     
     // Set up auto-cycling between leagues with smooth transitions
@@ -418,17 +527,12 @@ Module.register("MMM-MyTeams-LeagueTable", {
             this.cycleTimer = null;
         }
         
-        // Create array of enabled leagues in a fixed known order
-        this.enabledLeagues = [];
-        const knownLeagues = ["SPFL","SPFLC","UCL","UEL","ECL","EPL"];
-        knownLeagues.forEach((lk) => {
-            if (this.config["show" + lk]) {
-                this.enabledLeagues.push(lk);
-            }
-        });
+        // ===== NEW: Use dynamically determined enabledLeagueCodes =====
+        // Instead of creating from legacy config, we use the already-populated enabledLeagueCodes array
+        // This allows cycling through any configured European league
         
         // Only set up cycling if we have more than one league
-        if (this.enabledLeagues.length > 1) {
+        if (this.enabledLeagueCodes && this.enabledLeagueCodes.length > 1) {
             // Create a cycling function that will be called at regular intervals
             const cycleFn = function() {
                 if (self.config.debug) {
@@ -436,15 +540,15 @@ Module.register("MMM-MyTeams-LeagueTable", {
                 }
                 
                 // Find current and next league
-                let currentIndex = self.enabledLeagues.indexOf(self.currentLeague);
+                let currentIndex = self.enabledLeagueCodes.indexOf(self.currentLeague);
                 if (currentIndex === -1) {
                     // If current league not found in enabled leagues, reset to first league
                     currentIndex = 0;
-                    self.currentLeague = self.enabledLeagues[0];
+                    self.currentLeague = self.enabledLeagueCodes[0];
                 }
                 
-                let nextIndex = (currentIndex + 1) % self.enabledLeagues.length;
-                let nextLeague = self.enabledLeagues[nextIndex];
+                let nextIndex = (currentIndex + 1) % self.enabledLeagueCodes.length;
+                let nextLeague = self.enabledLeagueCodes[nextIndex];
                 
                 if (self.config.debug) {
                     Log.info(" MMM-MyTeams-LeagueTable: Cycling from " + self.currentLeague + " to " + nextLeague);
@@ -580,6 +684,88 @@ Module.register("MMM-MyTeams-LeagueTable", {
             Log.error(" MMM-MyTeams-LeagueTable: Max retries exceeded, giving up");
             this.updateDom(this.config.animationSpeed);
         }
+    },
+
+    // Get league information from EUROPEAN_LEAGUES (if available) or legacy config
+    getLeagueInfo: function(leagueCode) {
+        // Map of league codes to their information
+        // This includes new EUROPEAN_LEAGUES format and legacy codes
+        const leagueMapping = {
+            // Legacy codes (for backward compatibility)
+            "SPFL": { name: "Scottish Premiership", countryFolder: "Scotland", countryCode: "SC" },
+            "SPFLC": { name: "Scottish Championship", countryFolder: "Scotland", countryCode: "SC" },
+            "EPL": { name: "English Premier League", countryFolder: "England", countryCode: "EN" },
+            "UCL": { name: "UEFA Champions League", countryFolder: null, countryCode: "EU" },
+            "UEL": { name: "UEFA Europa League", countryFolder: null, countryCode: "EU" },
+            "ECL": { name: "UEFA Conference League", countryFolder: null, countryCode: "EU" },
+            
+            // New EUROPEAN_LEAGUES format codes
+            "SCOTLAND_PREMIERSHIP": { name: "Scottish Premiership", countryFolder: "Scotland", countryCode: "SC" },
+            "SCOTLAND_CHAMPIONSHIP": { name: "Scottish Championship", countryFolder: "Scotland", countryCode: "SC" },
+            "ENGLAND_PREMIER_LEAGUE": { name: "English Premier League", countryFolder: "England", countryCode: "EN" },
+            "GERMANY_BUNDESLIGA": { name: "Bundesliga", countryFolder: "Germany", countryCode: "DE" },
+            "FRANCE_LIGUE1": { name: "Ligue 1", countryFolder: "France", countryCode: "FR" },
+            "SPAIN_LA_LIGA": { name: "La Liga", countryFolder: "Spain", countryCode: "ES" },
+            "ITALY_SERIE_A": { name: "Serie A", countryFolder: "Italy", countryCode: "IT" },
+            "NETHERLANDS_EREDIVISIE": { name: "Eredivisie", countryFolder: "The Netherlands", countryCode: "NL" },
+            "BELGIUM_PRO_LEAGUE": { name: "Belgian Pro League", countryFolder: "Belgium", countryCode: "BE" },
+            "PORTUGAL_PRIMEIRA_LIGA": { name: "Primeira Liga", countryFolder: "Portugal", countryCode: "PT" },
+            "GREECE_SUPER_LEAGUE": { name: "Greek Super League", countryFolder: "Greece", countryCode: "GR" },
+            "TURKEY_SUPER_LIG": { name: "Turkish Super Lig", countryFolder: "Turkey", countryCode: "TR" },
+            "UKRAINE_PREMIER_LEAGUE": { name: "Ukrainian Premier League", countryFolder: "Ukraine", countryCode: "UA" },
+            "ROMANIA_LIGA_I": { name: "Liga I", countryFolder: "Romania", countryCode: "RO" },
+            "CROATIA_HNL": { name: "Croatian HNL", countryFolder: "Croatia", countryCode: "HR" },
+            "SERBIA_SUPER_LIGA": { name: "Serbian Super Liga", countryFolder: "Serbia", countryCode: "RS" },
+            "AUSTRIA_BUNDESLIGA": { name: "Austrian Bundesliga", countryFolder: "Austria", countryCode: "AT" },
+            "CZECH_LIGA": { name: "Czech Liga", countryFolder: "Czech Republic", countryCode: "CZ" },
+            "HUNGARY_NBI": { name: "Hungarian NB I", countryFolder: "Hungary", countryCode: "HU" },
+            "POLAND_EKSTRAKLASA": { name: "Ekstraklasa", countryFolder: "Poland", countryCode: "PL" },
+            "SWITZERLAND_SUPER_LEAGUE": { name: "Swiss Super League", countryFolder: "Switzerland", countryCode: "CH" },
+            "SWEDEN_ALLSVENSKAN": { name: "Allsvenskan", countryFolder: "Sweden", countryCode: "SE" },
+            "NORWAY_ELITESERIEN": { name: "Eliteserien", countryFolder: "Norway", countryCode: "NO" },
+            "DENMARK_SUPERLIGAEN": { name: "Superligaen", countryFolder: "Denmark", countryCode: "DK" }
+        };
+        
+        return leagueMapping[leagueCode] || null;
+    },
+
+    // Get league abbreviation from league code
+    getLeagueAbbreviation: function(leagueCode) {
+        // Map codes to abbreviations
+        const abbreviations = {
+            "SPFL": "SPFL",
+            "SPFLC": "SPFLC",
+            "EPL": "EPL",
+            "UCL": "UCL",
+            "UEL": "UEL",
+            "ECL": "ECL",
+            "SCOTLAND_PREMIERSHIP": "SPL",
+            "SCOTLAND_CHAMPIONSHIP": "SLC",
+            "ENGLAND_PREMIER_LEAGUE": "EPL",
+            "GERMANY_BUNDESLIGA": "BL",
+            "FRANCE_LIGUE1": "L1",
+            "SPAIN_LA_LIGA": "LL",
+            "ITALY_SERIE_A": "SA",
+            "NETHERLANDS_EREDIVISIE": "ED",
+            "BELGIUM_PRO_LEAGUE": "PL",
+            "PORTUGAL_PRIMEIRA_LIGA": "PL",
+            "GREECE_SUPER_LEAGUE": "SL",
+            "TURKEY_SUPER_LIG": "SL",
+            "UKRAINE_PREMIER_LEAGUE": "UPL",
+            "ROMANIA_LIGA_I": "LI",
+            "CROATIA_HNL": "HNL",
+            "SERBIA_SUPER_LIGA": "SL",
+            "AUSTRIA_BUNDESLIGA": "AB",
+            "CZECH_LIGA": "CL",
+            "HUNGARY_NBI": "NBI",
+            "POLAND_EKSTRAKLASA": "EK",
+            "SWITZERLAND_SUPER_LEAGUE": "SL",
+            "SWEDEN_ALLSVENSKAN": "AS",
+            "NORWAY_ELITESERIEN": "ES",
+            "DENMARK_SUPERLIGAEN": "SL"
+        };
+        
+        return abbreviations[leagueCode] || leagueCode.substring(0, 3).toUpperCase();
     },
     
     // Handle league button clicks with smooth transitions
@@ -733,51 +919,82 @@ Module.register("MMM-MyTeams-LeagueTable", {
         var buttonsContainer = document.createElement("div");
         buttonsContainer.className = "league-buttons-container";
         
-        // Create a mapping of league keys to their display properties
-        const leagueButtonsConfig = [
-            { key: "SPFL", show: this.config.showSPFL, text: "SPFL" },
-            { key: "SPFLC", show: this.config.showSPFLC, text: "SPFLC" },
-            { key: "UCL", show: this.config.showUCL, text: "UCL" },
-            { key: "UEL", show: this.config.showUEL, text: "UEL" },
-            { key: "ECL", show: this.config.showECL, text: "ECL" },
-            { key: "EPL", show: this.config.showEPL, text: "EPL" }
-        ];
-        
-        // Get the order of leagues from known order, respecting enabled flags
-        const configOrder = [];
-        const knownLeaguesOrder = ["SPFL","SPFLC","UCL","UEL","ECL","EPL"];
-        knownLeaguesOrder.forEach((lk) => {
-            if (this.config["show" + lk]) {
-                configOrder.push(lk);
-            }
-        });
-        
-        // If we found enabled leagues in the config, use that order
-        if (configOrder.length > 0) {
-            // Create buttons in the order they appear
-            configOrder.forEach(leagueKey => {
-                const league = leagueButtonsConfig.find(l => l.key === leagueKey);
-                if (league && league.show) {
+        // Auto-generate buttons from selectedLeagues if autoGenerateButtons is enabled
+        if (this.config.autoGenerateButtons && this.config.selectedLeagues && this.config.selectedLeagues.length > 0) {
+            this.config.selectedLeagues.forEach(leagueCode => {
+                const leagueInfo = this.getLeagueInfo(leagueCode);
+                if (leagueInfo) {
                     const btn = document.createElement("button");
-                    btn.className = "league-btn" + (this.currentLeague === league.key ? " active" : "");
-                    btn.textContent = league.text;
-                    btn.dataset.league = league.key;
+                    btn.className = "league-btn" + (this.currentLeague === leagueCode ? " active" : "");
+                    btn.title = leagueInfo.name; // Tooltip for full league name
+                    
+                    // Create button content with country flag image only
+                    if (leagueInfo.countryFolder) {
+                        const flagImg = document.createElement("img");
+                        flagImg.className = "flag-image";
+                        flagImg.alt = leagueInfo.name;
+                        // Construct path to flag image (e.g., "modules/MMM-MyTeams-LeagueTable/images/crests/Scotland/scotland.png")
+                        flagImg.src = `modules/MMM-MyTeams-LeagueTable/images/crests/${leagueInfo.countryFolder}/${leagueInfo.countryFolder.toLowerCase()}.png`;
+                        flagImg.onerror = function() {
+                            // Fallback if flag image not found
+                            this.style.display = 'none';
+                        };
+                        btn.appendChild(flagImg);
+                    }
+                    btn.dataset.league = leagueCode;
+                    btn.dataset.country = leagueInfo.countryCode || "";
+                    
                     btn.addEventListener("click", this.handleLeagueButtonClick.bind(this));
                     buttonsContainer.appendChild(btn);
                 }
             });
         } else {
-            // Fallback to the original order if no enabled leagues found in config
-            leagueButtonsConfig.forEach(league => {
-                if (league.show) {
-                    const btn = document.createElement("button");
-                    btn.className = "league-btn" + (this.currentLeague === league.key ? " active" : "");
-                    btn.textContent = league.text;
-                    btn.dataset.league = league.key;
-                    btn.addEventListener("click", this.handleLeagueButtonClick.bind(this));
-                    buttonsContainer.appendChild(btn);
+            // Legacy button generation
+            const leagueButtonsConfig = [
+                { key: "SPFL", show: this.config.showSPFL, text: "SPFL" },
+                { key: "SPFLC", show: this.config.showSPFLC, text: "SPFLC" },
+                { key: "UCL", show: this.config.showUCL, text: "UCL" },
+                { key: "UEL", show: this.config.showUEL, text: "UEL" },
+                { key: "ECL", show: this.config.showECL, text: "ECL" },
+                { key: "EPL", show: this.config.showEPL, text: "EPL" }
+            ];
+            
+            // Get the order of leagues from known order, respecting enabled flags
+            const configOrder = [];
+            const knownLeaguesOrder = ["SPFL","SPFLC","UCL","UEL","ECL","EPL"];
+            knownLeaguesOrder.forEach((lk) => {
+                if (this.config["show" + lk]) {
+                    configOrder.push(lk);
                 }
             });
+            
+            // If we found enabled leagues in the config, use that order
+            if (configOrder.length > 0) {
+                // Create buttons in the order they appear
+                configOrder.forEach(leagueKey => {
+                    const league = leagueButtonsConfig.find(l => l.key === leagueKey);
+                    if (league && league.show) {
+                        const btn = document.createElement("button");
+                        btn.className = "league-btn" + (this.currentLeague === league.key ? " active" : "");
+                        btn.textContent = league.text;
+                        btn.dataset.league = league.key;
+                        btn.addEventListener("click", this.handleLeagueButtonClick.bind(this));
+                        buttonsContainer.appendChild(btn);
+                    }
+                });
+            } else {
+                // Fallback to the original order if no enabled leagues found in config
+                leagueButtonsConfig.forEach(league => {
+                    if (league.show) {
+                        const btn = document.createElement("button");
+                        btn.className = "league-btn" + (this.currentLeague === league.key ? " active" : "");
+                        btn.textContent = league.text;
+                        btn.dataset.league = league.key;
+                        btn.addEventListener("click", this.handleLeagueButtonClick.bind(this));
+                        buttonsContainer.appendChild(btn);
+                    }
+                });
+            }
         }
         
         headerContainer.appendChild(buttonsContainer);
@@ -821,7 +1038,7 @@ Module.register("MMM-MyTeams-LeagueTable", {
                 Log.info(" MMM-MyTeams-LeagueTable: Creating table for " + this.currentLeague + 
                          " with " + currentData.teams.length + " teams");
             }
-            contentContainer.appendChild(this.createTable(currentData));
+            contentContainer.appendChild(this.createTable(currentData, this.currentLeague));
         } else {
             if (this.config.debug) {
                 Log.info(" MMM-MyTeams-LeagueTable: No league data available for " + this.currentLeague + ", payload: " + JSON.stringify(currentData || {}));
@@ -867,7 +1084,7 @@ Module.register("MMM-MyTeams-LeagueTable", {
     },
 
     // Create the league table
-    createTable: function(leagueData) {
+    createTable: function(leagueData, leagueKey) {
         var table = document.createElement("table");
         table.className = "small spfl-table";
         
@@ -1011,29 +1228,57 @@ Module.register("MMM-MyTeams-LeagueTable", {
                 var img = document.createElement("img");
                 img.className = "team-logo";
                 img.alt = team.name + " logo";
-                // Resolve logo filename candidates: mapping override -> slug.svg -> slug.png -> placeholder.svg
-                var mapped = (this.config.teamLogoMap && this.config.teamLogoMap[team.name]) || null;
+                
+                // ===== OPTIMIZED FALLBACK CHAIN =====
+                // Priority 1: Direct mappings from team-logo-mappings.js (1706+ teams with full crests/Country/file paths)
+                // Priority 2: Slug-based fallbacks for teams not in mapping
+                // Priority 3: Placeholder image
+                var mapped = this.getTeamLogoMapping(team.name) || null;
                 var slug = (team.name || "").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
                 var candidates = [];
-                if (mapped) candidates.push(mapped);
+                
+                // PRIMARY: Direct mapping (format: crests/Country/team.png)
+                if (mapped) {
+                    candidates.push(mapped);
+                    if (this.config.debug) {
+                        Log.info(" MMM-MyTeams-LeagueTable: Using direct mapping for " + team.name + ": " + mapped);
+                    }
+                }
+                
+                // SECONDARY FALLBACK: Slug-based paths for teams not in mapping
+                // Try SVG and PNG variants
+                candidates.push("crests/" + slug + ".svg");
+                candidates.push("crests/" + slug + ".png");
                 candidates.push(slug + ".svg");
                 candidates.push(slug + ".png");
-                candidates.push("placeholder.svg"); // Final fallback to placeholder
+                
+                // FINAL FALLBACK: Placeholder image
+                candidates.push("placeholder.svg");
 
                 var basePath = "modules/MMM-MyTeams-LeagueTable/images/";
                 var tryIndex = 0;
+                var self = this;
+                
                 function tryNext(imgEl) {
                     if (tryIndex >= candidates.length) {
                         // All candidates failed including placeholder, remove image
                         imgEl.onerror = null;
                         imgEl.remove();
+                        if (self.config.debug) {
+                            Log.warn(" MMM-MyTeams-LeagueTable: No logo found for " + team.name + ", image removed");
+                        }
                         return;
                     }
-                    imgEl.src = basePath + candidates[tryIndex++];
+                    var nextPath = basePath + candidates[tryIndex];
+                    if (self.config.debug && tryIndex === 0 && mapped) {
+                        Log.info(" MMM-MyTeams-LeagueTable: Loading primary mapping: " + nextPath);
+                    }
+                    imgEl.src = nextPath;
+                    tryIndex++;
                 }
+                
                 img.onerror = function () { tryNext(this); };
                 tryNext(img);
-                // If all fail including placeholder, image will be removed by onerror handler
                 teamCell.appendChild(img);
             }
 
