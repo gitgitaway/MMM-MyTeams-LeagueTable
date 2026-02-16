@@ -5,15 +5,33 @@
  * and support for multiple leagues (SPFL, UCL, UEL, ECL)
  */
 
+:root {
+    /* Responsive font sizes using clamp for fluid typography */
+    --mtlt-font-size-title: clamp(15px, 1.6vw, 19px);
+    --mtlt-font-size-header: clamp(13px, 1.3vw, 17px);
+    --mtlt-font-size-table: clamp(13px, 1.2vw, 16px);
+    --mtlt-font-size-small: clamp(11px, 1.0vw, 14px);
+    --mtlt-font-size-xsmall: clamp(10px, 0.9vw, 13px);
+    
+    /* Animation timing */
+    --mtlt-transition-speed: 0.4s;
+
+    /* Table height - set to 450px to show 12 teams */
+    --mtlt-max-table-height: 450px;
+}
+
 /* Main container styling */
 .spfl-league-table {
-    font-family: "Roboto Condensed", Arial, sans-serif;
     color: #fff;
     line-height: 1.0;
+    font-size: var(--mtlt-font-size-table);
     position: relative;
     width: 100%;
-    max-width: 550px; /* Added max-width to prevent table from expanding too much */
+    max-width: 575px; /* Added max-width to prevent table from expanding too much */
     min-width:  500px; /* Set a minimum width for all tables */
+    margin: 0 auto 120px auto; /* Moved up 30px from the bottom */
+    contain: content; /* P-06: Improve browser reflow performance */
+    overflow: hidden; /* Prevent horizontal scrollbars at module level */
 }
 
 /* League header container with buttons */
@@ -24,23 +42,114 @@
     margin-bottom: 10px;
     padding-bottom: 5px;
     border-bottom: 2px solid #555;
-    max-width: 550px; /* Added max-width to prevent header from expanding too much */
+    max-width: 575px; /* Added max-width to prevent header from expanding too much */
 }
 
 /* League title styling */
 .league-title {
-    font-size: 14px;
-    font-weight: bold;
+    font-size: var(--mtlt-font-size-header);
+    font-weight: 500;
     color: #ccc;
     text-transform: uppercase;
     letter-spacing: 1px;
-    flex: 1;
+}
+
+/* Meta info styling (Last Updated and Refresh) */
+.league-meta-info {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-left: auto;
+}
+
+.last-updated {
+    font-size: var(--mtlt-font-size-xsmall);
+    font-weight: 400;
+    font-style: italic;
+}
+
+.refresh-btn {
+    transition: color 0.3s ease, transform 0.3s ease;
+}
+
+.refresh-btn:hover {
+    color: #fff !important;
+    transform: rotate(30deg);
+}
+
+.refresh-btn.fa-spin {
+    color: #018749 !important;
+}
+
+.pin-btn.active {
+  color: #ff3333 !important; /* red when pinned */
+ 
+}
+
+/* League tabs wrapper for horizontal scroll indicators */
+.league-tabs-wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+    width: 100%;
+    margin-bottom: 5px;
 }
 
 /* League buttons container */
 .league-buttons-container {
     display: flex;
     gap: 5px;
+    overflow-x: auto;
+    overflow-y: hidden;
+    padding: 5px 0;
+    scrollbar-width: none; /* Hide standard scrollbar in Firefox */
+    -ms-overflow-style: none; /* Hide standard scrollbar in IE/Edge */
+    -webkit-overflow-scrolling: touch;
+    width: 100%;
+    scroll-behavior: smooth;
+}
+
+/* Hide scrollbar for Chrome, Safari and Opera */
+.league-buttons-container::-webkit-scrollbar {
+    display: none;
+}
+
+/* Scroll indicator buttons */
+.tab-scroll-btn {
+    background: rgba(0, 0, 0, 0.5);
+    border: none;
+    color: #fff;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 10px;
+    z-index: 10;
+    transition: all 0.2s ease;
+    opacity: 0;
+    visibility: hidden;
+    position: absolute;
+}
+
+.tab-scroll-btn.visible {
+    opacity: 1;
+    visibility: visible;
+}
+
+.tab-scroll-btn:hover {
+    background: rgba(0, 0, 0, 0.8);
+    transform: scale(1.1);
+}
+
+.tab-scroll-btn.prev {
+    left: -12px;
+}
+
+.tab-scroll-btn.next {
+    right: -12px;
 }
 
 /* League button styling */
@@ -49,7 +158,7 @@
     border: none;
     color: #ccc;
     padding: 4px 8px;
-    font-size: 10px;
+    font-size: var(--mtlt-font-size-small);
     border-radius: 3px;
     cursor: pointer;
     transition: all 0.3s ease;
@@ -70,7 +179,14 @@
     font-weight: bold;
     box-shadow: 0 0 8px rgba(255, 255, 255, 0.3);
     opacity: 1.0; /* Active buttons fully opaque */
-    background-color: #999999 !important; /* Active buttons use light green background - !important overrides league-specific colors */
+    /* background-color: #999999 !important; /* Active buttons use light green background - !important overrides league-specific colors */
+}
+
+/* Gold border for World Cup tab */
+.league-btn.gold-border {
+    border: 2px solid #FFD700 !important;
+    box-shadow: 0 0 10px rgba(255, 215, 0, 0.5) !important;
+    opacity: 1.0 !important;
 }
 
 /* Flag image styling - replaces emoji flags with actual PNG images */
@@ -82,6 +198,19 @@
     margin: 0;
     padding: 0;
     border-radius: 2px;
+    pointer-events: none; /* Ensure clicks pass through to the button */
+}
+
+/* 50% size increase for World Cup and UEFA competition tab images (P-08) */
+.league-btn[data-league="WORLD_CUP_2026"] .flag-image,
+.league-btn[data-league="UEFA_CHAMPIONS_LEAGUE"] .flag-image,
+.league-btn[data-league="UEFA_EUROPA_LEAGUE"] .flag-image,
+.league-btn[data-league="UEFA_EUROPA_CONFERENCE_LEAGUE"] .flag-image,
+.league-btn[data-league="UCL"] .flag-image,
+.league-btn[data-league="UEL"] .flag-image,
+.league-btn[data-league="ECL"] .flag-image {
+    width: 32px;
+    height: 24px;
 }
 
 /* Fallback for emoji flags (if image fails to load) */
@@ -91,15 +220,28 @@
     align-items: center;
     justify-content: center;
     line-height: 1;
+    pointer-events: none; /* Ensure clicks pass through to the button */
+}
+
+/* 50% size increase for World Cup and UEFA competition tab emojis (P-08) */
+.league-btn[data-league="WORLD_CUP_2026"] .flag-emoji,
+.league-btn[data-league="UEFA_CHAMPIONS_LEAGUE"] .flag-emoji,
+.league-btn[data-league="UEFA_EUROPA_LEAGUE"] .flag-emoji,
+.league-btn[data-league="UEFA_EUROPA_CONFERENCE_LEAGUE"] .flag-emoji,
+.league-btn[data-league="UCL"] .flag-emoji,
+.league-btn[data-league="UEL"] .flag-emoji,
+.league-btn[data-league="ECL"] .flag-emoji {
+    font-size: 24px;
 }
 
 /* League abbreviation text */
 .league-btn .league-abbr {
-    font-size: 9px;
+    font-size: var(--mtlt-font-size-xsmall);
     font-weight: 600;
     letter-spacing: 0.5px;
     text-transform: uppercase;
     display: inline-block;
+    pointer-events: none; /* Ensure clicks pass through to the button */
 }
 
 /* Different colors for each league button when active */
@@ -108,15 +250,18 @@
     background: rgba(0, 135, 73, 0.7); /* Celtic green */
 }
 
-.league-btn[data-league="UCL"].active {
+.league-btn[data-league="UCL"].active,
+.league-btn[data-league="UEFA_CHAMPIONS_LEAGUE"].active {
     background: rgba(30, 144, 255, 0.7); /* Champions League blue */
 }
 
-.league-btn[data-league="UEL"].active {
+.league-btn[data-league="UEL"].active,
+.league-btn[data-league="UEFA_EUROPA_LEAGUE"].active {
     background: rgba(255, 140, 0, 0.7); /* Europa League orange */
 }
 
-.league-btn[data-league="ECL"].active {
+.league-btn[data-league="ECL"].active,
+.league-btn[data-league="UEFA_EUROPA_CONFERENCE_LEAGUE"].active {
     background: rgba(50, 205, 50, 0.7); /* Conference League green */
 }
 
@@ -247,23 +392,23 @@
 
 /* Back to top button control container - sticky at bottom of scroll area */
 .back-to-top-controls {
-    position: sticky !important;    /* stick to bottom of scroll container */
-    bottom: 0 !important;           /* align to bottom edge of scrollable area */
-    display: flex !important;
-    justify-content: flex-end !important; /* align button to the right */
-    padding: 8px 8px !important;    /* padding around button */
-    background: rgba(0, 0, 0, 0.3) !important; /* semi-transparent background for contrast */
+    flex: 0 0 auto;                 /* Don't grow or shrink */
+    position: sticky;               /* Ensure it sticks to bottom of module */
+    bottom: 0;
+    display: flex !important;       /* Always visible (Task: Make source footer sticky) */
+    justify-content: space-between !important; /* Space items out */
+    align-items: center !important;
+    padding: 4px 8px !important;    /* Reduced padding */
+    background: rgba(0, 0, 0, 0.8) !important; /* Darker background for readability */
     border-top: 1px solid rgba(255, 255, 255, 0.1) !important; /* subtle top border */
     z-index: 50 !important;         /* above table content, below header */
-    opacity: 0 !important;          /* hidden by default - MUST be hidden */
     transition: opacity 0.2s ease-in-out !important;
-    pointer-events: none !important; /* don't block scroll when hidden */
-    visibility: visible !important; /* ensure element exists in DOM */
+    pointer-events: auto !important; /* always clickable */
 }
 
+/* Visibility classes kept for compatibility but overridden by base class always-on behavior */
 .back-to-top-controls.visible {
-    opacity: 1 !important;          /* show when scrolled */
-    pointer-events: auto !important; /* clickable when visible */
+    display: flex !important;
 }
 
 /* Back to top button - styled to match original but positioned within scroll container */
@@ -289,21 +434,28 @@
 
 /* Content container for scrollable table */
 .league-content-container {
-    min-height: 450px; /* Increased minimum height to ensure footer visibility */
-    max-width: 530px; /* Added max-width to prevent container from expanding too much */
-    overflow-y: auto;
+    max-height: var(--mtlt-max-table-height, 450px); /* Limited to 450px to show 12 teams */
+    max-width: 575px; /* Added max-width to prevent container from expanding too much */
+    overflow-y: hidden; /* Prevent double scrollbars - scrolling happens in league-body-scroll */
+    overflow-x: hidden; /* Remove horizontal scrollbar */
     position: relative;
-    max-height: var(--mtlt-max-table-height, 450px); /* default fallback, overridden via inline style */
     scrollbar-width: thin;
     scrollbar-color: rgba(255, 255, 255, 0.2) rgba(0, 0, 0, 0.1);
     scroll-behavior: smooth; /* Enable smooth scrolling */
     display: flex;
     flex-direction: column;
+    animation: mtlt-fade-in var(--mtlt-transition-speed) ease-out;
+    contain: content; /* P-06: Optimize browser reflows/repaints */
+}
+
+@keyframes mtlt-fade-in {
+    from { opacity: 0; transform: translateY(5px); }
+    to { opacity: 1; transform: translateY(0); }
 }
 
 /* Table header styling */
 .spfl-header {
-    font-size: 12px;
+    font-size: var(--mtlt-font-size-header);
     font-weight: bold;
     text-align: left;
     margin-bottom: 10px;
@@ -314,425 +466,1022 @@
     padding-bottom: 5px;
 }
 
-/* Main table styling */
+/* Table body styling */
 .spfl-table {
-    border-collapse: separate; /* Changed from collapse to support sticky elements better */
-    border-spacing: 0;
     width: 100%;
-    max-width: 530px; /* Added max-width to prevent table from expanding too much */
-    margin: 0 auto;
-    background: rgba(0, 0, 0, 0.3);
-    border-radius: 5px;
-    overflow: hidden;
-    display: table;
-    table-layout: fixed; /* Helps with column width consistency */
-}
-
-/* Table header row styling */
-.spfl-table thead {
-    position: sticky;
-    top: 0;
-    z-index: 100; /* Much higher z-index to ensure it stays on top of everything */
-    background: rgba(20, 20, 20, 0.98); /* More opaque background for better visibility */
-    border-bottom: 2px solid #555;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.5); /* Stronger shadow for better visibility */
-}
-
-.spfl-table thead tr {
-    background: rgba(20, 20, 20, 0.98); /* Darker, more opaque background for better readability */
-    border-bottom: 1px solid #555;
-}
-/* Keep header cells visible (sticky) */
-.spfl-table thead th {
-    position: sticky;
-    top: 0;
-    z-index: 101;
-    background: rgba(20, 20, 20, 0.98);
+    border-collapse: separate;
+    border-spacing: 0 2px;
+    table-layout: auto; /* Allow columns to fit content */
 }
 
 .spfl-table th {
-    padding: 5px 5px; /* Increased horizontal and vertical padding to 5px/5px to gove better column spacing */
-    text-align: left;
-    font-weight: bold;
-    font-size: 12px;
-    color: #ccc;
+    font-size: var(--mtlt-font-size-small);
+    color: #888;
     text-transform: uppercase;
-    letter-spacing: 0.5px;
-    transition: background-color 0.3s ease; /* Smooth transition for hover effects */
+    font-weight: bold;
+    padding: 8px 4px;
+    border-bottom: 1px solid #333;
 }
 
-/* Header column specific styling */
-.position-header {
-    width: 5px;
-    padding-right: 0; /* to achieve exact 30px gap via team-cell padding */
+.spfl-table td {
+    padding: 4px 2px;
+    vertical-align: middle;
+    height: 32px;
+    box-sizing: border-box;
 }
 
-/* Ensure Form header text aligns with centered tokens below */
-.form-header {
+/* Fixed position/team column alignment */
+.pos-cell {
     text-align: center;
+    width: 25px;
+    font-weight: bold;
+    color: #aaa;
+}
+
+.team-cell {
+    text-align: left;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    min-width: 120px;
+}
+
+/* Team logo styling */
+.team-logo {
+    width: 18px;
+    height: 18px;
+    margin-right: 4px;
+    vertical-align: middle;
+    object-fit: contain;
+}
+
+/* Stats columns */
+.played-cell, .won-cell, .drawn-cell, .lost-cell, 
+.gf-cell, .ga-cell, .gd-cell, .points-cell {
+    text-align: center;
+    width: 30px;
+}
+
+.gd-cell.positive { color: #00ff00; }
+.gd-cell.negative { color: #ff0000; }
+.gd-cell.neutral { color: #aaa; }
+
+.points-cell {
+    font-weight: bold;
+    color: #fff;
+}
+
+/* Form tokens */
+.form-cell {
+    text-align: left;
     width: 100px;
+    padding-left: 10px !important;
+}
+
+.form-tokens {
+    display: flex;
+    gap: 8px;
+    justify-content: center;
+}
+
+.form-tokens span {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 18px;
+    height: 18px; /* Square tokens for better vertical alignment */
+    box-sizing: border-box; /* Ensure border doesn't change dimensions */
+    padding: 0;
+    border-radius: 2px;
+    font-size: var(--mtlt-font-size-xsmall);
+    font-weight: bold;
+    color: #fff;
+    line-height: 1;
+}
+
+.form-win { 
+    background-color: #018749; 
+    border: 1px solid #016a3a;
+    color: #fff;
+}
+.form-draw { 
+    background-color: #666; 
+    border: 1px solid #444;
+    color: #fff;
+}
+.form-loss { 
+    background-color: #ff3333; 
+    border: 1px solid #cc0000;
+    color: #fff;
+}
+.form-missing { color: #555; background-color: transparent; }
+
+/* Tooltip styling for form tokens */
+.form-tokens .has-tooltip {
+    position: relative;
+    cursor: help;
+}
+
+.form-tokens .has-tooltip::after {
+    content: attr(data-tooltip);
+    position: absolute;
+    bottom: 125%;
+    left: 50%;
+    transform: translateX(-50%);
+    background-color: rgba(0, 0, 0, 0.9);
+    color: #fff;
+    padding: 5px 8px;
+    border-radius: 4px;
+    font-size: 10px;
+    white-space: nowrap;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.3s;
+    z-index: 100;
+    pointer-events: none;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    box-shadow: 0 2px 5px rgba(0,0,0,0.5);
+}
+
+.form-tokens .has-tooltip:hover::after {
+    opacity: 1;
+    visibility: visible;
+}
+
+/* Tooltip arrow */
+.form-tokens .has-tooltip::before {
+    content: "";
+    position: absolute;
+    top: -5px;
+    left: 50%;
+    transform: translateX(-50%);
+    border-width: 5px;
+    border-style: solid;
+    border-color: rgba(0, 0, 0, 0.9) transparent transparent transparent;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.3s;
+    z-index: 100;
+    pointer-events: none;
+}
+
+.form-tokens .has-tooltip:hover::before {
+    opacity: 1;
+    visibility: visible;
+}
+
+/* ----------------------------- */
+/* Mode-Specific Refinements (P-02) */
+/* ----------------------------- */
+
+/* National League Mode */
+.league-mode-national .team-cell {
+    font-weight: 500;
+}
+
+/* UEFA Mode */
+.league-mode-uefa .league-row.uefa-zone {
+    background-color: rgba(30, 144, 255, 0.15);
+}
+
+/* World Cup Mode */
+.league-mode-wc .spfl-league-table {
+    border: 1px solid rgba(255, 215, 0, 0.2);
+}
+
+.league-mode-wc .league-title {
+    color: #FFD700;
+}
+
+/* Row coloring based on league position */
+.league-row.promotion-zone {
+    background-color: rgba(0, 135, 73, 0.1);
+}
+
+.league-row.uefa-zone {
+    background-color: rgba(30, 144, 255, 0.1);
+}
+
+.league-row.relegation-zone {
+    background-color: rgba(220, 20, 60, 0.1);
+}
+
+.league-row.highlight-team {
+    background-color: rgba(255, 215, 0, 0.15) !important;
+    font-weight: bold;
+}
+
+/* Compact mode for small screens - preserve form if possible */
+@media (max-width: 480px) {
+    .team-cell { min-width: 100px; }
+    .played-cell, .won-cell, .drawn-cell, .lost-cell { display: none; }
+    /* .form-cell { display: none; } -- commented out to ensure form displays even on narrow screens */
+}
+
+/* Scroll button styling */
+.scroll-controls {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    padding: 5px;
+    margin-top: 5px;
+}
+
+.scroll-btn {
+    background: #333;
+    border: none;
+    color: #fff;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
 }
 
 /* Footer styling */
-.spfl-table tfoot {
-    position: sticky;
-    bottom: 0;
-    z-index: 90; /* High z-index but below header */
-    background: rgba(20, 20, 20, 0.98); /* Darker, more opaque background for better visibility */
-    box-shadow: 0 -4px 8px rgba(0, 0, 0, 0.5); /* Stronger shadow for better visibility */
-    /* Removed width: 100% and display: block which were causing the table to expand */
-}
-
-.spfl-table tfoot .spfl-footer {
-    padding: 8px 10px;
-    font-size: 10px;
-    color: #aaa;
-    text-align: center;
-    border-top: 2px solid rgba(255, 255, 255, 0.15);
-    font-weight: bold;
-    max-width: 550px; /* Added max-width to prevent footer from expanding too much */
-}
-
-.team-header {
-    text-align: left; /* !important; */
-    width: 100px;
-    max-width: 120px;
-    min-width: 15px; /* Increased to prevent squashing team names */
-    padding-left: 30px; /* Ensure 30px gap from position column */
-}
-
-.played-header,
-.won-header,
-.drawn-header,
-.lost-header,
-.gf-header,
-.ga-header,
-.gd-header {
-    width: 5px;
-    min-width: 2px;
-    padding-right: 15px; /* Add padding to push PTS text to the right */
-}
-
-/* Override: double gap between GD and PTS */
-.gd-header { padding-right: 5px; }
-.gd-cell { padding-right: 5px; }
-
-.points-header {
-    width: 10px;
-    min-width: 2px;
-    padding-right: 5px; 
-}
-
-.form-header {
-    width: 50px;
-     font-size: 5px;
-    text-align: center;
-}
-
-/* Table body row styling */
-.spfl-table tbody tr {
-    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-    transition: background-color 0.3s ease;
-}
-
-.spfl-table tbody tr:hover {
-    background: rgba(255, 255, 255, 0.05);
-}
-
-.spfl-table tbody tr:last-child {
-    border-bottom: none;
-}
-
-/* Table cell styling */
-.spfl-table td {
-    padding: 3px 3px; /* Decreased vertical/horizontal padding from 8px/5px to 3px/3px for better row spacing and readability */
-    text-align: center;
-    font-size: 12px;
-    vertical-align: middle;
-}
-
-/* Position cell styling */
-.position-cell {
-    font-weight: bold;
-    color: #fff;
-    background: rgba(255, 255, 255, 0.1);
-    width: 10px;
-    padding-right: 0; /* to achieve exact 30px gap via team-cell padding */
-}
-
-/* Team name cell styling */
-.team-cell {
-    display: flex; 
-    max-width: 100px;              /* allow logo + name inline */
-    align-items: center;
-    gap: 6px;
-    text-align: left; /* !important; */
-    font-weight: 500;
-    color: #fff;
-    padding-left: 5px; /* 30px gap from position column */
-    padding-right: 5px; /* Match padding with other cells */
-}
-.team-cell .team-name {
-    flex: 1;                     /* let name take remaining space */
-    overflow: hidden;
-    text-overflow: ellipsis;     /* Prevents overflow while keeping layout tidy */
-    white-space: nowrap;
-    max-width: 100px;  
-    min-width: 0;                /* enable ellipsis within flex item */
-    text-align: left;            /* explicitly left-align names */
-}
-/* Small team logo next to name */
-.team-logo {
-    height: 24px;
-    width: auto;
-    border-radius: 2px;
-    display: inline-block;
-}
-
-/* Statistics cell styling */
-.played-cell,
-.won-cell,
-.drawn-cell,
-.lost-cell,
-.gf-cell,
-.ga-cell {
-    color: #ccc;
-    font-size: 12px;
-    font-weight: 500;
-    min-width: 5px;
-}
-
-/* Points cell styling */
-.points-cell {
-    font-weight: bold;
-    color: #68acec;
-    padding-right: 330px; /* Doubled from 165px */
-}
-
-/* Goal difference cell styling */
-.gd-cell.positive {
-    color: #4CAF50; /* Green for positive GD */
-}
-
-.gd-cell.negative {
-    color: #f44336; /* Red for negative GD */
-}
-
-/* Form cell styling */
-.form-cell {
-  /*  font-family: monospace; */
-    font-size: 5px;
+.spfl-footer {
+    padding: 10px 4px;
     text-align: right;
-    /* Remove letter-spacing; use centered flex tokens for perfect alignment */
-    padding: 5px 4px;
+    border-top: 1px solid #333;
 }
-/* Centered, spaced W/D/L tokens */
-.form-cell .form-tokens {
+
+.footer-source {
+    font-size: var(--mtlt-font-size-xsmall);
+    color: #666;
+    font-style: italic;
+}
+
+/* Clear cache button */
+.clear-cache-btn {
+    background: transparent;
+    border: 1px solid #444;
+    color: #666;
+    font-size: var(--mtlt-font-size-xsmall);
+    padding: 2px 6px;
+    border-radius: 3px;
+    cursor: pointer;
+    margin-left: 10px;
+}
+
+.clear-cache-btn:hover {
+    color: #fff;
+    border-color: #888;
+}
+
+/* Pin button styling */
+.pin-btn {
+  background: transparent;
+  border: none;
+  color: #666;
+  font-size: 12px;
+  cursor: pointer;
+  padding: 0 4px;
+  transition: all 0.3s ease;
+}
+
+.pin-btn:hover {
+  color: #fff;
+}
+
+.pin-btn.active {
+  color: #ff3333; /* red when pinned */
+}
+
+/* World Cup 2026 Specific Styles */
+.wc2026-container {
+    padding: 10px;
+    animation: mtlt-fade-in var(--mtlt-transition-speed) ease-out;
+}
+
+.wc2026-groups-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 20px;
+    margin-top: 10px;
+}
+
+.wc2026-group-block {
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 8px;
+    padding: 12px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.wc2026-group-title {
+    font-size: var(--mtlt-font-size-header);
+    font-weight: bold;
+    color: #FFD700; /* Gold */
+    margin-bottom: 8px;
+    text-align: center;
+    text-transform: uppercase;
+}
+
+/* WC2026 Fixture Layouts */
+.wc2026-fixtures-container {
+    margin-top: 20px;
+    border-top: 2px solid #555;
+    padding-top: 15px;
+}
+
+.wc2026-section-title {
+    font-size: var(--mtlt-font-size-header);
+    font-weight: bold;
+    color: #fff;
+    margin: 15px 0 10px 0;
+    text-transform: uppercase;
+    border-left: 4px solid #018749;
+    padding-left: 10px;
+}
+
+.wc2026-fixture-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px;
+    background: rgba(255, 255, 255, 0.03);
+    margin-bottom: 5px;
+    border-radius: 4px;
+}
+
+.wc2026-fixture-time {
+    font-size: var(--mtlt-font-size-xsmall);
+    color: #aaa;
+    width: 50px;
+}
+
+.wc2026-fixture-teams {
+    flex-grow: 1;
     display: flex;
     justify-content: center;
     align-items: center;
-    gap: 5px;
+    gap: 10px;
+    font-weight: 500;
 }
-.form-cell .form-tokens > span {
-    width: 5px; /* fixed token width ensures consistent centering */
+
+.wc2026-fixture-score {
+    font-weight: bold;
+    color: #FFD700;
+    min-width: 40px;
     text-align: center;
-    display: inline-block;
 }
 
-/* Position-based row coloring */
-.team-row.champions-league {
-    border-left: 4px solid #4CAF50; /* Green for Champions League spots */
+/* Multi-tab View (Sub-tabs for Groups/Knockouts) */
+.wc-subtabs-container {
+    display: flex;
+    gap: 4px; /* Reduced gap */
+    margin-bottom: 12px;
+    flex-wrap: nowrap; /* Ensure they stay on one line */
+    overflow-x: auto; /* Allow horizontal scroll if still too many */
+    scrollbar-width: none; /* Hide scrollbar for cleaner look */
+    justify-content: flex-start; /* Start from left */
+    padding: 2px 0;
 }
 
-.team-row.europa-league {
-    border-left: 4px solid #FF9800; /* Orange for Europa League spots */
+.wc-subtabs-container::-webkit-scrollbar {
+    display: none;
 }
 
-.team-row.relegation {
-    border-left: 4px solid #f44336; /* Red for relegation zone */
+.wc-btn {
+    background: transparent !important; /* P-08: Remove background color */
+    border: 1px solid rgba(255, 255, 255, 0.15); /* Thin default border */
+    color: #888;
+    padding: 2px 5px; /* Further reduced padding for compact fit */
+    font-size: 9px; /* Further reduced font size to ensure single row fit */
+    border-radius: 3px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-weight: 500;
+    flex-shrink: 0; /* Prevent buttons from shrinking */
 }
 
-/* Highlighted teams styling */
-.team-row.highlighted {
-    background: rgba(219, 198, 2, 0.2) !important; /* Blue highlight */
-    border-left: 4px solid #2196F3 !important;
+.wc-btn:hover {
+    background: rgba(255, 255, 255, 0.05) !important;
+    color: #fff;
+    border-color: rgba(255, 255, 255, 0.4);
 }
 
-.team-row.highlighted .team-cell {
-    color: #018749 ;
+.wc-btn.active {
+    color: #fff;
     font-weight: bold;
+    border-width: 1.5px !important;
 }
 
-/* Loading and error states */
-.spfl-league-table.dimmed {
-    opacity: 0.9;
+/* League-specific thin border colors for sub-tabs (P-08) */
+.spfl-league-table[data-league="WORLD_CUP_2026"] .wc-btn.active {
+    border-color: #FFD700 !important; /* Gold */
+    color: #FFD700;
 }
 
-.spfl-league-table.light {
-    color: #999;
+.spfl-league-table[data-league="UEFA_CHAMPIONS_LEAGUE"] .wc-btn.active,
+.spfl-league-table[data-league="UCL"] .wc-btn.active {
+    border-color: #1e90ff !important; /* Blue */
+    color: #1e90ff;
 }
 
-.spfl-league-table.small {
-    font-size: 12px;
+.spfl-league-table[data-league="UEFA_EUROPA_LEAGUE"] .wc-btn.active,
+.spfl-league-table[data-league="UEL"] .wc-btn.active {
+    border-color: #ff8c00 !important; /* Orange */
+    color: #ff8c00;
 }
 
-/* Responsive design for smaller screens */
-@media (max-width: 380px) {
-    .spfl-table {
-        font-size: 10px;
-    }
-    
-    .spfl-table th,
-    .spfl-table td {
-        padding: 4px 5px; /* Increased horizontal padding from 3px to 5px for mobile readability */
-    }
-    
-    .spfl-header {
-        font-size: 14px;
-       
-    }
-    
-    .team-cell {
-        padding-left: 6px; /* Increased mobile team cell left padding from 6px to 10px */
-        padding-right: 6px; /* Added right padding for consistency */
-    }
+.spfl-league-table[data-league="UEFA_EUROPA_CONFERENCE_LEAGUE"] .wc-btn.active,
+.spfl-league-table[data-league="ECL"] .wc-btn.active {
+    border-color: #32cd32 !important; /* Green */
+    color: #32cd32;
 }
 
-/* Animation for updates */
-.spfl-league-table {
-    transition: all 0.5s ease-in-out;
+/* Base border colors for inactive sub-tabs based on league mode */
+.league-mode-wc .wc-btn { border-color: rgba(255, 215, 0, 0.2); }
+.league-mode-uefa .wc-btn { border-color: rgba(255, 255, 255, 0.15); }
+
+/* Ensure refresh button in WC/UEFA matches style */
+.refresh-btn-wc {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 24px;
+    padding: 0 !important;
 }
 
-/* League transition animations */
-@keyframes fadeInTable {
-    from {
-        opacity: 0;
-        transform: translateY(10px);
-    }
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
+
+/* Stale Data Warning Styling */
+.stale-data-warning {
+    color: #ff9800; /* Orange color for warning */
+    margin-right: 5px;
+    cursor: help;
+    animation: mtlt-pulse 2s infinite;
 }
 
-.league-content-container {
-    animation: fadeInTable 0.5s ease-in-out;
+@keyframes mtlt-pulse {
+    0% { opacity: 1; }
+    50% { opacity: 0.5; }
+    100% { opacity: 1; }
 }
 
-/* Button transition effects */
-.league-btn {
-    transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+/* Fade in for sub-content */
+.sub-content-fade-in {
+    animation: mtlt-fade-in 0.5s ease-out;
 }
 
-.league-btn:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+/* Fixtures Header Container */
+.fixtures-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+    padding: 5px 0;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
 }
 
-/* Form indicators styling (W/D/L) */
-.form-cell .form-win {
-    color: #4CAF50;
-    font-weight: normal;
-   
+.fixtures-title {
+    font-size: var(--mtlt-font-size-header);
+    font-weight: 700;
+    color: #fff;
+    text-transform: uppercase;
 }
 
-.form-cell .form-draw {
-    color: #FFFFFF;
-    font-weight: normal;
-}
-
-.form-cell .form-loss {
-    color: #f44336;
-    font-weight: normal;
-}
-
-/* Alternating row colors for better readability */
-.spfl-table tbody tr:nth-child(even) {
-    background: rgba(255, 255, 255, 0.02);
-}
-
-.spfl-table tbody tr:nth-child(odd) {
-    background: rgba(0, 0, 0, 0.02);
-}
-
-/* Special styling for top teams */
-.team-row:first-child .position-cell {
-    background: linear-gradient(45deg, #FFD700, #FFA500);
-    color: #000;
-    font-weight: bold;
-}
-
-/* Fade in animation for new data */
-@keyframes fadeIn {
-    from {
-        opacity: 0;
-        transform: translateY(10px);
-    }
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
-}
-
-.spfl-table tbody tr {
-    animation: fadeIn 0.5s ease-in-out;
-}
-
-/* Scrollable table for many teams - this is a duplicate definition kept for compatibility */
-/* The values are updated to match the main definition above */
-.league-content-container {
-    min-height: 450px;
-    max-height: 450px;
-    max-width: 500px; /* Added max-width to prevent container from expanding too much */
-    overflow-y: auto;
+/* Enhanced 3-Column Centered Fixture Layout (P-05) */
+.fixtures-list {
     display: flex;
     flex-direction: column;
+    gap: 15px;
 }
 
-/* Sticky header and footer - these styles are applied in addition to the ones above */
-/* This section is kept for compatibility but the values are updated to match */
-.spfl-table thead {
-    position: sticky;
-    top: 0;
-    z-index: 100; /* Much higher z-index to ensure it stays on top */
-    background: rgba(20, 20, 20, 0.98); /* Darker, more opaque background */
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.5); /* Stronger shadow for better visibility */
+.fixture-day-block {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
 }
 
-.spfl-table tfoot {
-    position: sticky;
-    bottom: 0;
-    z-index: 90; /* High z-index but below header */
-    background: rgba(20, 20, 20, 0.98); /* Darker, more opaque background */
-    box-shadow: 0 -4px 8px rgba(0, 0, 0, 0.5); /* Stronger shadow for better visibility */
-    /* Removed width: 100% and display: block which were causing the table to expand */
+.fixture-date-header {
+    font-size: var(--mtlt-font-size-xsmall);
+    color: #888;
+    text-transform: uppercase;
+    font-weight: 600;
+    letter-spacing: 1px;
+    margin-bottom: 4px;
+    padding-left: 4px;
+    border-left: 2px solid #555;
 }
 
-/* Custom scrollbar styling */
-.league-content-container::-webkit-scrollbar {
+/* The Core Centered Container */
+.fixture-row {
+    display: grid;
+    grid-template-columns: 1fr 60px 1fr; /* Equal space for teams, fixed center for score/time */
+    align-items: center;
+    padding: 8px 4px;
+    background: rgba(255, 255, 255, 0.02);
+    border-radius: 4px;
+    transition: background 0.3s ease;
+}
+
+.fixture-row:hover {
+    background: rgba(255, 255, 255, 0.05);
+}
+
+/* Home Team (Right Aligned) */
+.home-team {
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    gap: 8px;
+    text-align: right;
+    font-size: var(--mtlt-font-size-table);
+}
+
+/* Away Team (Left Aligned) */
+.away-team {
+    display: flex;
+    justify-content: flex-start;
+    align-items: center;
+    gap: 8px;
+    text-align: left;
+    font-size: var(--mtlt-font-size-table);
+}
+
+/* Centered Score or Time */
+.fixture-status {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+
+.fixture-score, .fixture-time {
+    font-weight: bold;
+    font-size: var(--mtlt-font-size-table);
+    padding: 2px 6px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 3px;
+    min-width: 45px;
+    text-align: center;
+}
+
+.fixture-score {
+    color: #FFD700; /* Gold for scores */
+}
+
+.fixture-time {
+    color: #aaa;
+    font-weight: 500;
+}
+
+/* Live Indicator */
+.live-badge {
+    font-size: 8px;
+    color: #ff3333;
+    font-weight: bold;
+    margin-top: 2px;
+    animation: mtlt-pulse 1.5s infinite;
+}
+
+/* Aggregate Score */
+.agg-score {
+    font-size: var(--mtlt-font-size-xsmall);
+    color: #666;
+    margin-top: 2px;
+}
+
+/* Venue/Stadium Info */
+.fixture-venue {
+    font-size: var(--mtlt-font-size-xsmall);
+    color: #555;
+    font-style: italic;
+    grid-column: 1 / span 3; /* Spans full width */
+    text-align: center;
+    margin-top: 4px;
+}
+
+/* Responsive adjustments for fixtures */
+@media (max-width: 400px) {
+    .fixture-row {
+        grid-template-columns: 1fr 50px 1fr;
+    }
+    .home-team, .away-team {
+        font-size: var(--mtlt-font-size-small);
+    }
+}
+
+/* Scroll Control Buttons (Header/Footer) */
+.scroll-btn-container {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+.scroll-nav-btn {
+    background: rgba(255, 255, 255, 0.1);
+    border: none;
+    color: #ccc;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 10px;
+    transition: all 0.2s ease;
+}
+
+.scroll-nav-btn:hover:not(:disabled) {
+    background: rgba(255, 255, 255, 0.2);
+    color: #fff;
+}
+
+.scroll-nav-btn:disabled {
+    opacity: 0.3;
+    cursor: default;
+}
+
+/* Error and Retry State Styling */
+.error-state, .retry-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 30px 20px;
+    gap: 12px;
+    text-align: center;
+    width: 100%;
+}
+
+.error-icon {
+    font-size: 24px;
+    color: #ff4444;
+}
+
+.retry-icon {
+    font-size: 20px;
+    color: #018749;
+}
+
+.retry-btn-error {
+    background: #444;
+    color: #fff;
+    border: 1px solid #666;
+    border-radius: 4px;
+    padding: 6px 12px;
+    font-size: 11px;
+    cursor: pointer;
+    margin-top: 8px;
+    transition: all 0.3s ease;
+}
+
+.retry-btn-error:hover {
+    background: #018749;
+    border-color: #01a85c;
+}
+
+/* Hide/Show toggle icon - positioned at bottom left of module */
+.LeagueTable-toggle-icon {
+  position: relative; /* Changed from absolute to work within source footer flexbox */
+  width: 4px;
+  height: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #000;
+  color: #fff;
+  border: 0px solid #018749;
+  border-radius: 4px;
+  font-size: 10px;
+  cursor: pointer;
+  opacity: 0.5;
+  visibility: hidden;
+  pointer-events: none;
+  transition: opacity 0.2s ease, background 0.2s ease, transform 0.1s ease;
+  z-index: 100;
+}
+
+/* Visible when content is hidden OR when scrolling */
+.LeagueTable-toggle-icon.visible {
+  opacity: 1.0; /* Increased visibility */
+  visibility: visible;
+  pointer-events: auto;
+}
+
+/* Center at bottom middle when table is hidden */
+.content-hidden {
+  min-height: 40px;
+}
+
+.LeagueTable-toggle-icon:hover {
+  opacity: 1;
+  background: #018749;
+  color: #fff;
+}
+
+.LeagueTable-toggle-icon:active {
+  transform: scale(0.95);
+}
+
+/* New 8-Column Tabulated Grid for Fixtures */
+:root {
+    --mtlt-fixture-date-width: 14%;
+    --mtlt-fixture-time-width: 8%;
+    --mtlt-fixture-team-width: 18%;
+    --mtlt-fixture-logo-width: 4%;
+    --mtlt-fixture-score-width: 12%;
+    --mtlt-fixture-location-width: 22%;
+    
+    --mtlt-fixture-font-size: 11px; /* Reduced from table size (13-16px) */
+    --mtlt-fixture-header-font-size: 10px; /* Reduced from xsmall size (10-13px) */
+    
+    --mtlt-fixture-date-align: left;
+    --mtlt-fixture-time-align: center;
+    --mtlt-fixture-home-team-align: right;
+    --mtlt-fixture-home-logo-align: center;
+    --mtlt-fixture-score-align: center;
+    --mtlt-fixture-away-logo-align: center;
+    --mtlt-fixture-away-team-align: left;
+    --mtlt-fixture-location-align: left;
+}
+
+.fixtures-container {
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    margin: 10px 0;
+}
+
+/* Container for the sticky header and scrollable body */
+.fixtures-wrapper-v2 {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    max-height: 450px; /* Adjust based on your MagicMirror layout */
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+/* Header container - always visible */
+.fixtures-header-container {
+    flex: 0 0 auto;
+    background: rgba(34, 34, 34, 0.95);
+    z-index: 10;
+    border-bottom: 2px solid #444;
+}
+
+/* Scrollable body container */
+.fixtures-body-scroll {
+    flex: 1 1 auto;
+    overflow-y: auto;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(255, 255, 255, 0.2) transparent;
+}
+
+/* Restricted height for specific tournament rounds (Tasks 3 & 4) */
+.fixtures-body-scroll.restricted-height {
+    max-height: 280px; /* Approximately 8 fixtures */
+}
+
+.fixtures-body-scroll::-webkit-scrollbar {
+    width: 6px;
+    background: transparent; /* Chrome/Safari: transparent track */
+}
+
+.fixtures-body-scroll::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.fixtures-body-scroll::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.2); /* Visible with 0.2 transparency */
+    border-radius: 3px;
+}
+
+/* League Table Sticky Header & Scrollable Body */
+.league-table-wrapper-v2 {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    max-height: var(--mtlt-max-table-height, 750px); /* Use variable to ensure consistency across versions */
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+.league-header-sticky {
+    flex: 0 0 auto;
+    background: rgba(34, 34, 34, 0.95);
+    z-index: 10;
+    border-bottom: 2px solid #555;
+    overflow-y: scroll; /* Match body scrollbar gutter */
+    scrollbar-width: thin;
+    scrollbar-color: rgba(255, 255, 255, 0.2) transparent;
+}
+
+.league-header-sticky::-webkit-scrollbar {
+    width: 6px;
+    background: transparent;
+}
+
+.league-header-sticky::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.2);
+}
+
+.league-body-scroll {
+    flex: 1 1 auto;
+    overflow-y: auto;
+    overflow-x: hidden; /* Remove horizontal scrollbar */
+    scrollbar-width: thin;
+    scrollbar-color: rgba(255, 255, 255, 0.2) transparent;
+}
+
+.league-body-scroll::-webkit-scrollbar {
     width: 6px;
 }
 
-.league-content-container::-webkit-scrollbar-track {
-    background: rgba(255, 255, 255, 0.1);
+.league-body-scroll::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.league-body-scroll::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.2); /* Visible with 0.2 transparency */
     border-radius: 3px;
 }
 
-.league-content-container::-webkit-scrollbar-thumb {
-    background: rgba(255, 255, 255, 0.3);
-    border-radius: 3px;
+.wc-sticky-top {
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    background: #000;
+    padding-bottom: 5px;
 }
 
-.league-content-container::-webkit-scrollbar-thumb:hover {
-    background: rgba(255, 255, 255, 0.5);
+.spfl-table {
+    width: 100%;
+    border-collapse: collapse;
+    table-layout: fixed;
 }
 
-/* Group header styling for UCL/UEL/ECL */
-.team-row.group-header td {
-    background: rgba(255, 255, 255, 0.15);
+.spfl-table th {
+    padding: 8px 2px;
+    text-transform: uppercase;
+    font-size: var(--mtlt-font-size-xsmall);
+    color: #888;
+    text-align: center;
+    vertical-align: middle;
+    height: 30px;
+    box-sizing: border-box;
+}
+
+.team-row {
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.team-row.highlighted {
+    background: rgba(255, 255, 255, 0.1) !important;
+}
+
+/* Column Widths for alignment */
+.position-header, .position-cell { width: 22px; }
+.team-header, .team-cell { text-align: left !important; }
+.played-header, .played-cell,
+.won-header, .won-cell,
+.drawn-header, .drawn-cell,
+.lost-header, .lost-cell,
+.gf-header, .gf-cell,
+.ga-header, .ga-cell,
+.gd-header, .gd-cell,
+.points-header, .points-cell { width: 26px; text-align: center; }
+.form-header, .form-cell { 
+    width: 150px; /* 70px base + 40px left gap + 40px right gap */
+    text-align: center; 
+    padding-left: 42px !important; /* 40px gap + 2px existing padding */
+    padding-right: 42px !important; /* 40px gap + 2px existing padding */
+}
+
+
+.wc-fixtures-table-v2 th {
+    font-size: var(--mtlt-fixture-header-font-size);
+    color: #888;
+    text-transform: uppercase;
+    padding: 10px 4px;
+    text-align: center;
+}
+
+.fixture-row-v2 {
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    transition: background 0.3s ease;
+}
+
+.fixture-row-v2.current-fixture {
+    background: rgba(255, 215, 0, 0.05); /* Subtle gold highlight for current match */
+}
+
+.fixture-row-v2:hover {
+    background: rgba(255, 255, 255, 0.03);
+}
+
+.fixture-row-v2 td {
+    padding: 8px 4px;
+    vertical-align: middle;
+    font-size: var(--mtlt-fixture-font-size);
+}
+
+/* Column Widths & Alignment */
+.fixture-date-v2, .fixture-header-date {
+    text-align: var(--mtlt-fixture-date-align);
+    width: var(--mtlt-fixture-date-width);
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.fixture-time-v2, .fixture-header-time {
+    text-align: var(--mtlt-fixture-time-align);
+    width: var(--mtlt-fixture-time-width);
+}
+
+.fixture-home-team-v2, .fixture-header-home-team {
+    text-align: var(--mtlt-fixture-home-team-align);
+    width: var(--mtlt-fixture-team-width);
+    font-weight: 500;
+}
+
+.fixture-home-logo-v2, .fixture-header-home-logo {
+    text-align: var(--mtlt-fixture-home-logo-align);
+    width: var(--mtlt-fixture-logo-width);
+}
+
+.fixture-score-v2, .fixture-header-score {
+    text-align: var(--mtlt-fixture-score-align);
+    width: var(--mtlt-fixture-score-width);
     font-weight: bold;
-    text-align: left;
-    padding: 5px 10px;
-    color: #ddd;
-    font-size: 11px;
 }
+
+.fixture-away-team-v2, .fixture-header-away-team {
+    text-align: var(--mtlt-fixture-away-team-align);
+    width: var(--mtlt-fixture-team-width);
+    font-weight: 500;
+}
+
+.fixture-away-logo-v2, .fixture-header-away-logo {
+    text-align: var(--mtlt-fixture-away-logo-align);
+    width: var(--mtlt-fixture-logo-width);
+}
+
+.fixture-location-v2, .fixture-header-location, .fixture-header-venue {
+    text-align: var(--mtlt-fixture-location-align);
+    width: var(--mtlt-fixture-location-width);
+    font-size: var(--mtlt-fixture-font-size);
+    color: #aaa;
+}
+
+/* Location Column */
+.fixture-location-v2, .fixture-header-location {
+    text-align: var(--mtlt-fixture-location-align);
+    width: var(--mtlt-fixture-location-width);
+}
+
+.fixture-logo-v2 {
+    width: 20px;
+    height: 20px;
+    object-fit: contain;
+    display: inline-block;
+    vertical-align: middle;
+}
+
+.score-wrapper-v2 {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 2px;
+}
+
+.main-score-v2 {
+    font-weight: bold;
+    color: #FFD700; /* Gold */
+    white-space: nowrap;
+}
+
+.main-score-v2.bright {
+    color: #fff;
+    text-shadow: 0 0 5px rgba(255, 255, 255, 0.5);
+}
+
+.aggregate-score-v2 {
+    font-size: 0.85em;
+    font-style: italic;
+    color: #aaa;
+}
+
+/* Responsive adjustments for the new grid */
+@media (max-width: 600px) {
+    .fixture-date-v2 {
+        font-size: 0.9em;
+    }
+    .fixture-location-v2 {
+        display: none; /* Hide location on small screens to save space */
+    }
+    .fixture-header-location {
+        display: none;
+    }
+}
+

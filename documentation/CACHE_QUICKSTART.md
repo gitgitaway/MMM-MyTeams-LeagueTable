@@ -276,12 +276,21 @@ Run it:
 node monitor-cache.js
 ```
 
-## Next Steps
+## Configuration Options
 
-1. **Monitor**: Check cache statistics regularly
-2. **Optimize**: Adjust TTL if data changes frequently
-3. **Debug**: Enable debug mode to see cache hits/misses
-4. **Integrate**: Add cache management UI buttons (optional)
+You can control the cache behavior via your `config.js`:
+
+```javascript
+config: {
+    clearCacheButton: true,    // Adds a "Clear Cache" button to the module header
+    clearCacheOnStart: false,  // Force clear all cache files every time the module starts
+    debug: true                // Enables detailed cache performance logs in console
+}
+```
+
+### Manual Cache Management
+- **Clear via UI**: If `clearCacheButton` is enabled, click the button in the module header to purge all cached data and trigger a fresh fetch.
+- **Force Reset**: Set `clearCacheOnStart: true` to ensure the module always pulls fresh data from the internet on startup.
 
 ## Troubleshooting
 
