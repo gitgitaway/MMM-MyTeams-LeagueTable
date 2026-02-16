@@ -1,6 +1,8 @@
 # MMM-MyTeams-LeagueTable
 
-A comprehensive **MagicMirror²** module for displaying football league standings, fixtures, and live results. Supports 20+ domestic leagues, UEFA competitions (Champions League, Europa League, Conference League), and the FIFA World Cup 2026.
+A comprehensive **MagicMirror²** module that displays football league standings from multiple competitions including the FIFA 2026 World Cup , UEFA Champions League (UCL), UEFA Europa League (UEL), UEFA Europa Conference League (ECL), English Premier League (EPL), German Bundesliga,French La Ligue , Italian Serie A , Spanish Primera División, Portuguese Liga, SPFL (Scottish Professional Football League) and Scottish Championship (SPFLC) as well as most other European and World wide leagues, with data sourced from the official website of the BBC Sport with robust fallback data and detailed error handling. 
+
+- **Author**: gitgitaway
 
 [![MagicMirror²](https://img.shields.io/badge/MagicMirror%C2%B2-v2.1.0+-blue.svg)](https://magicmirror.builders)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
@@ -23,18 +25,32 @@ A comprehensive **MagicMirror²** module for displaying football league standing
 - **Stale Data Protection**: Automatic warning indicators if live data cannot be fetched.
 - **Auto-Cycling**: Automatically rotate between different leagues or tournament groups.
 
-## 🛠️ Installation
+## Requirements & Dependencies
 
+- **MagicMirror²**: v2.1.0 or newer (tested on 2.32.0)
+- **Node.js**: v14+ (tested on v22.14.0)
+- **Network access**: HTTPS egress to `www.bbc.co.uk`
+- **Runtime NPM dependencies**: None (uses Node core modules and MagicMirror core only)
+- **Optional Dev Tools** (for local lint/format only; not required to run):
+  - `eslint` ^8
+  - `prettier` ^2
+
+## Installation
+
+1. Navigate to your MagicMirror's modules folder:
 ```bash
-cd ~/MagicMirror/modules
-git clone https://github.com/gitgitaway/MMM-MyTeams-LeagueTable.git
-cd MMM-MyTeams-LeagueTable
-npm install
+cd ~/MagicMirror/modules/
 ```
 
-## ⚙️ Configuration
+2. Clone this repository:
+```bash
+git clone https://github.com/gitgitaway/MMM-MyTeams-LeagueTable.git
+```
 
-To use this module, add it to the modules array in the `config/config.js` file:
+## Configuration
+
+To use this module, add it to the modules array in the  `~/MagicMirror/config/config.js` file:
+
 
 ### Minimum Configuration
 ```javascript
@@ -70,6 +86,8 @@ To use this module, add it to the modules array in the `config/config.js` file:
   }
 },
 ```
+See - **[Configuration User Guide](./documentation/Configuration_User_Guide.md)**: for further detailed configuration options.
+
 
 ### Configuration Options
 
@@ -152,8 +170,10 @@ Use these codes in your `selectedLeagues` array:
 - **[Final Review](./Final_Review.md)**: Final implementation review.
 - **[License](./LICENSE)**: MIT License details.
 
-## 📝 License & Acknowledgments
+### Acknowledgments
+Thanks to the MagicMirror community for inspiration and guidance! 
+Thanks to the BBC for providing free access to their sports pages.
 
-- **License**: MIT
-- **Data Source**: BBC Sport / FIFA
-- **Community**: Built for the MagicMirror² community.
+### License
+MIT
+
