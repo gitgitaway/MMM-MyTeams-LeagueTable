@@ -298,6 +298,7 @@ config: {
 **A**: 
 - First fetch: On startup
 - Subsequent: Based on `updateInterval` config (default 1 hour)
+- **Dynamic Refresh**: Automatically increases to **3 minutes** when live matches are detected
 - Cache expiration: 24 hours
 
 ### Q: What if I want fresher data?

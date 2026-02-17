@@ -6,7 +6,7 @@ The **MMM-MyTeams-LeagueTable** module is highly configurable. This guide covers
 
 | Option | Default | Description |
 |:--- |:--- |:--- |
-| `updateInterval` | `1800000` (30m) | How often to refresh data from sources (in milliseconds). |
+| `updateInterval` | `1800000` (30m) | How often to refresh data from sources (in milliseconds). Note: This automatically drops to 3 minutes when live matches are detected. |
 | `animationSpeed` | `2000` | Speed of the transition animation (in milliseconds). |
 | `selectedLeagues` | `["SCOTLAND_PREMIERSHIP"]` | Array of league codes to display. (See [Available Leagues](#available-leagues)). |
 | `autoCycle` | `false` | If true, the module automatically rotates through selected leagues. |

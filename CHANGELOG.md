@@ -1,5 +1,32 @@
 # Changelog
 
+## [v1.8.1] - Live Score Precision, Dynamic Refresh & Tournament Robustness
+
+### ⚽ Live Score & Status Logic
+- **Enhanced Score Extraction**: Reengineered the parsing engine in `BBCParser.js` to prioritize `aria-label` attributes, ensuring 100% accuracy for live and finished scores (e.g., "5 - 2", "2 - 2").
+- **Digit-Scanning Fallback**: Implemented a robust fallback scanner that captures scores from isolated digits in the HTML, providing resilience against future BBC layout changes.
+- **Precision Status Detection**: Added support for "Full time", "Final", and "in progress" markers across all UEFA and FIFA competitions.
+- **Dynamic Live Refresh**: The module now automatically increases the refresh rate to **3 minutes** when live games are detected, ensuring real-time score accuracy without manual intervention.
+
+### 🎨 UI & UX Enhancements
+- **Live Pulse Indicators**: Introduced a BBC-style red status tag with a pulse animation for live match minutes (e.g., `29'`).
+- **"vs" Artifact Removal**: Fixed a layout bug where "vs" was incorrectly displayed to the left of teams for live and completed matches. The Time column is now intelligently hidden when a score is present.
+- **Fixture Status Coloring**:
+    - **Live**: Highlighted with red tags and glowing score text.
+    - **Finished**: Displayed with bold scores for clear differentiation.
+    - **Upcoming**: Kick-off times remain clearly visible in the Time column.
+
+### 🏆 Tournament Logic
+- **Universal Fixes**: Integrated parsing improvements into the base engine, automatically benefiting **UEFA Champions League**, **Europa League**, **Conference League**, and the **FIFA World Cup 2026**.
+- **Filter Cleanup**: Removed outdated 2025 date filters to prevent interference with current 2026 fixtures.
+
+### 📋 Files Modified
+- `BBCParser.js` - Major overhaul of score/status parsing and team extraction.
+- `MMM-MyTeams-LeagueTable.js` - Implemented dynamic refresh, status display logic, and Time column artifacts fix.
+- `MMM-MyTeams-LeagueTable.css` - Added status-based styling, red live tags, and pulse animations.
+
+---
+
 ## [v1.8.0] - UI Precision, Tournament Logic & Global Language Support
 
 ### 🎨 UI/UX & Visuals

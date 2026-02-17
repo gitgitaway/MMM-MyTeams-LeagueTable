@@ -1002,14 +1002,35 @@ Module.register("MMM-MyTeams-LeagueTable", {
 		}
 
 		// Schedule next update
+		let nextUpdate = this.config.updateInterval;
+		
+		// Task: Reduce refresh time for live matches to once per 3 mins
+		let hasLiveGames = false;
+		if (this.leagueData) {
+			Object.values(this.leagueData).forEach(data => {
+				if (data && data.fixtures && Array.isArray(data.fixtures)) {
+					if (data.fixtures.some(f => f.live)) {
+						hasLiveGames = true;
+					}
+				}
+			});
+		}
+		
+		if (hasLiveGames) {
+			nextUpdate = 3 * 60 * 1000; // 3 minutes
+			if (this.config.debug) {
+				Log.info(" MMM-MyTeams-LeagueTable: Live games detected, increasing refresh rate to 3 minutes.");
+			}
+		}
+
 		this.updateTimer = setTimeout(function () {
 			self.requestAllLeagueData();
 			self.scheduleUpdate();
-		}, this.config.updateInterval);
+		}, nextUpdate);
 
 		if (this.config.debug) {
 			Log.info(
-				` MMM-MyTeams-LeagueTable: Next update scheduled in ${this.config.updateInterval / 1000} seconds`
+				` MMM-MyTeams-LeagueTable: Next update scheduled in ${nextUpdate / 1000} seconds`
 			);
 		}
 	},
@@ -2912,7 +2933,15 @@ Module.register("MMM-MyTeams-LeagueTable", {
 			fixtures.forEach((fix, index) => {
 				const row = document.createElement("tr");
 				row.className = "fixture-row-v2";
-				if (fix.live) row.classList.add("live");
+				
+				// Task: Color indicators for live, finished and upcoming fixtures
+				if (fix.live) {
+					row.classList.add("live");
+				} else if (fix.status === "FT" || fix.status === "AET" || fix.status === "PEN") {
+					row.classList.add("finished");
+				} else {
+					row.classList.add("upcoming");
+				}
 
 				// Task 3 & 4: Special auto-scroll logic for Playoff/Rd32
 				// Scroll to second leg (index 8+) if ALL first leg matches are finished
@@ -2974,7 +3003,16 @@ Module.register("MMM-MyTeams-LeagueTable", {
 		fixtures.forEach(fix => {
 			const row = document.createElement("tr");
 			row.className = "fixture-row-v2";
-			if (fix.live) row.classList.add("live");
+			
+			// Task: Color indicators for live, finished and upcoming fixtures
+			if (fix.live) {
+				row.classList.add("live");
+			} else if (fix.status === "FT" || fix.status === "AET" || fix.status === "PEN") {
+				row.classList.add("finished");
+			} else {
+				row.classList.add("upcoming");
+			}
+
 			this._buildFixtureRowContent(row, fix, columnNames);
 			tbody.appendChild(row);
 		});
@@ -3001,7 +3039,14 @@ Module.register("MMM-MyTeams-LeagueTable", {
 				}
 			} else if (col === "Time") {
 				cell.className = "fixture-time-v2";
-				if (fix.timestamp) {
+				
+				// Task: Fix 'vs' in Time column. If there's a score or match is live/finished, hide the time column content
+				const hasScore = fix.score && fix.score !== "vs";
+				const isPlayed = fix.live || (fix.status && ["FT", "AET", "PEN"].includes(fix.status));
+				
+				if (hasScore || isPlayed) {
+					cell.textContent = "";
+				} else if (fix.timestamp) {
 					const d = new Date(fix.timestamp);
 					cell.textContent = d.toLocaleTimeString(this.config.language || "en", { hour: "2-digit", minute: "2-digit", hour12: false });
 				} else {
@@ -3030,11 +3075,18 @@ Module.register("MMM-MyTeams-LeagueTable", {
 				if (fix.live) mainScore.classList.add("bright");
 				let scoreText = fix.score || "vs";
 				if (scoreText === "vs" && fix.live) scoreText = "0 - 0";
-				if (fix.status && ["HT", "FT", "AET", "PEN"].includes(fix.status)) {
-					scoreText += ` ${fix.status}`;
-				}
 				mainScore.textContent = scoreText;
 				scoreWrapper.appendChild(mainScore);
+
+				// Show status (FT, HT, 85', etc) below the score if live or finished
+				if (fix.status && fix.status !== "LIVE") {
+					const statusDiv = document.createElement("div");
+					statusDiv.className = "fixture-status-tag-v2";
+					if (fix.live) statusDiv.classList.add("live-tag");
+					statusDiv.textContent = fix.status;
+					scoreWrapper.appendChild(statusDiv);
+				}
+
 				if (fix.aggregateScore) {
 					const aggScore = document.createElement("div");
 					aggScore.className = "aggregate-score-v2";

@@ -269,29 +269,39 @@ class BBCParser extends BaseParser {
 
 			// Improved fixture block detection with simplified class matching
 			// This avoids deep backtracking and is more resilient to BBC class name changes
-			const fixtureRegex = /<(article|div|li)[^>]*?(?:class="[^"]*?(?:sp-c-fixture|GridContainer|MatchItem|FixtureBlock|MatchListItem|HeadToHeadWrapper|StyledHeadToHeadWrapper)[^"]*?"|data-event-id="[^"]+"|data-testid="[^"]*(?:fixture|match-list-item)[^"]*")[^>]*?>([\s\S]*?)(?=<article|<div[^>]*?(?:data-event-id|data-testid="[^"]*(?:fixture|match-list-item)[^"]*")|<li[^>]*?(?:class="[^"]*?HeadToHeadWrapper[^"]*?"|data-event-id)|<div[^>]*?class="[^"]*?(?:sp-c-fixture|GridContainer|MatchItem|FixtureBlock|MatchListItem)[^"]*?"|$)/gi;
+			const fixtureRegex = /<(article|div|li)([^>]*?(?:class="[^"]*?(?:sp-c-fixture|GridContainer|MatchItem|FixtureBlock|MatchListItem|HeadToHeadWrapper|StyledHeadToHeadWrapper)[^"]*?"|data-event-id="[^"]+"|data-testid="[^"]*(?:fixture|match-list-item)[^"]*")[^>]*?)>([\s\S]*?)(?=<article|<div[^>]*?(?:data-event-id|data-testid="[^"]*(?:fixture|match-list-item)[^"]*")|<li[^>]*?(?:class="[^"]*?HeadToHeadWrapper[^"]*?"|data-event-id)|<div[^>]*?class="[^"]*?(?:sp-c-fixture|GridContainer|MatchItem|FixtureBlock|MatchListItem)[^"]*?"|$)/gi;
 			
 			let m;
 			while ((m = fixtureRegex.exec(section.content)) !== null) {
-				const block = m[2];
+				const attributes = m[2];
+				const content = m[3];
+				const block = attributes + content;
 				
 				// Centralized team extraction logic
 				const extractTeams = (b) => {
 					const teamsFound = [];
 					
 					// Match various team name containers in a single pass where possible
-					// Priority 1: data-testid and specific BBC classes
 					const teamPatterns = [
 						/data-testid="[^"]*team-name[^"]*"[^>]*>([\s\S]*?)<\/span>/gi,
 						/class="[^"]*(?:team-name|qa-full-team-name|LongName|GelName|DesktopValue|MobileValue)[^"]*"[^>]*>([\s\S]*?)<\/span>/gi,
+						/aria-label="([^"]+?)\s*\d+\s*,\s*([^"]+?)\s*\d+/i, // Both teams in one aria-label
 						/<abbr[^>]*title="([^"]+)"[^>]*>/gi,
 						/data-abbv="([^"]+)"/gi
 					];
 
 					teamPatterns.forEach(pattern => {
 						let match;
-						while ((match = pattern.exec(b)) !== null) {
-							teamsFound.push(match[1]);
+						if (pattern.global) {
+							while ((match = pattern.exec(b)) !== null) {
+								teamsFound.push(match[1]);
+							}
+						} else {
+							match = b.match(pattern);
+							if (match) {
+								teamsFound.push(match[1]);
+								if (match[2]) teamsFound.push(match[2]);
+							}
 						}
 					});
 
@@ -316,12 +326,21 @@ class BBCParser extends BaseParser {
 				}
 
 				if (!homeTeam || !awayTeam || homeTeam === awayTeam || (homeTeam && awayTeam && (homeTeam.includes(awayTeam) || awayTeam.includes(homeTeam)))) {
-					if (sepMatch) {
-						const sepIdx = block.indexOf(sepMatch[0]);
-						const hPart = block.substring(0, sepIdx), aPart = block.substring(sepIdx + sepMatch[0].length);
-						const hTs = extractTeams(hPart), aTs = extractTeams(aPart);
-						homeTeam = hTs.sort((a, b) => b.length - a.length)[0] || homeTeam;
-						awayTeam = aTs.sort((a, b) => b.length - a.length)[0] || awayTeam;
+					// Fallback: try to get teams from aria-label if present
+					const ariaMatch = block.match(/aria-label="([^"]+?)\s*\d+\s*,\s*([^"]+?)\s*\d+/i);
+					if (ariaMatch) {
+						homeTeam = ariaMatch[1].trim();
+						awayTeam = ariaMatch[2].trim();
+					}
+					
+					if (!homeTeam || !awayTeam) {
+						if (sepMatch) {
+							const sepIdx = block.indexOf(sepMatch[0]);
+							const hPart = block.substring(0, sepIdx), aPart = block.substring(sepIdx + sepMatch[0].length);
+							const hTs = extractTeams(hPart), aTs = extractTeams(aPart);
+							homeTeam = hTs.sort((a, b) => b.length - a.length)[0] || homeTeam;
+							awayTeam = aTs.sort((a, b) => b.length - a.length)[0] || awayTeam;
+						}
 					}
 				}
 
@@ -336,15 +355,36 @@ class BBCParser extends BaseParser {
 				if (!homeTeam || !awayTeam) continue;
 
 				const stage = currentSectionStage || this._inferStageFromBlock(block) || "GS";
-				const scoresRaw = Array.from(block.matchAll(/<span[^>]*class="[^"]*(?:sp-c-fixture__number|sp-c-fixture__number--[a-z]+|ScoreValue)[^"]*"[^>]*>([\s\S]*?)<\/span>/gi)).map(x => x[1]);
-				let scores = scoresRaw.map(s => s.replace(/<[^>]*>/g, "").trim()).filter(s => /^\d+$/.test(s));
+				
+				// Improved score extraction (Task: Robustness)
+				let scores = [];
+				
+				// 1. Check aria-label first as it's very reliable for current scores
+				const ariaScoreMatch = block.match(/aria-label="[^"]+?\s*(\d+)\s*,\s*[^"]+?\s*(\d+)/i);
+				if (ariaScoreMatch) {
+					scores = [ariaScoreMatch[1], ariaScoreMatch[2]];
+				} else {
+					// 2. Try to find scores by modern BBC classes and data-testids
+					const scoresRaw = Array.from(block.matchAll(/<(?:span|div)[^>]*?(?:class="[^"]*?(?:sp-c-fixture__number|sp-c-fixture__number--[a-z]+|ScoreValue|MatchScore|FixtureScore|score-value)[^"]*?"|data-testid="[^"]*?(?:score-value|match-score|score)[^"]*?")[^>]*?>([\s\S]*?)<\/(?:span|div)>/gi)).map(x => x[1]);
+					scores = scoresRaw.map(s => s.replace(/<[^>]*>/g, "").trim()).filter(s => /^\d+$/.test(s));
+				}
 
 				const aggMatch = block.match(/\((?:agg\s*)?(\d+-\d+)\)/i) || block.match(/agg\s*(\d+-\d+)/i);
 				const aggregateScore = aggMatch ? aggMatch[1] : undefined;
 
+				// 3. Fallback to hyphenated score match or scanning for all digits
 				if (scores.length < 2) {
-					const sm = block.match(/(\d+)\s*-\s*(\d+)/);
-					if (sm) scores = [sm[1], sm[2]];
+					const sm = block.match(/(\d+)\s*[-–,]\s*(\d+)/);
+					if (sm) {
+						scores = [sm[1], sm[2]];
+					} else {
+						// Scan for any isolated digits in the block that could be scores
+						const allDigits = Array.from(block.matchAll(/>\s*(\d+)\s*</g)).map(x => x[1]);
+						if (allDigits.length >= 2) {
+							// For live matches, the scores are usually the first two isolated numbers
+							scores = [allDigits[0], allDigits[1]];
+						}
+					}
 				}
 
 				const homeScore = scores.length >= 2 ? parseInt(scores[0]) : undefined;
@@ -353,23 +393,39 @@ class BBCParser extends BaseParser {
 				let fixtureIso = (block.match(/<time[^>]*datetime="([^"]+)"[^>]*>/i) || [])[1] || "";
 				let status = "";
 				let statusStr = "";
-				if (block.includes("LiveFixture") || block.match(/\d+'|HT|AET/i)) {
-					status = "LIVE";
-					const sm = block.match(/\b(HT|AET|\d+')\b/i);
-					if (sm) statusStr = sm[1].toUpperCase();
-				}
-				else if (block.includes("FinishedFixture") || /\b(FT|PEN)\b/i.test(block)) {
+				
+				// Improved status detection (Task: Precision)
+				if (block.includes("FinishedFixture") || /\b(FT|PEN|Full time)\b/i.test(block)) {
 					status = "FT";
 					const sm = block.match(/\b(FT|PEN)\b/i);
-					if (sm) statusStr = sm[1].toUpperCase();
+					statusStr = sm ? sm[1].toUpperCase() : "FT";
+				}
+				else if (block.includes("LiveFixture") || block.match(/\d+'|HT|AET|Live|in progress/i)) {
+					status = "LIVE";
+					const sm = block.match(/\b(HT|AET|\d+')\b/i);
+					if (sm) {
+						statusStr = sm[1].toUpperCase();
+					} else {
+						// Look for "X minutes , in progress"
+						const minMatch = block.match(/(\d+)\s*minutes\s*,\s*in progress/i);
+						if (minMatch) statusStr = minMatch[1] + "'";
+					}
 				}
 
 				const venueMatch = block.match(/<span[^>]*class="[^"]*(?:venue|stadium)[^"]*"[^>]*>([\s\S]*?)<\/span>/i);
 				const venue = venueMatch ? venueMatch[1].replace(/<[^>]*>/g, "").trim() : "";
 
 				let fixtureDate = currentSectionDate || (fixtureIso ? fixtureIso.split("T")[0] : "");
-				const timeTextMatch = block.match(/<(?:time|span)[^>]*class="[^"]*(?:StyledTime|eli9aj90)[^"]*"[^>]*>([\s\S]*?)<\/(?:time|span)>/i);
-				const time = timeTextMatch ? timeTextMatch[1].replace(/<[^>]*>/g, "").trim() : (fixtureIso.includes("T") ? fixtureIso.split("T")[1].substring(0, 5) : "vs");
+				const timeTextMatch = block.match(/<(?:time|span)[^>]*class="[^"]*(?:StyledTime|eli9aj90|FixtureTime|MatchTime)[^"]*"[^>]*>([\s\S]*?)<\/(?:time|span)>/i);
+				let time = timeTextMatch ? timeTextMatch[1].replace(/<[^>]*>/g, "").trim() : "";
+				
+				// Ensure we have a valid time or fallback to ISO time (Task: Fix 'vs' in Time column)
+				if ((!time || time === "vs") && fixtureIso && fixtureIso.includes("T")) {
+					time = fixtureIso.split("T")[1].substring(0, 5);
+				}
+				
+				// If still no time, use "vs" as last resort
+				if (!time) time = "vs";
 
 				const dedupKey = `${homeTeam}|${awayTeam}|${fixtureDate}|${time}`;
 				if (seen.has(dedupKey)) continue;
@@ -464,13 +520,6 @@ class BBCParser extends BaseParser {
 		const baseData = this.parseLeagueData(tablesHtml, leagueType);
 		let allFixtures = this._parseBBCFixtureArticles(fixturesHtml);
 
-		// Remove invalid TBC fixtures dated Feb 17 and Feb 24 (Task 1)
-		allFixtures = allFixtures.filter(f => {
-			const isTBC = (f.time && f.time.includes("TBC")) || (f.homeTeam && f.homeTeam.includes("TBC")) || (f.awayTeam && f.awayTeam.includes("TBC"));
-			const isInvalidDate = f.date === "2025-02-17" || f.date === "2025-02-24" || f.date.includes("17 Feb") || f.date.includes("24 Feb");
-			return !(isTBC && isInvalidDate);
-		});
-
 		allFixtures.forEach(f => {
 			const inferred = this._inferUEFAStage(f);
 			if (inferred) f.stage = inferred;
@@ -480,7 +529,7 @@ class BBCParser extends BaseParser {
 			...baseData,
 			fixtures: allFixtures,
 			knockouts: {
-				playoff: allFixtures.filter(f => f.stage === "Playoff").slice(0, 16),
+				playoff: allFixtures.filter(f => f.stage === "Playoff"),
 				rd16: allFixtures.filter(f => f.stage === "Rd16"),
 				qf: allFixtures.filter(f => f.stage === "QF"),
 				sf: allFixtures.filter(f => f.stage === "SF"),

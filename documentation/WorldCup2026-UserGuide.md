@@ -136,7 +136,7 @@ Team logos (crests) are automatically mapped to participating nations, including
 
 ### 4. Real-time Fixtures & Results
 
-Live scores and upcoming fixtures are updated automatically according to your `updateInterval` settings. Fixtures are presented in a professional 3-column centered layout:
+Live scores and upcoming fixtures are updated automatically according to your `updateInterval` settings. When live matches are detected, the refresh rate automatically increases to every **3 minutes** for real-time accuracy. Fixtures are presented in a professional 3-column centered layout:
 - **Date Blocks**: Matches are grouped by date with a dedicated header.
 - **Centered Alignment**: Team names and logos are centered around the score or kick-off time.
 - **Venue Tracking**: Venue cities are displayed for all World Cup matches, right-aligned to the module's edge with optimized (50% reduced) horizontal padding for better readability on smaller screens.
