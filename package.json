@@ -1,16 +1,15 @@
 {
 	"name": "MMM-MyTeams-LeagueTable",
-	"version": "1.0.0",
-	"description": "A MagicMirror² module to display the current SPFL (Scottish Professional Football League) standings",
+	"version": "1.8.0",
+	"description": "A MagicMirror² module to display any Professional Football League standings as well as FIFA World Cup 2026 and UEFA leauge Competitions.",  
 	"main": "MMM-MyTeams-LeagueTable.js",
 	"keywords": [
-		"MagicMirror",
-		"module",
-		"SPFL",
-		"Scottish Premier League",
+		"World Cup 2026",
+		"UEFA Champions League",
+		"Premier League",
 		"football",
 		"soccer",
-		"league table",
+		"European Football League tables",
 		"standings",
 		"sports",
 		"Celtic"
