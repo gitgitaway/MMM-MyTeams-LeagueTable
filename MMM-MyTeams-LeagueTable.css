@@ -1255,6 +1255,76 @@
     border-radius: 3px;
 }
 
+/* UEFA Split-View Layout - Equal height allocation for Results and Future Fixtures */
+/* Each section displays exactly 4 fixtures without scrolling */
+.uefa-split-view-container {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    height: 340px; /* Fixed height for both sections: 2 sections × 165px + 10px gap */
+    gap: 10px;
+}
+
+/* Each section wrapper contains title + scrollable content */
+.uefa-section-wrapper {
+    display: flex;
+    flex-direction: column;
+    height: 165px; /* Fixed equal height for both sections - shows 4 fixtures without scrolling */
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 4px;
+    overflow: hidden;
+    background: rgba(34, 34, 34, 0.3);
+}
+
+/* Title for each section - reduced padding and font size to maximize fixture space */
+.uefa-section-wrapper .wc-title {
+    flex: 0 0 auto;
+    padding: 4px 8px; /* Reduced from 8px 10px to save space */
+    font-size: 11px; /* Reduced font size */
+    background: rgba(34, 34, 34, 0.95);
+    border-bottom: 2px solid #444;
+    text-align: center;
+    font-weight: bold;
+    letter-spacing: 1px;
+}
+
+/* Scrollable content area for each section */
+.uefa-section-scroll {
+    flex: 1 1 auto;
+    overflow-y: auto;
+    overflow-x: hidden;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(255, 255, 255, 0.2) transparent;
+}
+
+.uefa-section-scroll::-webkit-scrollbar {
+    width: 6px;
+    background: transparent;
+}
+
+.uefa-section-scroll::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.uefa-section-scroll::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 3px;
+}
+
+.uefa-section-scroll::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.4);
+}
+
+/* Equal sizing for both sections - no dynamic growth */
+/* Both sections maintain fixed 165px height to show exactly 4 fixtures */
+.uefa-section-wrapper.results-section {
+    height: 165px; /* Fixed height - equal to future section */
+}
+
+.uefa-section-wrapper.future-section {
+    height: 165px; /* Fixed height - equal to results section */
+}
+
 /* League Table Sticky Header & Scrollable Body */
 .league-table-wrapper-v2 {
     width: 100%;
@@ -1366,6 +1436,12 @@
     text-align: center;
 }
 
+/* Reduced header padding for UEFA split-view sections to maximize fixture display space */
+.uefa-section-scroll .wc-fixtures-table-v2 th {
+    padding: 5px 4px; /* Reduced from 10px 4px */
+    font-size: 9px; /* Reduced from 10px */
+}
+
 .fixture-row-v2 {
     border-bottom: 1px solid rgba(255, 255, 255, 0.05);
     transition: background 0.3s ease;
@@ -1383,6 +1459,11 @@
     padding: 8px 4px;
     vertical-align: middle;
     font-size: var(--mtlt-fixture-font-size);
+}
+
+/* Reduced row padding for UEFA split-view sections to fit exactly 4 fixtures */
+.uefa-section-scroll .fixture-row-v2 td {
+    padding: 6px 4px; /* Reduced from 8px 4px to fit 4 fixtures per section */
 }
 
 /* Column Widths & Alignment */

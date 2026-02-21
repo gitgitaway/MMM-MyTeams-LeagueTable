@@ -66,10 +66,11 @@ class FIFAParser extends BBCParser {
 
 		try {
 			if (fixturesHtml) {
-				const allFixtures = this._parseBBCFixtureArticles(fixturesHtml);
+				const fixturesMap = this._parseBBCFixtureArticles(fixturesHtml);
+				const allFixtures = Array.from(fixturesMap.values());
 				data.fixtures = allFixtures;
 
-				// Categorize into knockouts
+				// Categorize into knockouts - ensure each stage is filtered correctly
 				data.knockouts.rd32 = allFixtures.filter((f) => f.stage === "Rd32");
 				data.knockouts.rd16 = allFixtures.filter((f) => f.stage === "Rd16");
 				data.knockouts.qf = allFixtures.filter((f) => f.stage === "QF");

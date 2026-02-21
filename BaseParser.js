@@ -8,6 +8,14 @@ class BaseParser {
 	}
 
 	/**
+	 * Update the configuration
+	 * @param {object} config - New configuration
+	 */
+	setConfig(config) {
+		this.config = config || {};
+	}
+
+	/**
 	 * Log debug information if debug mode is enabled
 	 * @param {string} message - Message to log
 	 */
@@ -197,9 +205,13 @@ class BaseParser {
 	_inferStageFromBlock(block) {
 		const b = block || "";
 		if (
-			/Round of 32|Rd32|Play-offs?|Playoffs?|Knockout[- ]round play-offs?/i.test(b)
+			/Round of 32|Rd32/i.test(b)
 		)
 			return "Rd32";
+		if (
+			/Play-offs?|Playoffs?|Knockout[- ]round play-offs?/i.test(b)
+		)
+			return "Playoff";
 		if (/Round of 16|Rd16/i.test(b)) return "Rd16";
 		if (/Quarter[- ]?finals?|QF/i.test(b)) return "QF";
 		if (/Semi[- ]?finals?|SF/i.test(b)) return "SF";
@@ -221,13 +233,33 @@ class BaseParser {
 				const d = new Date(iso);
 				if (!isNaN(d.getTime())) return d.getTime();
 			}
+			
+			// If we have a fallback date, construct a timestamp
 			if (fallbackDateStr) {
 				let dt = fallbackDateStr;
+				
+				// Handle time
+				let time = "00:00";
 				if (fallbackTimeStr && /\d\d:\d\d/.test(fallbackTimeStr)) {
-					dt += `T${fallbackTimeStr}:00`;
+					time = fallbackTimeStr;
+				} else if (fallbackTimeStr && /\d\d\.\d\d/.test(fallbackTimeStr)) {
+					time = fallbackTimeStr.replace(".", ":");
 				}
-				const d2 = new Date(dt);
+				
+				// Combine date and time
+				// Use T for ISO format
+				const isoStr = `${dt}T${time}:00`;
+				const d2 = new Date(isoStr);
+				
 				if (!isNaN(d2.getTime())) return d2.getTime();
+				
+				// If ISO failed, try space separator
+				const d3 = new Date(`${dt} ${time}`);
+				if (!isNaN(d3.getTime())) return d3.getTime();
+				
+				// Last resort: just the date
+				const d4 = new Date(dt);
+				if (!isNaN(d4.getTime())) return d4.getTime();
 			}
 		} catch {
 			// Silently fail and return 0

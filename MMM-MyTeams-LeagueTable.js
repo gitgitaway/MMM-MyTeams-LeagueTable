@@ -158,7 +158,7 @@ Module.register("MMM-MyTeams-LeagueTable", {
 
 		// Cache controls
 		clearCacheButton: true,
-		clearCacheOnStart: false,
+		clearCacheOnStart: false, // Set to true to force-clear ALL caches (disk, fixture, logo) on every module start - useful for development and troubleshooting
 		maxTableHeight: 460 // Height in px to show 12 teams
 	},
 
@@ -736,7 +736,10 @@ Module.register("MMM-MyTeams-LeagueTable", {
 			EPL: "ENGLAND_PREMIER_LEAGUE",
 			UCL: "UEFA_CHAMPIONS_LEAGUE",
 			UEL: "UEFA_EUROPA_LEAGUE",
-			ECL: "UEFA_EUROPA_CONFERENCE_LEAGUE"
+			ECL: "UEFA_EUROPA_CONFERENCE_LEAGUE",
+			CHAMPIONS_LEAGUE: "UEFA_CHAMPIONS_LEAGUE",
+			EUROPA_LEAGUE: "UEFA_EUROPA_LEAGUE",
+			EUROPA_CONFERENCE_LEAGUE: "UEFA_EUROPA_CONFERENCE_LEAGUE"
 		};
 
 		return legacyCodeMap[code] || code;
@@ -1427,7 +1430,13 @@ Module.register("MMM-MyTeams-LeagueTable", {
 				if (league === "WORLD_CUP_2026") {
 					this.currentSubTab = this.config.defaultWCSubTab || "A";
 				} else if (uefaLeagues.includes(league)) {
-					this.currentSubTab = "Table";
+					// For UEFA leagues, default to Playoff in February, otherwise Table
+					const month = new Date().getMonth(); // 1 = February
+					if (month === 1) {
+						this.currentSubTab = "Playoff";
+					} else {
+						this.currentSubTab = "Table";
+					}
 				} else {
 					this.currentSubTab = null;
 				}
@@ -1448,48 +1457,53 @@ Module.register("MMM-MyTeams-LeagueTable", {
 	// Handle back to top button click
 	handleBackToTopClick() {
 		const root = document.getElementById(`mtlt-${this.identifier}`);
+		// FIX: Handle both regular tables and UEFA split-view (which has multiple scroll containers)
 		const tableContainer = root
-			? root.querySelector(".league-body-scroll") || root.querySelector(".league-content-container")
+			? root.querySelector(".league-body-scroll") || 
+			  root.querySelector(".league-content-container")
 			: null;
+		
+		// For UEFA split-view, scroll all section containers to top
+		const uefaScrollContainers = root ? root.querySelectorAll(".uefa-section-scroll") : null;
+		
 		if (tableContainer) {
-			// Use smooth scrolling for a better user experience
+			// Regular table - single scroll container
 			tableContainer.scrollTo({
 				top: 0,
 				behavior: "smooth"
 			});
-
-			// Update button visibility after scrolling
-			setTimeout(() => {
-				this.updateScrollButtons();
-			}, 500);
+		} else if (uefaScrollContainers && uefaScrollContainers.length > 0) {
+			// UEFA split-view - scroll all sections to top
+			uefaScrollContainers.forEach(container => {
+				container.scrollTo({
+					top: 0,
+					behavior: "smooth"
+				});
+			});
 		}
+
+		// Update button visibility after scrolling
+		setTimeout(() => {
+			this.updateScrollButtons();
+		}, 500);
 	},
 
 	// Update scroll buttons visibility based on scroll position (log only on state change)
 	updateScrollButtons() {
 		const root = document.getElementById(`mtlt-${this.identifier}`);
+		// FIX: Also check for UEFA split-view scroll containers
 		const tableContainer = root
-			? root.querySelector(".league-body-scroll") || root.querySelector(".league-content-container")
+			? root.querySelector(".league-body-scroll") || 
+			  root.querySelector(".league-content-container") ||
+			  root.querySelector(".uefa-section-scroll")
 			: null;
 		const backToTopControls = root
 			? root.querySelector(".back-to-top-controls")
-			: null;
-		const toggleIcon = root
-			? root.querySelector(".LeagueTable-toggle-icon")
 			: null;
 
 		if (tableContainer && backToTopControls) {
 			const scrollTop = tableContainer.scrollTop;
 			const isScrolled = scrollTop > 30;
-
-			// Update toggle icon visibility (show when scrolled OR when module is hidden)
-			if (toggleIcon) {
-				if (isScrolled || this.isContentHidden) {
-					toggleIcon.classList.add("visible");
-				} else {
-					toggleIcon.classList.remove("visible");
-				}
-			}
 
 			// Footer is now always visible via CSS sticky behavior
 			// We just update the internal isScrolling state for other components
@@ -2092,11 +2106,11 @@ Module.register("MMM-MyTeams-LeagueTable", {
 
 				// Generate UEFA Knockout Tabs
 				const uefaKnockouts = [
-					{ id: "Playoff", label: "Playoff" },
-					{ id: "Rd16", label: "Rd16" },
-					{ id: "QF", label: "QF" },
-					{ id: "SF", label: "SF" },
-					{ id: "Final", label: "Final" }
+					{ id: "Playoff", label: this.translate("PLAYOFF") || "Playoff" },
+					{ id: "Rd16", label: this.translate("ROUND_OF_16") || "Rd16" },
+					{ id: "QF", label: this.translate("QUARTER_FINAL") || "QF" },
+					{ id: "SF", label: this.translate("SEMI_FINAL") || "SF" },
+					{ id: "Final", label: this.translate("FINAL") || "Final" }
 				];
 				uefaKnockouts.forEach((ko) => {
 					if (this.config.showUEFAnockouts.includes(ko.id)) {
@@ -2265,10 +2279,6 @@ Module.register("MMM-MyTeams-LeagueTable", {
 		backToTopControls.style.width = "100%";
 		backToTopControls.style.boxSizing = "border-box";
 
-		// Left side: Toggle icon
-		const toggleIcon = this._createToggleIcon();
-		backToTopControls.appendChild(toggleIcon);
-
 		// Center: Source information
 		if (currentData) {
 			const sourceContainer = document.createElement("div");
@@ -2303,7 +2313,10 @@ Module.register("MMM-MyTeams-LeagueTable", {
 
 		// Set up scroll event listener and initialize visibility
 		setTimeout(() => {
-			const tableContainer = wrapper.querySelector(".league-body-scroll") || wrapper.querySelector(".league-content-container");
+			// FIX: Also check for UEFA split-view scroll containers
+			const tableContainer = wrapper.querySelector(".league-body-scroll") || 
+								   wrapper.querySelector(".league-content-container") ||
+								   wrapper.querySelector(".uefa-section-scroll");
 			const backToTopControls = wrapper.querySelector(".back-to-top-controls");
 			if (tableContainer && backToTopControls) {
 				// Attach scroll event listener for visibility state and pause/resume behavior
@@ -2634,8 +2647,8 @@ Module.register("MMM-MyTeams-LeagueTable", {
 				this.updateDom(this.config.animationSpeed || 300);
 				return;
 			}
-			// If Rd32 complete, set Rd16; then QF; then SF; then TP; then Final
-			const order = ["Rd32", "Rd16", "QF", "SF", "TP", "Final"];
+			// If Playoff complete, set Rd16; then QF; then SF; then TP; then Final
+			const order = ["Playoff", "Rd32", "Rd16", "QF", "SF", "TP", "Final"];
 			for (let i = 0; i < order.length - 1; i++) {
 				if (this.currentSubTab === order[i] && this.isWorldCupStageComplete(order[i])) {
 					this.currentSubTab = order[i + 1];
@@ -2802,25 +2815,132 @@ Module.register("MMM-MyTeams-LeagueTable", {
 			const koKey = subTab.toLowerCase();
 			const knockoutFixtures = (currentData.knockouts && currentData.knockouts[koKey]) || [];
 
-			var title = document.createElement("div");
-			title.className = "wc-title";
-			title.textContent = `${subTab} Fixtures`;
-			fragment.appendChild(title);
-
-			if (knockoutFixtures.length > 0) {
-				fragment.appendChild(this.createFixturesTable(knockoutFixtures));
-			} else {
-				var msg = document.createElement("div");
-				msg.className = "dimmed small";
-				msg.style.textAlign = "center";
-				msg.style.marginTop = "10px";
-				if (this.isUEFAOffSeason()) {
-					msg.textContent = "awaiting competition draw";
-					msg.className = "bright small";
-				} else {
-					msg.textContent = `Fixtures not yet available for ${subTab}`;
+			// STAGED APPROACH (Task: UEFA 3-stage display for ALL knockout rounds)
+			// FIX: Apply to ALL UEFA knockout stages (Playoff, Rd16, QF, SF), not just Playoff
+			const isUEFA = ["UEFA_CHAMPIONS_LEAGUE", "UEFA_EUROPA_LEAGUE", "UEFA_EUROPA_CONFERENCE_LEAGUE", "UCL", "UEL", "ECL"].includes(this.currentLeague);
+			const uefaTwoLeggedStages = ["Playoff", "Rd16", "QF", "SF"];
+			
+			if (isUEFA && uefaTwoLeggedStages.includes(subTab) && currentData.uefaStages) {
+				const stages = currentData.uefaStages;
+				
+				// Map each stage to its typical month(s) for filtering
+				const stageMonthMap = {
+					"Playoff": ["02"],      // February
+					"Rd16": ["03"],         // March
+					"QF": ["04"],           // April
+					"SF": ["05"]            // May
+				};
+				
+				const allowedMonths = stageMonthMap[subTab] || [];
+				
+				// Filter fixtures to only show those in the appropriate month(s) for this stage
+				const filterStageFixtures = (fixtures) => {
+					return fixtures.filter(f => {
+						if (!f.date) return false;
+						const month = f.date.split("-")[1];
+						// Also check stage field to ensure we're showing the right fixtures
+						const fixtureStage = (f.stage || "").toUpperCase();
+						const currentStageUpper = subTab.toUpperCase();
+						
+						// Match by month OR by explicit stage field
+						return allowedMonths.includes(month) || fixtureStage === currentStageUpper;
+					});
+				};
+				
+				// Sort fixtures by date and time
+				const sortByDateTime = (a, b) => {
+					if (a.date !== b.date) return a.date.localeCompare(b.date);
+					const timeA = a.time || "00:00";
+					const timeB = b.time || "00:00";
+					return timeA.localeCompare(timeB);
+				};
+				
+				const stageResults = filterStageFixtures(stages.results || []);
+				const stageToday = filterStageFixtures(stages.today || []);
+				const stageFuture = filterStageFixtures(stages.future || []);
+				
+				stageResults.sort(sortByDateTime);
+				stageToday.sort(sortByDateTime);
+				stageFuture.sort(sortByDateTime);
+				
+				// FIX: Create split-view layout for Results and Future Fixtures
+				// Each section gets 50% height with independent scrolling
+				const splitViewContainer = document.createElement("div");
+				splitViewContainer.className = "uefa-split-view-container";
+				
+				// Section 1: Results (Finished and Live matches)
+				if (stageResults.length > 0) {
+					const resultsWrapper = document.createElement("div");
+					resultsWrapper.className = "uefa-section-wrapper results-section";
+					
+					const resultsTitle = document.createElement("div");
+					resultsTitle.className = "wc-title";
+					resultsTitle.textContent = "RESULTS";
+					resultsWrapper.appendChild(resultsTitle);
+					
+					const resultsScroll = document.createElement("div");
+					resultsScroll.className = "uefa-section-scroll";
+					resultsScroll.appendChild(this.createFixturesTable(stageResults, false));
+					resultsWrapper.appendChild(resultsScroll);
+					
+					splitViewContainer.appendChild(resultsWrapper);
 				}
-				fragment.appendChild(msg);
+				
+				// Section 2: Today's Fixtures (if any)
+				// Merge today's fixtures into Future section for cleaner layout
+				const allUpcoming = [...stageToday, ...stageFuture];
+				allUpcoming.sort(sortByDateTime);
+				
+				// Section 3: Future Fixtures (Upcoming matches including second legs)
+				if (allUpcoming.length > 0) {
+					const futureWrapper = document.createElement("div");
+					futureWrapper.className = "uefa-section-wrapper future-section";
+					
+					const futureTitle = document.createElement("div");
+					futureTitle.className = "wc-title";
+					futureTitle.textContent = "UPCOMING FIXTURES";
+					futureWrapper.appendChild(futureTitle);
+					
+					const futureScroll = document.createElement("div");
+					futureScroll.className = "uefa-section-scroll";
+					futureScroll.appendChild(this.createFixturesTable(allUpcoming, false));
+					futureWrapper.appendChild(futureScroll);
+					
+					splitViewContainer.appendChild(futureWrapper);
+				}
+				
+				// Only append split view if we have at least one section
+				if (stageResults.length > 0 || allUpcoming.length > 0) {
+					fragment.appendChild(splitViewContainer);
+				} else {
+					var msg = document.createElement("div");
+					msg.className = "dimmed small";
+					msg.style.textAlign = "center";
+					msg.textContent = `Fixtures not yet available for ${subTab}`;
+					fragment.appendChild(msg);
+				}
+			} else {
+				// Standard view for other stages/leagues
+				var title = document.createElement("div");
+				title.className = "wc-title";
+				title.textContent = `${subTab} Fixtures`;
+				fragment.appendChild(title);
+
+				if (knockoutFixtures.length > 0) {
+					fragment.appendChild(this.createFixturesTable(knockoutFixtures));
+				} else {
+					var msg = document.createElement("div");
+					msg.className = "dimmed small";
+					msg.style.textAlign = "center";
+					msg.style.marginTop = "10px";
+					if (this.isUEFAOffSeason()) {
+						msg.textContent = "awaiting competition draw";
+						msg.className = "bright small";
+					} else {
+						msg.textContent = `Fixtures not yet available for ${subTab}`;
+					}
+					fragment.appendChild(msg);
+				}
 			}
 			container.appendChild(fragment);
 			return container;
@@ -2876,7 +2996,7 @@ Module.register("MMM-MyTeams-LeagueTable", {
 	},
 
 	// ===== NEW: Create Fixtures Table =====
-	createFixturesTable(fixtures) {
+	createFixturesTable(fixtures, showHeader = true) {
 		const outerWrapper = document.createElement("div");
 		outerWrapper.className = "fixtures-container";
 		
@@ -2888,38 +3008,41 @@ Module.register("MMM-MyTeams-LeagueTable", {
 		// Check if we should use the enhanced scrollable view (World Cup or UEFA)
 		const uefaLeagues = ["UEFA_CHAMPIONS_LEAGUE", "UEFA_EUROPA_LEAGUE", "UEFA_EUROPA_CONFERENCE_LEAGUE", "UCL", "UEL", "ECL"];
 		const useEnhancedView = this.currentLeague === "WORLD_CUP_2026" || uefaLeagues.includes(this.currentLeague);
+		let columnNames = ["Date", "Time", "Home Team", "Home Logo", "Score", "Away Logo", "Away Team", "Venue"];
 
 		if (useEnhancedView) {
 			const wrapperV2 = document.createElement("div");
 			wrapperV2.className = "fixtures-wrapper-v2";
 
 			// 1. Header Table (Sticky/Fixed)
-			const headerContainer = document.createElement("div");
-			headerContainer.className = "fixtures-header-container";
-			const headerTable = document.createElement("table");
-			headerTable.className = "wc-fixtures-table-v2 header-only";
-			
-			const thead = document.createElement("thead");
-			const headerRow = document.createElement("tr");
-			// Order: Date, Time, Home Team, Home Logo, Score, Away Logo, Away Team, Venue
-			const columnNames = ["Date", "Time", "Home Team", "Home Logo", "Score", "Away Logo", "Away Team", "Venue"];
-			columnNames.forEach(col => {
-				const th = document.createElement("th");
-				th.textContent = col;
-				th.className = `fixture-header-${col.toLowerCase().replace(/\s+/g, "-")}`;
-				headerRow.appendChild(th);
-			});
-			thead.appendChild(headerRow);
-			headerTable.appendChild(thead);
-			headerContainer.appendChild(headerTable);
-			wrapperV2.appendChild(headerContainer);
+			if (showHeader) {
+				const headerContainer = document.createElement("div");
+				headerContainer.className = "fixtures-header-container";
+				const headerTable = document.createElement("table");
+				headerTable.className = "wc-fixtures-table-v2 header-only";
+				
+				const thead = document.createElement("thead");
+				const headerRow = document.createElement("tr");
+				// Order: Date, Time, Home Team, Home Logo, Score, Away Logo, Away Team, Venue
+				columnNames.forEach(col => {
+					const th = document.createElement("th");
+					th.textContent = col;
+					th.className = `fixture-header-${col.toLowerCase().replace(/\s+/g, "-")}`;
+					headerRow.appendChild(th);
+				});
+				thead.appendChild(headerRow);
+				headerTable.appendChild(thead);
+				headerContainer.appendChild(headerTable);
+				wrapperV2.appendChild(headerContainer);
+			}
 
 			// 2. Body Scroll Container
 			const scrollContainer = document.createElement("div");
 			scrollContainer.className = "fixtures-body-scroll";
 			
-			// Task 3 & 4: Restrict height for Playoff and Rd32
-			if (this.currentSubTab === "Playoff" || this.currentSubTab === "Rd32") {
+			// Apply restricted-height to all UEFA knockout stages and World Cup knockout rounds
+			const restrictedStages = ["Playoff", "Rd32", "Rd16", "QF", "SF", "TP", "Final"];
+			if (restrictedStages.includes(this.currentSubTab)) {
 				scrollContainer.classList.add("restricted-height");
 			}
 
@@ -2929,6 +3052,8 @@ Module.register("MMM-MyTeams-LeagueTable", {
 
 			let foundCurrent = false;
 			const now = Date.now();
+			// Use local date in YYYY-MM-DD format for comparison
+			const today = new Date().toLocaleDateString("en-CA"); 
 
 			fixtures.forEach((fix, index) => {
 				const row = document.createElement("tr");
@@ -2943,21 +3068,22 @@ Module.register("MMM-MyTeams-LeagueTable", {
 					row.classList.add("upcoming");
 				}
 
-				// Task 3 & 4: Special auto-scroll logic for Playoff/Rd32
-				// Scroll to second leg (index 8+) if ALL first leg matches are finished
-				if ((this.currentSubTab === "Playoff" || this.currentSubTab === "Rd32") && !foundCurrent) {
-					// Check if all of the first 8 fixtures are finished
-					const firstEightFinished = fixtures.slice(0, 8).every(f => f.status === "FT" || f.status === "PEN" || f.status === "AET");
-					if (firstEightFinished && index === 8) {
+				// Special auto-scroll logic for two-legged knockout rounds
+				const twoLeggedMap = { Playoff: 8, Rd32: 8, Rd16: 8, QF: 4, SF: 2 };
+				const firstLegCount = twoLeggedMap[this.currentSubTab];
+				if (firstLegCount && !foundCurrent && fixtures.length >= firstLegCount * 2) {
+					// Check if all of the first leg matches are finished
+					const firstLegsFinished = fixtures.slice(0, firstLegCount).every(f => f.status === "FT" || f.status === "PEN" || f.status === "AET");
+					if (firstLegsFinished && index === firstLegCount) {
 						row.classList.add("current-fixture");
 						foundCurrent = true;
 					}
 				}
 
 				// Standard Identification of current fixture for auto-scroll
-				// Priority: 1. Live matches, 2. First upcoming match
+				// Priority: 1. Live matches, 2. Today's matches, 3. First upcoming match
 				if (!foundCurrent) {
-					if (fix.live || (fix.timestamp && fix.timestamp > now)) {
+					if (fix.live || fix.date === today || (fix.timestamp && fix.timestamp > now)) {
 						row.classList.add("current-fixture");
 						foundCurrent = true;
 					}
@@ -2989,7 +3115,7 @@ Module.register("MMM-MyTeams-LeagueTable", {
 		table.className = "wc-fixtures-table-v2";
 		const thead = document.createElement("thead");
 		const headerRow = document.createElement("tr");
-		const columnNames = ["Date", "Time", "Home Team", "Home Logo", "Score", "Away Logo", "Away Team", "Location"];
+		columnNames = ["Date", "Time", "Home Team", "Home Logo", "Score", "Away Logo", "Away Team", "Location"];
 		columnNames.forEach(col => {
 			const th = document.createElement("th");
 			th.textContent = col;
@@ -3040,18 +3166,9 @@ Module.register("MMM-MyTeams-LeagueTable", {
 			} else if (col === "Time") {
 				cell.className = "fixture-time-v2";
 				
-				// Task: Fix 'vs' in Time column. If there's a score or match is live/finished, hide the time column content
-				const hasScore = fix.score && fix.score !== "vs";
-				const isPlayed = fix.live || (fix.status && ["FT", "AET", "PEN"].includes(fix.status));
-				
-				if (hasScore || isPlayed) {
-					cell.textContent = "";
-				} else if (fix.timestamp) {
-					const d = new Date(fix.timestamp);
-					cell.textContent = d.toLocaleTimeString(this.config.language || "en", { hour: "2-digit", minute: "2-digit", hour12: false });
-				} else {
-					cell.textContent = fix.time || "TBD";
-				}
+				// Time column is always blank - time is shown in Score column for upcoming matches
+				// This prevents redundancy and follows the new design pattern
+				cell.textContent = "";
 			} else if (col === "Home Team") {
 				cell.className = "fixture-home-team-v2";
 				cell.textContent = this.translateTeamName(fix.homeTeam);
@@ -3073,25 +3190,119 @@ Module.register("MMM-MyTeams-LeagueTable", {
 				const mainScore = document.createElement("div");
 				mainScore.className = "main-score-v2";
 				if (fix.live) mainScore.classList.add("bright");
-				let scoreText = fix.score || "vs";
-				if (scoreText === "vs" && fix.live) scoreText = "0 - 0";
+				
+				// Determine if fixture is upcoming (not played yet) or live/finished
+				// FIX: More robust upcoming detection with multiple checks
+				const status = (fix.status || "").toUpperCase();
+				const isFinished = status === "FT" || status === "AET" || status === "PEN";
+				const isLive = fix.live === true || /\d+'|HT|LIVE/i.test(status);
+				
+				// A fixture is upcoming if ALL of the following are true:
+				// 1. NOT live (no live flag and no live status)
+				// 2. NOT finished (no FT/AET/PEN status)
+				// 3. Either has no scores OR has aggregate score but no actual match score
+				const hasMatchScore = fix.homeScore !== undefined && fix.awayScore !== undefined;
+				const isUpcoming = !isLive && !isFinished;
+				
+				// Additional safety: if fixture has time but no status, it's definitely upcoming
+				const hasKickoffTime = fix.time && fix.time !== "vs" && /\d{1,2}:\d{2}/.test(fix.time);
+				const definitelyUpcoming = hasKickoffTime && !status && !hasMatchScore;
+				
+				// DEBUG: Log ALL fixtures to diagnose issues
+				console.log(`[FIXTURE-DISPLAY] "${fix.homeTeam}" vs "${fix.awayTeam}" | date=${fix.date} | time=${fix.time} | live=${fix.live} | status="${fix.status || 'none'}" | score="${fix.score || 'none'}" | homeScore=${fix.homeScore} | awayScore=${fix.awayScore} | hasMatchScore=${hasMatchScore} | isUpcoming=${isUpcoming} | isLive=${isLive} | isFinished=${isFinished} | aggregateScore="${fix.aggregateScore || 'none'}"`);
+				
+				let scoreText = "";
+				
+				// For upcoming fixtures: ALWAYS show kickoff time (never scores)
+				if (isUpcoming || definitelyUpcoming) {
+					scoreText = fix.time || "TBD";
+					console.log(`[FIXTURE-DISPLAY] Upcoming fixture - showing time: "${scoreText}"`);
+				} 
+				// For live fixtures: show current match score
+				else if (isLive) {
+					// Use match score if available, otherwise default to "0 - 0"
+					if (hasMatchScore) {
+						scoreText = `${fix.homeScore} - ${fix.awayScore}`;
+					} else {
+						scoreText = fix.score || "0 - 0";
+					}
+					console.log(`[FIXTURE-DISPLAY] Live fixture - showing score: "${scoreText}"`);
+				}
+				// For finished fixtures: show final score
+				else if (isFinished) {
+					if (hasMatchScore) {
+						scoreText = `${fix.homeScore} - ${fix.awayScore}`;
+					} else {
+						scoreText = fix.score || "vs";
+					}
+					console.log(`[FIXTURE-DISPLAY] Finished fixture - showing score: "${scoreText}"`);
+				}
+				// Fallback: if we can't determine state, prefer time over score
+				else {
+					if (hasKickoffTime) {
+						scoreText = fix.time;
+						console.log(`[FIXTURE-DISPLAY] Unknown state but has time - showing time: "${scoreText}"`);
+					} else {
+						scoreText = fix.score || "vs";
+						console.log(`[FIXTURE-DISPLAY] Unknown state - showing score: "${scoreText}"`);
+					}
+				}
+				
 				mainScore.textContent = scoreText;
 				scoreWrapper.appendChild(mainScore);
 
 				// Show status (FT, HT, 85', etc) below the score if live or finished
-				if (fix.status && fix.status !== "LIVE") {
+				// FIX: NEVER show status for upcoming fixtures (even if status field is set by mistake)
+				if (fix.status && !isUpcoming && !definitelyUpcoming) {
 					const statusDiv = document.createElement("div");
 					statusDiv.className = "fixture-status-tag-v2";
-					if (fix.live) statusDiv.classList.add("live-tag");
-					statusDiv.textContent = fix.status;
+					if (isLive) statusDiv.classList.add("live-tag");
+					
+					// Format live minutes as "90+x" if over 90 minutes
+					let displayStatus = fix.status;
+					const minuteMatch = fix.status.match(/^(\d+)'$/);
+					if (minuteMatch) {
+						const minutes = parseInt(minuteMatch[1]);
+						if (minutes > 90) {
+							displayStatus = `90+${minutes - 90}'`;
+						}
+					}
+					statusDiv.textContent = displayStatus;
 					scoreWrapper.appendChild(statusDiv);
+					console.log(`[FIXTURE-DISPLAY] Showing status tag: "${displayStatus}"`);
+				} else if (isUpcoming || definitelyUpcoming) {
+					console.log(`[FIXTURE-DISPLAY] Upcoming fixture - NOT showing status`);
 				}
 
+				// FIX: Show aggregate score for second leg fixtures in brackets below the time/score
+				// For upcoming second leg fixtures: shows below the kickoff time
+				// For live/finished second leg: shows below the current match score
 				if (fix.aggregateScore) {
 					const aggScore = document.createElement("div");
 					aggScore.className = "aggregate-score-v2";
-					aggScore.textContent = `(${fix.aggregateScore})`;
+					
+					// For upcoming fixtures, make aggregate score more prominent
+					if (isUpcoming) {
+						aggScore.classList.add("upcoming-agg");
+					}
+					
+					aggScore.textContent = `(agg ${fix.aggregateScore})`;
 					scoreWrapper.appendChild(aggScore);
+				}
+				// Fallback: If fixture is marked as second leg but aggregateScore is missing,
+				// try to calculate it from first leg data if available
+				else if (fix.isSecondLeg && fix.firstLegFixture) {
+					const firstLeg = fix.firstLegFixture;
+					if (firstLeg.homeScore !== undefined && firstLeg.awayScore !== undefined) {
+						const aggScore = document.createElement("div");
+						aggScore.className = "aggregate-score-v2";
+						if (isUpcoming) {
+							aggScore.classList.add("upcoming-agg");
+						}
+						// First leg score reversed for aggregate (away team becomes home in 2nd leg)
+						aggScore.textContent = `(agg ${firstLeg.awayScore}-${firstLeg.homeScore})`;
+						scoreWrapper.appendChild(aggScore);
+					}
 				}
 				cell.appendChild(scoreWrapper);
 			} else if (col === "Away Team") {

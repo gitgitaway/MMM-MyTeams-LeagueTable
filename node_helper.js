@@ -106,6 +106,18 @@ module.exports = NodeHelper.create({
 			});
 		}
 
+		// 5. Resolve logos for uefaStages (Task: Staged Approach)
+		if (data.uefaStages) {
+			["results", "today", "future"].forEach(sKey => {
+				if (Array.isArray(data.uefaStages[sKey])) {
+					data.uefaStages[sKey].forEach(fixture => {
+						if (fixture.homeTeam) fixture.homeLogo = getCachedLogo(fixture.homeTeam);
+						if (fixture.awayTeam) fixture.awayLogo = getCachedLogo(fixture.awayTeam);
+					});
+				}
+			});
+		}
+
 		return data;
 	},
 
@@ -143,15 +155,24 @@ module.exports = NodeHelper.create({
 	socketNotificationReceived(notification, payload) {
 		if (notification === "GET_LEAGUE_DATA") {
 			this.config = payload;
+			// Propagate config to parsers
+			if (this.bbcParser) this.bbcParser.setConfig(payload);
+			if (this.fifaParser) this.fifaParser.setConfig(payload);
+			
 			this.sendDebugInfo("Received request for " + payload.leagueType); this.fetchLeagueData(payload.url, payload.leagueType, payload);
 		} else if (notification === "CACHE_GET_STATS") {
 			const stats = this.cache.getStats();
 			this.sendSocketNotification("CACHE_STATS", stats);
 		} else if (notification === "CACHE_CLEAR_ALL") {
 			const cleared = this.cache.clearAll();
+			
+			// Also clear in-memory caches
+			this.fixtureCache = {};
+			this.resolvedLogoCache.clear();
+			
 			this.sendSocketNotification("CACHE_CLEARED", { cleared: cleared });
 			console.log(
-				` MMM-MyTeams-LeagueTable: Cache cleared (${cleared} files removed)`
+				` MMM-MyTeams-LeagueTable: All caches cleared (${cleared} disk files removed, fixture cache reset, logo cache reset)`
 			);
 		} else if (notification === "CACHE_CLEANUP") {
 			const deleted = this.cache.cleanupExpired();
@@ -321,6 +342,7 @@ module.exports = NodeHelper.create({
 			// Handle Mock Data specifically for World Cup
 			if (useMockData) {
 				if (debug) console.log(" MMM-MyTeams-LeagueTable: [MOCK MODE] Generating World Cup mock data");
+				this.fifaParser.setConfig(config);
 				const mockData = this.fifaParser.generateMockWC2026Data();
 				mockData.fromCache = false;
 				mockData.isMock = true;
@@ -337,6 +359,7 @@ module.exports = NodeHelper.create({
 					);
 				}
 				cachedData.fromCache = true;
+				this.fifaParser.setConfig(config);
 				const resolvedCached = this.fifaParser.resolveWCPlaceholders(cachedData);
 				this.sendSocketNotification("LEAGUE_DATA", this.resolveLogos(resolvedCached, config));
 			}
@@ -349,6 +372,7 @@ module.exports = NodeHelper.create({
 			]);
 
 			// Parse groups from tables page
+			this.fifaParser.setConfig(config);
 			const groups = this.fifaParser.parseFIFAWorldCupTablesBBC(tablesHtml);
 			// Parse fixtures from fixtures page
 			let data = this.fifaParser.parseFIFAWorldCupData("", fixturesHtml);
@@ -407,84 +431,85 @@ module.exports = NodeHelper.create({
 			const now = new Date();
 			const currentYear = now.getFullYear();
 			const currentMonth = now.getMonth(); // 0-11
-			
 			const formatMonth = (y, m) => `${y}-${String(m + 1).padStart(2, "0")}`;
 			
 			const monthsToFetch = [];
+			const cachedMonthParts = [];
 			
 			for (let i = 0; i <= 4; i++) {
 				const d = new Date(currentYear, currentMonth + i, 1);
 				const monthStr = formatMonth(d.getFullYear(), d.getMonth());
-				
-				// PRIORITY QUEUE LOGIC (P-03):
-				// 1. Current month: Always fetch (handled by standard module interval)
-				// 2. Future months: Only fetch once per 24 hours
-				const cacheKey = `${leagueType}_${monthStr}`;
-				const lastFetch = this.fixtureCache[cacheKey] ? this.fixtureCache[cacheKey].timestamp : 0;
 				const isFuture = i > 0;
 				const oneDay = 24 * 60 * 60 * 1000;
 				
+				// Check if we need to fetch this month's variants
+				const baseKey = `${leagueType}_${monthStr}_base`;
+				const resKey = `${leagueType}_${monthStr}_results`;
+				const lastFetch = Math.min(
+					this.fixtureCache[baseKey]?.timestamp || 0,
+					this.fixtureCache[resKey]?.timestamp || 0
+				);
+
 				if (!isFuture || (Date.now() - lastFetch > oneDay)) {
 					monthsToFetch.push(monthStr);
-				} else if (this.fixtureCache[cacheKey].html) {
-					if (config.debug) console.log(` MMM-MyTeams-LeagueTable: Using cached fixtures for ${monthStr} (fetched ${Math.round((Date.now() - lastFetch) / 3600000)}h ago)`);
+				} else {
+					// Use cached parts
+					if (this.fixtureCache[baseKey]) cachedMonthParts.push(this.fixtureCache[baseKey].html);
+					if (this.fixtureCache[resKey]) cachedMonthParts.push(this.fixtureCache[resKey].html);
+					if (config.debug) console.log(` MMM-MyTeams-LeagueTable: Using cached variants for ${monthStr}`);
 				}
 			}
 
-			// Create promises with individual catch to handle 404s on future months
 			const fixtureFetchPromises = [
-				this.fetchWebPage(urls.fixtures).catch(() => {
-					console.warn(` MMM-MyTeams-LeagueTable: Base fixtures fetch failed`);
-					return "";
-				})
+				this.fetchWebPage(urls.fixtures).then(html => {
+					// Also cache the base URL for current month
+					const curMonthStr = formatMonth(currentYear, currentMonth);
+					this.fixtureCache[`${leagueType}_${curMonthStr}_base`] = { html, timestamp: Date.now() };
+					return html;
+				}).catch(() => "")
 			];
 			
 			monthsToFetch.forEach(month => {
-				fixtureFetchPromises.push(
-					this.fetchWebPage(`${urls.fixtures}/${month}`).then(html => {
-						// Store in memory cache for P-03 logic
-						const cacheKey = `${leagueType}_${month}`;
-						this.fixtureCache[cacheKey] = {
-							timestamp: Date.now(),
-							html: html
-						};
-						return html;
-					}).catch(() => {
-						// Don't warn for future months as they might not exist yet
-						return "";
-					})
-				);
+				const baseMonthlyUrl = `${urls.fixtures}/${month}`;
+				const isCurrentMonth = month === formatMonth(currentYear, currentMonth);
+				
+				// STAGED APPROACH: Results and Today/Future base URLs
+				const variants = [
+					{ url: baseMonthlyUrl, type: "base" },
+					{ url: `${baseMonthlyUrl}?filter=results`, type: "results" }
+				];
+
+				variants.forEach(variant => {
+					// Avoid redundant fetch of base URL for current month (already in index 0)
+					if (isCurrentMonth && variant.type === "base") return;
+
+					fixtureFetchPromises.push(
+						this.fetchWebPage(variant.url).then(html => {
+							const cacheKey = `${leagueType}_${month}_${variant.type}`;
+							this.fixtureCache[cacheKey] = { html, timestamp: Date.now() };
+							return html;
+						}).catch(() => "")
+					);
+				});
+				
+				// Legacy /fixtures/ fallback
+				const legacyUrl = urls.fixtures.replace("scores-fixtures", "fixtures") + "/" + month;
+				fixtureFetchPromises.push(this.fetchWebPage(legacyUrl).catch(() => ""));
 			});
 
-			// Fetch BBC table and all relevant fixture pages in parallel
 			const results = await Promise.all([
-				this.fetchWebPage(urls.table).catch(err => {
-					console.error(` MMM-MyTeams-LeagueTable: Table fetch failed for ${leagueType}: ${err.message}`);
-					return ""; // Return empty string instead of throwing, so fixtures can still be parsed
-				}),
+				this.fetchWebPage(urls.table).catch(() => ""),
 				...fixtureFetchPromises
 			]);
 
 			const tablesHtml = results[0];
 			const fetchedFixturesHtml = results.slice(1);
-			
-			// Re-inject cached future months that we skipped fetching
-			const allFixturesHtmlParts = [...fetchedFixturesHtml];
-			for (let i = 1; i <= 4; i++) {
-				const d = new Date(currentYear, currentMonth + i, 1);
-				const monthStr = formatMonth(d.getFullYear(), d.getMonth());
-				const cacheKey = `${leagueType}_${monthStr}`;
-				
-				if (!monthsToFetch.includes(monthStr) && this.fixtureCache[cacheKey]) {
-					allFixturesHtmlParts.push(this.fixtureCache[cacheKey].html);
-				}
-			}
+			const allFixturesHtmlParts = [...fetchedFixturesHtml, ...cachedMonthParts];
 
-			// Combine all fixture pages into a single string for parsing
-			const combinedFixturesHtml = allFixturesHtmlParts.join("\n");
+			if (config.debug) console.log(` MMM-MyTeams-LeagueTable: Parsing ${leagueType} with ${allFixturesHtmlParts.length} HTML parts`);
 
-			// Parse data
-			const leagueData = this.bbcParser.parseUEFACompetitionData(tablesHtml, combinedFixturesHtml, leagueType);
+			this.bbcParser.setConfig(config);
+			const leagueData = this.bbcParser.parseUEFACompetitionData(tablesHtml, allFixturesHtmlParts, leagueType);
 
 			// Logic update: Accept data if either teams OR fixtures are found
 			const hasTeams = leagueData && leagueData.teams && leagueData.teams.length > 0;

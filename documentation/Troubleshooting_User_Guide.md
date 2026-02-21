@@ -40,6 +40,35 @@ This guide helps you resolve common issues with the **MMM-MyTeams-LeagueTable** 
     *   This is an automated safety feature. It will disappear once a live fetch succeeds.
     *   If it persists, check if the BBC Sport URL for that league is accessible from your network.
 
+### 6. Duplicate Fixtures Appearing in UEFA Competitions
+*   **Status**: ✅ **FIXED in v1.8.3** (2026-02-19)
+*   **Cause**: BBC Sport HTML sometimes contains truncated or corrupted team names (e.g., "Ferencv" instead of "Ferencváros", "ystok" instead of "Jagiellonia Białystok")
+*   **Solution**: 
+    *   The module now includes fuzzy matching deduplication that automatically detects and removes duplicates
+    *   Deduplication prioritizes the version with longer (more complete) team names
+    *   Check the browser console for `[BBCParser-DEDUP]` logs showing which duplicates were removed
+
+### 7. Same Team Playing Against Itself (e.g., "Dortmund vs Borussia Dortmund")
+*   **Status**: ✅ **FIXED in v1.8.3** (2026-02-19)
+*   **Cause**: BBC Sport occasionally serves corrupted fixture data with the same team twice
+*   **Solution**: 
+    *   The module now automatically detects corrupted fixtures and repairs them using counterpart fixtures from the two-legged tie
+    *   Check the browser console for `[BBCParser-CORRUPTION]` logs showing repairs (e.g., "Fixed first leg: Borussia Dortmund vs Atalanta")
+
+### 8. Upcoming Fixtures Showing "0-0" Instead of Kick-off Time
+*   **Status**: ✅ **FIXED in v1.8.3** (2026-02-19)
+*   **Cause**: BBC Sport sometimes sends 0-0 scores for scheduled fixtures before kickoff
+*   **Solution**: 
+    *   The module now ignores score data for non-live fixtures and displays kick-off time (e.g., "17:45", "20:00") instead
+    *   Once matches go live, the display automatically switches to showing actual scores
+    *   Check the browser console for `[FIXTURE-DEBUG]` logs showing fixture status and display decisions for today's matches
+
+### 9. Missing Second Leg Fixtures in UEFA Playoff Tab
+*   **Status**: ✅ **FIXED in v1.8.3** (2026-02-19)
+*   **Solution**: 
+    *   The module now displays three sections in UEFA Playoff tabs: "RESULTS" (completed), "TODAYS FIXTURES" (live/today), and "UPCOMING FIXTURES" (future, including Feb 26th second legs)
+    *   All fixtures are sorted chronologically within each section
+
 ## Diagnostic Steps
 
 1.  **Enable Debug Mode**: Set `debug: true` in your module configuration. This will output detailed logs to the browser console and the Node.js console.

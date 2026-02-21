@@ -11,9 +11,20 @@ A comprehensive **MagicMirror²** module that displays football league standings
 
 | | | |
 |:---:|:---:|:---:|
-| [![Screenshot 1](./screenshots/screenshot1.png)](./screenshots/screenshot1.png) | [![Screenshot 2](./screenshots/screenshot2.png)](./screenshots/screenshot2.png) | [![Screenshot 3](./screenshots/screenshot3.png)](./screenshots/screenshot3.png) |
-| [![Screenshot 4](./screenshots/screenshot4.png)](./screenshots/screenshot4.png) | [![Screenshot 5](./screenshots/screenshot5.png)](./screenshots/screenshot5.png) | [![Screenshot 6](./screenshots/screenshot6.png)](./screenshots/screenshot6.png) |
-| [![Screenshot 7](./screenshots/screenshot7.png)](./screenshots/screenshot7.png) | | |
+| [![Screenshot 1](./screenshots/screenshot1.png)] | [![Screenshot 2](./screenshots/screenshot2.png)] | [![Screenshot 3](./screenshots/screenshot3.png)] |
+| [![Screenshot 4](./screenshots/screenshot4.png)] | [![Screenshot 5](./screenshots/screenshot5.png)] | [![Screenshot 6](./screenshots/screenshot6.png)] |
+| [![Screenshot 7](./screenshots/screenshot7.png)] | | |
+
+## 🆕 Recent Updates (v1.8.4 - 2026-02-21)
+
+**UEFA Display & Data Quality Enhancements:**
+- ✅ **Equal-height split view** - Results and Future Fixtures sections now display exactly 4 fixtures each without scrolling
+- ✅ **Fixed partial team names** - "Newcastle" → "Newcastle United", "Atletico" → "Atletico Madrid", "Leverkusen" → "Bayer Leverkusen"
+- ✅ **Enhanced corruption detection** - Properly identifies and repairs fixtures like "Dortmund vs Borussia Dortmund"
+- ✅ **Improved team name matching** - Less aggressive normalization preserves team identity while detecting duplicates
+- 🎨 **Optimized fixture display** - Reduced header/row padding to maximize visible content
+
+See [CHANGELOG.md](./CHANGELOG.md) for complete details.
 
 ## 🏆 Key Features
 
