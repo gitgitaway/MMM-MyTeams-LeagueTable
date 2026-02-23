@@ -260,10 +260,13 @@ class SharedRequestManager {
 			const domainLastRequest = this.domainLastRequest.get(domain) || 0;
 			const timeSinceDomainRequest = Date.now() - domainLastRequest;
 			if (timeSinceDomainRequest < this.config.minDomainInterval) {
-				const baseDelay = this.config.minDomainInterval - timeSinceDomainRequest;
+				const baseDelay =
+					this.config.minDomainInterval - timeSinceDomainRequest;
 				const jitter = baseDelay * this.config.jitterFactor * Math.random();
 				const delay = Math.round(baseDelay + jitter);
-				this.log(`Domain throttle (${domain}): waiting ${delay}ms (including ${Math.round(jitter)}ms jitter)`);
+				this.log(
+					`Domain throttle (${domain}): waiting ${delay}ms (including ${Math.round(jitter)}ms jitter)`
+				);
 				await this.sleep(delay);
 			}
 
@@ -308,7 +311,8 @@ class SharedRequestManager {
 		// Inject random User-Agent if not already present
 		if (!options.headers) options.headers = {};
 		if (!options.headers["User-Agent"]) {
-			const randomUA = this.userAgents[Math.floor(Math.random() * this.userAgents.length)];
+			const randomUA =
+				this.userAgents[Math.floor(Math.random() * this.userAgents.length)];
 			options.headers["User-Agent"] = randomUA;
 		}
 

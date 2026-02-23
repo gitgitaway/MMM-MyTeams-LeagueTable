@@ -1606,3 +1606,772 @@
     }
 }
 
+/* ==========================================
+   HIGH CONTRAST MODE SUPPORT (A11Y-03)
+   WCAG 2.1 Level AAA: 7:1 contrast ratio
+   ========================================== */
+
+@media (prefers-contrast: high) {
+    :root {
+        /* High contrast color palette - 7:1 minimum contrast */
+        --hc-text-primary: #FFFFFF;
+        --hc-text-secondary: #FFFF00;  /* Yellow for emphasis */
+        --hc-background: #000000;
+        --hc-border: #FFFFFF;
+        --hc-accent: #00FF00;  /* Green for positive indicators */
+        --hc-alert: #FF0000;   /* Red for negative indicators */
+        --hc-neutral: #CCCCCC;
+    }
+
+    .spfl-league-table {
+        background-color: var(--hc-background);
+        color: var(--hc-text-primary);
+        border: 2px solid var(--hc-border);
+    }
+
+    /* Headers and titles */
+    .league-title,
+    .league-header-container,
+    .wc-subtabs-container,
+    .league-buttons-container {
+        color: var(--hc-text-primary);
+        border-color: var(--hc-border);
+    }
+
+    /* Tables */
+    .standings-table,
+    .table-row,
+    .table-header-row {
+        border: 2px solid var(--hc-border);
+        background-color: var(--hc-background);
+    }
+
+    .table-row:nth-child(even) {
+        background-color: #111111;
+    }
+
+    .table-row:hover {
+        background-color: #222222;
+        border: 2px solid var(--hc-text-secondary);
+    }
+
+    /* Table cells */
+    .table-row td,
+    .table-header-row th {
+        color: var(--hc-text-primary);
+        border: 1px solid var(--hc-border);
+    }
+
+    /* Form indicators with high contrast */
+    .form-token {
+        border: 2px solid var(--hc-border);
+        font-weight: bold;
+    }
+
+    .form-win,
+    .form-token.W {
+        background-color: var(--hc-accent) !important;
+        color: var(--hc-background) !important;
+    }
+
+    .form-loss,
+    .form-token.L {
+        background-color: var(--hc-alert) !important;
+        color: var(--hc-text-primary) !important;
+    }
+
+    .form-draw,
+    .form-token.D {
+        background-color: var(--hc-text-secondary) !important;
+        color: var(--hc-background) !important;
+    }
+
+    /* Buttons */
+    button,
+    .league-btn,
+    .wc-btn,
+    .refresh-btn,
+    .pin-btn,
+    .clear-cache-btn {
+        background-color: var(--hc-background);
+        color: var(--hc-text-primary);
+        border: 2px solid var(--hc-border);
+    }
+
+    button:hover,
+    .league-btn:hover,
+    .wc-btn:hover {
+        background-color: var(--hc-text-primary);
+        color: var(--hc-background);
+    }
+
+    button.active,
+    .league-btn.active,
+    .wc-btn.active {
+        background-color: var(--hc-text-secondary);
+        color: var(--hc-background);
+        border: 3px solid var(--hc-border);
+    }
+
+    /* Live indicators */
+    .live-indicator,
+    .live-tag,
+    .fixture-status-tag-v2.live-tag {
+        background-color: var(--hc-alert) !important;
+        color: var(--hc-text-primary) !important;
+        border: 2px solid var(--hc-border);
+    }
+
+    /* Position indicators */
+    .position-change-up {
+        color: var(--hc-accent);
+    }
+
+    .position-change-down {
+        color: var(--hc-alert);
+    }
+
+    /* Stale data warning */
+    .stale-badge,
+    .stale-warning {
+        background-color: var(--hc-text-secondary);
+        color: var(--hc-background);
+        border: 2px solid var(--hc-border);
+    }
+
+    /* Loading and error states */
+    .loading-state,
+    .error-state,
+    .retry-state {
+        color: var(--hc-text-primary);
+        background-color: var(--hc-background);
+        border: 2px solid var(--hc-border);
+    }
+
+    .error-icon {
+        color: var(--hc-alert);
+    }
+
+    /* Ensure all text meets contrast requirements */
+    .dimmed {
+        color: var(--hc-neutral) !important;
+    }
+
+    /* Team logos - add border for visibility */
+    .team-logo,
+    .fixture-logo,
+    .fixture-logo-v2 {
+        border: 1px solid var(--hc-border);
+        background-color: var(--hc-text-primary);
+        padding: 2px;
+    }
+
+    /* Highlighted teams */
+    .highlighted-team {
+        background-color: #1a1a1a;
+        border: 3px solid var(--hc-text-secondary);
+    }
+
+    /* Position-based coloring with high contrast */
+    .first-place {
+        background-color: #003300;
+        border-left: 4px solid var(--hc-accent);
+    }
+
+    .uefa-zone {
+        background-color: #000033;
+        border-left: 4px solid #0066FF;
+    }
+
+    .relegation-zone {
+        background-color: #330000;
+        border-left: 4px solid var(--hc-alert);
+    }
+}
+
+/* Optional: Support for Windows High Contrast Mode */
+@media (forced-colors: active) {
+    .spfl-league-table {
+        forced-color-adjust: none;
+        border: 2px solid CanvasText;
+    }
+
+    .table-row,
+    button {
+        border: 1px solid CanvasText;
+    }
+
+    .form-token {
+        border: 2px solid CanvasText;
+        font-weight: bold;
+    }
+}
+
+/* ==========================================
+   SKELETON LOADING STATES (DES-05)
+   Improves perceived performance
+   ========================================== */
+
+.skeleton-loader {
+    width: 100%;
+    padding: 10px 0;
+}
+
+.skeleton-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.skeleton-row {
+    display: flex;
+    gap: 10px;
+    padding: 8px 5px;
+    align-items: center;
+}
+
+.skeleton-cell {
+    background: linear-gradient(
+        90deg,
+        rgba(255, 255, 255, 0.05) 0%,
+        rgba(255, 255, 255, 0.15) 50%,
+        rgba(255, 255, 255, 0.05) 100%
+    );
+    background-size: 200% 100%;
+    animation: shimmer 1.5s infinite;
+    border-radius: 4px;
+    height: 16px;
+}
+
+/* Different widths for different columns */
+.skeleton-cell.position {
+    width: 30px;
+}
+
+.skeleton-cell.logo {
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+}
+
+.skeleton-cell.team {
+    flex: 1;
+    max-width: 150px;
+}
+
+.skeleton-cell.stat {
+    width: 30px;
+}
+
+.skeleton-cell.form {
+    width: 120px;
+}
+
+@keyframes shimmer {
+    0% {
+        background-position: -200% 0;
+    }
+    100% {
+        background-position: 200% 0;
+    }
+}
+
+/* Skeleton header */
+.skeleton-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+}
+
+.skeleton-title {
+    background: linear-gradient(
+        90deg,
+        rgba(255, 255, 255, 0.1) 0%,
+        rgba(255, 255, 255, 0.2) 50%,
+        rgba(255, 255, 255, 0.1) 100%
+    );
+    background-size: 200% 100%;
+    animation: shimmer 1.5s infinite;
+    width: 200px;
+    height: 24px;
+    border-radius: 4px;
+}
+
+.skeleton-meta {
+    background: linear-gradient(
+        90deg,
+        rgba(255, 255, 255, 0.05) 0%,
+        rgba(255, 255, 255, 0.15) 50%,
+        rgba(255, 255, 255, 0.05) 100%
+    );
+    background-size: 200% 100%;
+    animation: shimmer 1.5s infinite;
+    width: 120px;
+    height: 14px;
+    border-radius: 4px;
+}
+
+/* Fade transition from skeleton to real content */
+.content-fade-in {
+    animation: fadeIn 0.5s ease-in;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}
+
+/* Ensure no layout shift */
+.skeleton-loader {
+    min-height: 400px;
+}
+
+/* ==========================================
+   PHASE 4: ADVANCED UX & DESIGN FEATURES
+   ========================================== */
+
+/* ==========================================
+   UX-04: CONFIGURABLE TABLE DENSITY
+   Provides compact, normal, and comfortable spacing options
+   ========================================== */
+
+/* Compact density - minimal padding for maximum information density */
+.spfl-league-table.density-compact .table-row td,
+.spfl-league-table.density-compact .table-header-row th {
+    padding: 3px 2px;
+    line-height: 1.1;
+}
+
+.spfl-league-table.density-compact .team-name {
+    font-size: 11px;
+}
+
+.spfl-league-table.density-compact .team-logo,
+.spfl-league-table.density-compact .fixture-logo,
+.spfl-league-table.density-compact .fixture-logo-v2 {
+    width: 16px;
+    height: 16px;
+}
+
+.spfl-league-table.density-compact .form-token {
+    width: 14px;
+    height: 14px;
+    font-size: 9px;
+    margin: 0 1px;
+}
+
+.spfl-league-table.density-compact .fixture-row-v2 td {
+    padding: 4px 3px;
+}
+
+/* Normal density - default balanced spacing (already defined in base styles) */
+.spfl-league-table.density-normal .table-row td,
+.spfl-league-table.density-normal .table-header-row th {
+    padding: 6px 4px;
+}
+
+/* Comfortable density - generous padding for better readability */
+.spfl-league-table.density-comfortable .table-row td,
+.spfl-league-table.density-comfortable .table-header-row th {
+    padding: 10px 6px;
+    line-height: 1.4;
+}
+
+.spfl-league-table.density-comfortable .team-name {
+    font-size: 15px;
+}
+
+.spfl-league-table.density-comfortable .team-logo,
+.spfl-league-table.density-comfortable .fixture-logo,
+.spfl-league-table.density-comfortable .fixture-logo-v2 {
+    width: 24px;
+    height: 24px;
+}
+
+.spfl-league-table.density-comfortable .form-token {
+    width: 20px;
+    height: 20px;
+    font-size: 12px;
+    margin: 0 2px;
+}
+
+.spfl-league-table.density-comfortable .fixture-row-v2 td {
+    padding: 8px 6px;
+}
+
+/* ==========================================
+   DES-02: FULL LIGHT/DARK MODE SUPPORT
+   Comprehensive theme support with CSS variables
+   ========================================== */
+
+/* CSS Variables for Light Theme */
+.spfl-league-table.theme-light,
+.spfl-league-table.theme-auto {
+    /* Base colors */
+    --theme-bg-primary: #f5f5f5;
+    --theme-bg-secondary: #ffffff;
+    --theme-bg-hover: #e8e8e8;
+    --theme-text-primary: #222222;
+    --theme-text-secondary: #666666;
+    --theme-text-muted: #999999;
+    --theme-border: #cccccc;
+    --theme-border-light: #e0e0e0;
+    
+    /* Semantic colors */
+    --theme-accent: #0066cc;
+    --theme-success: #28a745;
+    --theme-warning: #ffc107;
+    --theme-danger: #dc3545;
+    --theme-info: #17a2b8;
+    
+    /* Position indicators */
+    --theme-first-place: rgba(212, 175, 55, 0.2); /* Gold tint */
+    --theme-uefa-zone: rgba(0, 123, 255, 0.15); /* Blue tint */
+    --theme-relegation-zone: rgba(220, 53, 69, 0.15); /* Red tint */
+    
+    /* Form indicators */
+    --theme-form-win: #28a745;
+    --theme-form-draw: #ffc107;
+    --theme-form-loss: #dc3545;
+    
+    /* Buttons */
+    --theme-button-bg: #ffffff;
+    --theme-button-text: #333333;
+    --theme-button-hover-bg: #0066cc;
+    --theme-button-hover-text: #ffffff;
+    --theme-button-active-bg: #0052a3;
+    
+    /* Live indicators */
+    --theme-live-bg: #dc3545;
+    --theme-live-text: #ffffff;
+    
+    /* Stale data warning */
+    --theme-stale-fresh: #28a745;
+    --theme-stale-moderate: #ffc107;
+    --theme-stale-old: #dc3545;
+}
+
+/* Apply light theme colors */
+.spfl-league-table.theme-light,
+.spfl-league-table.theme-auto {
+    background-color: var(--theme-bg-primary);
+    color: var(--theme-text-primary);
+}
+
+.spfl-league-table.theme-light .standings-table,
+.spfl-league-table.theme-auto .standings-table {
+    background-color: var(--theme-bg-secondary);
+    border-color: var(--theme-border);
+}
+
+.spfl-league-table.theme-light .table-row,
+.spfl-league-table.theme-auto .table-row {
+    color: var(--theme-text-primary);
+    border-bottom-color: var(--theme-border-light);
+}
+
+.spfl-league-table.theme-light .table-row:hover,
+.spfl-league-table.theme-auto .table-row:hover {
+    background-color: var(--theme-bg-hover);
+}
+
+.spfl-league-table.theme-light .table-header-row th,
+.spfl-league-table.theme-auto .table-header-row th {
+    color: var(--theme-text-secondary);
+    border-bottom-color: var(--theme-border);
+}
+
+.spfl-league-table.theme-light .league-btn,
+.spfl-league-table.theme-auto .league-btn {
+    background-color: var(--theme-button-bg);
+    color: var(--theme-button-text);
+    border-color: var(--theme-border);
+}
+
+.spfl-league-table.theme-light .league-btn:hover,
+.spfl-league-table.theme-auto .league-btn:hover {
+    background-color: var(--theme-button-hover-bg);
+    color: var(--theme-button-hover-text);
+}
+
+.spfl-league-table.theme-light .league-btn.active,
+.spfl-league-table.theme-auto .league-btn.active {
+    background-color: var(--theme-button-active-bg);
+    color: var(--theme-button-hover-text);
+}
+
+/* CSS Variables for Dark Theme */
+.spfl-league-table.theme-dark {
+    /* Base colors */
+    --theme-bg-primary: #1a1a1a;
+    --theme-bg-secondary: #2d2d2d;
+    --theme-bg-hover: #3a3a3a;
+    --theme-text-primary: #f0f0f0;
+    --theme-text-secondary: #b0b0b0;
+    --theme-text-muted: #808080;
+    --theme-border: #444444;
+    --theme-border-light: #3a3a3a;
+    
+    /* Semantic colors */
+    --theme-accent: #4d94ff;
+    --theme-success: #5cb85c;
+    --theme-warning: #f0ad4e;
+    --theme-danger: #d9534f;
+    --theme-info: #5bc0de;
+    
+    /* Position indicators */
+    --theme-first-place: rgba(255, 215, 0, 0.2); /* Gold tint */
+    --theme-uefa-zone: rgba(77, 148, 255, 0.2); /* Blue tint */
+    --theme-relegation-zone: rgba(217, 83, 79, 0.2); /* Red tint */
+    
+    /* Form indicators */
+    --theme-form-win: #5cb85c;
+    --theme-form-draw: #f0ad4e;
+    --theme-form-loss: #d9534f;
+    
+    /* Buttons */
+    --theme-button-bg: #3a3a3a;
+    --theme-button-text: #f0f0f0;
+    --theme-button-hover-bg: #4d94ff;
+    --theme-button-hover-text: #ffffff;
+    --theme-button-active-bg: #3a7bd5;
+    
+    /* Live indicators */
+    --theme-live-bg: #d9534f;
+    --theme-live-text: #ffffff;
+    
+    /* Stale data warning */
+    --theme-stale-fresh: #5cb85c;
+    --theme-stale-moderate: #f0ad4e;
+    --theme-stale-old: #d9534f;
+    
+    background-color: var(--theme-bg-primary);
+    color: var(--theme-text-primary);
+}
+
+/* Apply dark theme colors */
+.spfl-league-table.theme-dark .standings-table {
+    background-color: var(--theme-bg-secondary);
+    border-color: var(--theme-border);
+}
+
+.spfl-league-table.theme-dark .table-row {
+    color: var(--theme-text-primary);
+    border-bottom-color: var(--theme-border-light);
+}
+
+.spfl-league-table.theme-dark .table-row:hover {
+    background-color: var(--theme-bg-hover);
+}
+
+.spfl-league-table.theme-dark .table-header-row th {
+    color: var(--theme-text-secondary);
+    border-bottom-color: var(--theme-border);
+}
+
+.spfl-league-table.theme-dark .league-btn {
+    background-color: var(--theme-button-bg);
+    color: var(--theme-button-text);
+    border-color: var(--theme-border);
+}
+
+.spfl-league-table.theme-dark .league-btn:hover {
+    background-color: var(--theme-button-hover-bg);
+    color: var(--theme-button-hover-text);
+}
+
+.spfl-league-table.theme-dark .league-btn.active {
+    background-color: var(--theme-button-active-bg);
+    color: var(--theme-button-hover-text);
+}
+
+/* Auto theme - respects system preference */
+@media (prefers-color-scheme: dark) {
+    .spfl-league-table.theme-auto {
+        /* Inherit dark theme variables */
+        --theme-bg-primary: #1a1a1a;
+        --theme-bg-secondary: #2d2d2d;
+        --theme-bg-hover: #3a3a3a;
+        --theme-text-primary: #f0f0f0;
+        --theme-text-secondary: #b0b0b0;
+        --theme-text-muted: #808080;
+        --theme-border: #444444;
+        --theme-border-light: #3a3a3a;
+        --theme-accent: #4d94ff;
+        --theme-success: #5cb85c;
+        --theme-warning: #f0ad4e;
+        --theme-danger: #d9534f;
+        --theme-form-win: #5cb85c;
+        --theme-form-draw: #f0ad4e;
+        --theme-form-loss: #d9534f;
+        --theme-button-bg: #3a3a3a;
+        --theme-button-text: #f0f0f0;
+        --theme-button-hover-bg: #4d94ff;
+        --theme-button-active-bg: #3a7bd5;
+        
+        background-color: var(--theme-bg-primary);
+        color: var(--theme-text-primary);
+    }
+}
+
+/* ==========================================
+   PERF-03: VIRTUAL SCROLLING SUPPORT
+   For large tables with 50+ rows
+   ========================================== */
+
+.spfl-league-table.virtual-scrolling-enabled {
+    position: relative;
+}
+
+.virtual-scroll-container {
+    position: relative;
+    overflow-y: auto;
+    height: var(--mtlt-max-table-height);
+    contain: strict;
+}
+
+.virtual-scroll-spacer {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 1px;
+    pointer-events: none;
+}
+
+.virtual-scroll-viewport {
+    position: relative;
+    will-change: transform;
+}
+
+/* Optimize virtual scrolling performance */
+.virtual-scrolling-enabled .table-row {
+    contain: layout style paint;
+    will-change: transform;
+}
+
+/* ==========================================
+   UX-07: OFFLINE MODE INDICATOR
+   Display when internet connection is lost
+   ========================================== */
+
+.offline-indicator {
+    background: linear-gradient(135deg, #ffa500 0%, #ff6b00 100%);
+    color: #fff;
+    padding: 8px 12px;
+    border-radius: 4px;
+    margin-bottom: 10px;
+    font-size: var(--mtlt-font-size-small);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    animation: pulse 2s ease-in-out infinite;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+@keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.7; }
+}
+
+.offline-indicator i {
+    font-size: 14px;
+}
+
+/* ==========================================
+   A11Y-09: REDUCED MOTION SUPPORT
+   Respect user's motion preferences
+   ========================================== */
+
+@media (prefers-reduced-motion: reduce) {
+    * {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+        scroll-behavior: auto !important;
+    }
+    
+    /* Disable animations */
+    .offline-indicator {
+        animation: none;
+    }
+    
+    .skeleton-shimmer::before {
+        animation: none;
+    }
+    
+    /* Disable transforms */
+    .refresh-btn:hover {
+        transform: none;
+    }
+    
+    .league-button:hover {
+        transform: none;
+    }
+    
+    /* Disable transitions */
+    .team-row,
+    .fixture-row,
+    .league-button,
+    .refresh-btn,
+    .spfl-league-table {
+        transition: none !important;
+    }
+}
+
+/* ==========================================
+   A11Y-10: ENHANCED FORM INDICATOR SHAPES
+   Visual differentiation beyond color
+   ========================================== */
+
+/* Add shape differentiation to form tokens */
+.form-win {
+    clip-path: circle(50%); /* Circular shape for wins */
+}
+
+.form-draw {
+    /* Square shape (default rectangle) for draws */
+    clip-path: none;
+}
+
+.form-loss {
+    clip-path: polygon(50% 0%, 100% 100%, 0% 100%); /* Triangle shape for losses */
+}
+
+/* High contrast mode - add patterns for additional differentiation */
+@media (prefers-contrast: high) {
+    .form-win {
+        background-image: repeating-linear-gradient(
+            45deg,
+            transparent,
+            transparent 2px,
+            rgba(255, 255, 255, 0.3) 2px,
+            rgba(255, 255, 255, 0.3) 4px
+        );
+    }
+    
+    .form-loss {
+        background-image: repeating-linear-gradient(
+            -45deg,
+            transparent,
+            transparent 2px,
+            rgba(255, 255, 255, 0.3) 2px,
+            rgba(255, 255, 255, 0.3) 4px
+        );
+    }
+    
+    .form-draw {
+        background-image: repeating-linear-gradient(
+            90deg,
+            transparent,
+            transparent 2px,
+            rgba(255, 255, 255, 0.2) 2px,
+            rgba(255, 255, 255, 0.2) 4px
+        );
+    }
+}
+
+

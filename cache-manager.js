@@ -9,6 +9,7 @@
  */
 
 const fs = require("fs");
+const fsPromises = require("fs").promises;
 const path = require("path");
 
 class CacheManager {
@@ -57,11 +58,11 @@ class CacheManager {
 	}
 
 	/**
-	 * Get cached data for a league
+	 * Get cached data for a league (async)
 	 * @param {string} leagueType - League identifier
-	 * @returns {object | null} Cached data or null if not found/expired
+	 * @returns {Promise<object | null>} Cached data or null if not found/expired
 	 */
-	get(leagueType) {
+	async get(leagueType) {
 		// Check memory cache first
 		const memCacheEntry = this.memoryCache.get(leagueType);
 		if (memCacheEntry && !this.isExpired(memCacheEntry)) {
@@ -76,7 +77,9 @@ class CacheManager {
 
 		// Check disk cache
 		const cacheFile = this.getCacheFilePath(leagueType);
-		if (!fs.existsSync(cacheFile)) {
+		try {
+			await fsPromises.access(cacheFile);
+		} catch {
 			if (this.debug) {
 				console.log(
 					` CacheManager: Cache MISS for ${leagueType} - file not found`
@@ -86,14 +89,14 @@ class CacheManager {
 		}
 
 		try {
-			const fileContent = fs.readFileSync(cacheFile, "utf8");
+			const fileContent = await fsPromises.readFile(cacheFile, "utf8");
 			const cacheEntry = JSON.parse(fileContent);
 
 			if (this.isExpired(cacheEntry)) {
 				if (this.debug) {
 					console.log(` CacheManager: Cache EXPIRED for ${leagueType}`);
 				}
-				this.delete(leagueType); // Clean up expired cache
+				await this.delete(leagueType); // Clean up expired cache
 				return null;
 			}
 
@@ -117,13 +120,13 @@ class CacheManager {
 	}
 
 	/**
-	 * Save league data to cache
+	 * Save league data to cache (async, non-blocking)
 	 * @param {string} leagueType - League identifier
 	 * @param {object} data - League data to cache
 	 * @param {number} ttl - Time-to-live in milliseconds (optional)
-	 * @returns {boolean} Success status
+	 * @returns {Promise<boolean>} Success status
 	 */
-	set(leagueType, data, ttl = null) {
+	async set(leagueType, data, ttl = null) {
 		try {
 			const cacheEntry = {
 				leagueType: leagueType,
@@ -134,8 +137,8 @@ class CacheManager {
 			};
 
 			const cacheFile = this.getCacheFilePath(leagueType);
-			fs.writeFileSync(cacheFile, JSON.stringify(cacheEntry, null, 2), "utf8");
-			// Also update memory cache with LRU policy
+			
+			// Update memory cache immediately (synchronous for instant availability)
 			if (this.memoryCache.has(leagueType)) {
 				this.memoryCache.delete(leagueType);
 			} else if (this.memoryCache.size >= this.maxMemoryEntries) {
@@ -147,6 +150,9 @@ class CacheManager {
 				}
 			}
 			this.memoryCache.set(leagueType, cacheEntry);
+
+			// Write to disk asynchronously (non-blocking)
+			await fsPromises.writeFile(cacheFile, JSON.stringify(cacheEntry, null, 2), "utf8");
 
 			if (this.debug) {
 				console.log(
@@ -165,23 +171,25 @@ class CacheManager {
 	}
 
 	/**
-	 * Delete cached data for a league
+	 * Delete cached data for a league (async)
 	 * @param {string} leagueType - League identifier
-	 * @returns {boolean} Success status
+	 * @returns {Promise<boolean>} Success status
 	 */
-	delete(leagueType) {
+	async delete(leagueType) {
 		try {
 			const cacheFile = this.getCacheFilePath(leagueType);
-			if (fs.existsSync(cacheFile)) {
-				fs.unlinkSync(cacheFile);
+			try {
+				await fsPromises.access(cacheFile);
+				await fsPromises.unlink(cacheFile);
 				this.memoryCache.delete(leagueType);
 
 				if (this.debug) {
 					console.log(` CacheManager: Cache DELETED for ${leagueType}`);
 				}
 				return true;
+			} catch {
+				return false;
 			}
-			return false;
 		} catch (error) {
 			console.error(
 				` CacheManager: Error deleting cache for ${leagueType}:`,
@@ -192,22 +200,24 @@ class CacheManager {
 	}
 
 	/**
-	 * Clear all cache
-	 * @returns {number} Number of cache files deleted
+	 * Clear all cache (async)
+	 * @returns {Promise<number>} Number of cache files deleted
 	 */
-	clearAll() {
+	async clearAll() {
 		try {
-			if (!fs.existsSync(this.cacheDir)) {
+			try {
+				await fsPromises.access(this.cacheDir);
+			} catch {
 				return 0;
 			}
 
-			const files = fs.readdirSync(this.cacheDir);
+			const files = await fsPromises.readdir(this.cacheDir);
 			let deleted = 0;
 
 			for (const file of files) {
 				if (file.endsWith(".json")) {
 					try {
-						fs.unlinkSync(path.join(this.cacheDir, file));
+						await fsPromises.unlink(path.join(this.cacheDir, file));
 						deleted++;
 					} catch (error) {
 						console.error(
@@ -245,12 +255,14 @@ class CacheManager {
 	}
 
 	/**
-	 * Get cache statistics
-	 * @returns {object} Cache statistics
+	 * Get cache statistics (async)
+	 * @returns {Promise<object>} Cache statistics
 	 */
-	getStats() {
+	async getStats() {
 		try {
-			if (!fs.existsSync(this.cacheDir)) {
+			try {
+				await fsPromises.access(this.cacheDir);
+			} catch {
 				return {
 					cacheDir: this.cacheDir,
 					totalFiles: 0,
@@ -259,15 +271,15 @@ class CacheManager {
 				};
 			}
 
-			const files = fs.readdirSync(this.cacheDir);
+			const files = await fsPromises.readdir(this.cacheDir);
 			const entries = [];
 
 			for (const file of files) {
 				if (file.endsWith(".json")) {
 					try {
 						const filePath = path.join(this.cacheDir, file);
-						const stats = fs.statSync(filePath);
-						const content = fs.readFileSync(filePath, "utf8");
+						const stats = await fsPromises.stat(filePath);
+						const content = await fsPromises.readFile(filePath, "utf8");
 						const cacheEntry = JSON.parse(content);
 
 						const age = Date.now() - cacheEntry.timestamp;
@@ -309,27 +321,29 @@ class CacheManager {
 	}
 
 	/**
-	 * Clean up expired cache entries
-	 * @returns {number} Number of expired files deleted
+	 * Clean up expired cache entries (async)
+	 * @returns {Promise<number>} Number of expired files deleted
 	 */
-	cleanupExpired() {
+	async cleanupExpired() {
 		try {
-			if (!fs.existsSync(this.cacheDir)) {
+			try {
+				await fsPromises.access(this.cacheDir);
+			} catch {
 				return 0;
 			}
 
-			const files = fs.readdirSync(this.cacheDir);
+			const files = await fsPromises.readdir(this.cacheDir);
 			let deleted = 0;
 
 			for (const file of files) {
 				if (file.endsWith(".json")) {
 					try {
 						const filePath = path.join(this.cacheDir, file);
-						const content = fs.readFileSync(filePath, "utf8");
+						const content = await fsPromises.readFile(filePath, "utf8");
 						const cacheEntry = JSON.parse(content);
 
 						if (this.isExpired(cacheEntry)) {
-							fs.unlinkSync(filePath);
+							await fsPromises.unlink(filePath);
 							this.memoryCache.delete(cacheEntry.leagueType);
 							deleted++;
 						}

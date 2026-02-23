@@ -1,15 +1,16 @@
 {
 	"name": "MMM-MyTeams-LeagueTable",
-	"version": "1.8.1",
-	"description": "A MagicMirror² module to display any Professional Football League standings as well as FIFA World Cup 2026 and UEFA leauge Competitions.",  
+	"version": "1.0.0",
+	"description": "A MagicMirror² module to display the current SPFL (Scottish Professional Football League) standings",
 	"main": "MMM-MyTeams-LeagueTable.js",
 	"keywords": [
-		"World Cup 2026",
-		"UEFA Champions League",
-		"Premier League",
+		"MagicMirror",
+		"module",
+		"SPFL",
+		"Scottish Premier League",
 		"football",
 		"soccer",
-		"European Football League tables",
+		"league table",
 		"standings",
 		"sports",
 		"Celtic"
@@ -34,13 +35,18 @@
 		"node-fetch": "^2.7.0"
 	},
 	"devDependencies": {
+		"clean-css-cli": "^5.6.0",
 		"eslint": "^8.0.0",
 		"prettier": "^2.0.0"
 	},
 	"scripts": {
 		"test": "echo \"Error: no test specified\" && exit 1",
 		"lint": "eslint *.js",
-		"format": "prettier --write *.js *.json *.md"
+		"format": "prettier --write *.js *.json *.md",
+		"minify-css": "cleancss -o MMM-MyTeams-LeagueTable.min.css MMM-MyTeams-LeagueTable.css",
+		"build": "npm run minify-css",
+		"audit": "npm audit --audit-level=moderate",
+    	"audit:fix": "npm audit fix"
 	},
 	"magicmirror": {
 		"moduleName": "MMM-MyTeams-LeagueTable",

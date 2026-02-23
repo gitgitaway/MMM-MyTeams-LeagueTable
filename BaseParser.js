@@ -16,6 +16,33 @@ class BaseParser {
 	}
 
 	/**
+	 * Get current date, respecting dateTimeOverride if configured
+	 * @returns {Date} - Current date or overridden date
+	 */
+	getCurrentDate() {
+		if (this.config.dateTimeOverride) {
+			const overrideDate = new Date(this.config.dateTimeOverride);
+			if (!isNaN(overrideDate.getTime())) {
+				if (this.config.debug) {
+					console.log(
+						` MMM-MyTeams-LeagueTable: [Parser] Using date override: ${this.config.dateTimeOverride} -> ${overrideDate.toISOString()}`
+					);
+				}
+				return overrideDate;
+			}
+		}
+		return new Date();
+	}
+
+	/**
+	 * Get current date as YYYY-MM-DD string (used for fixture date comparisons)
+	 * @returns {string} - Date in YYYY-MM-DD format
+	 */
+	getCurrentDateString() {
+		return this.getCurrentDate().toLocaleDateString("en-CA");
+	}
+
+	/**
 	 * Log debug information if debug mode is enabled
 	 * @param {string} message - Message to log
 	 */
@@ -34,14 +61,29 @@ class BaseParser {
 	getAriaNum(rowHtml, label) {
 		const patterns = [
 			// Exact match or contains label (e.g., "Played 20" or just "Played")
-			new RegExp(`<td[^>]*(?:aria-label|title)="${label}[^"]*"[^>]*><span[^>]*>([+-]?\\d+)</span></td>`, "i"),
-			new RegExp(`<td[^>]*(?:aria-label|title)="${label}[^"]*"[^>]*>([+-]?\\d+)</td>`, "i"),
+			new RegExp(
+				`<td[^>]*(?:aria-label|title)="${label}[^"]*"[^>]*><span[^>]*>([+-]?\\d+)</span></td>`,
+				"i"
+			),
+			new RegExp(
+				`<td[^>]*(?:aria-label|title)="${label}[^"]*"[^>]*>([+-]?\\d+)</td>`,
+				"i"
+			),
 			// Match by class containing the label
-			new RegExp(`<td[^>]*class="[^"]*${label.replace(/\s+/g, "").toLowerCase()}[^"]*"[^>]*>.*?([+-]?\\d+).*?</td>`, "is"),
+			new RegExp(
+				`<td[^>]*class="[^"]*${label.replace(/\s+/g, "").toLowerCase()}[^"]*"[^>]*>.*?([+-]?\\d+).*?</td>`,
+				"is"
+			),
 			// Generic element (div, etc) with aria-label
-			new RegExp(`<(?:td|div|span)[^>]*(?:aria-label|title)="${label}[^"]*"[^>]*>.*?([+-]?\\d+).*?</(?:td|div|span)>`, "is"),
+			new RegExp(
+				`<(?:td|div|span)[^>]*(?:aria-label|title)="${label}[^"]*"[^>]*>.*?([+-]?\\d+).*?</(?:td|div|span)>`,
+				"is"
+			),
 			// Data-testid variation
-			new RegExp(`data-testid="[^"]*${label.replace(/\s+/g, "-").toLowerCase()}[^"]*"[^>]*>.*?([+-]?\\d+).*?<`, "is")
+			new RegExp(
+				`data-testid="[^"]*${label.replace(/\s+/g, "-").toLowerCase()}[^"]*"[^>]*>.*?([+-]?\\d+).*?<`,
+				"is"
+			)
 		];
 
 		for (const pattern of patterns) {
@@ -64,24 +106,36 @@ class BaseParser {
 		try {
 			// Find the Form cell (aria-label starts with "Form" or contains "Form")
 			let contentToParse = rowHtml;
-			
+
 			// Try to isolate the Form cell if possible
 			// BBC uses labels like "Form, Last 6 games, Oldest first" or "Recent Form"
-			const tdMatch = rowHtml.match(/<td[^>]*(?:aria-label|title)="[^"]*Form[^"]*"[^>]*>([\s\S]*?)<\/td>/i) ||
-						   rowHtml.match(/<td[^>]*class="[^"]*Form(?:Guide)?[^"]*"[^>]*>([\s\S]*?)<\/td>/i) ||
-						   rowHtml.match(/<div[^>]*role="cell"[^>]*(?:aria-label|title)="[^"]*Form[^"]*"[^>]*>([\s\S]*?)<\/div>/i);
-			
+			const tdMatch =
+				rowHtml.match(
+					/<td[^>]*(?:aria-label|title)="[^"]*Form[^"]*"[^>]*>([\s\S]*?)<\/td>/i
+				) ||
+				rowHtml.match(
+					/<td[^>]*class="[^"]*Form(?:Guide)?[^"]*"[^>]*>([\s\S]*?)<\/td>/i
+				) ||
+				rowHtml.match(
+					/<div[^>]*role="cell"[^>]*(?:aria-label|title)="[^"]*Form[^"]*"[^>]*>([\s\S]*?)<\/div>/i
+				);
+
 			if (tdMatch) {
 				contentToParse = tdMatch[1];
 			} else {
 				// Fallback for modern BBC structure where it might be a div with specific testid
-				const testidMatch = rowHtml.match(/data-testid="form-container"[^>]*>([\s\S]*?)<\/(?:div|ul)>/i) ||
-								   rowHtml.match(/data-testid="[^"]*form-guide[^"]*"[^>]*>([\s\S]*?)<\/(?:div|ul)>/i);
+				const testidMatch =
+					rowHtml.match(
+						/data-testid="form-container"[^>]*>([\s\S]*?)<\/(?:div|ul)>/i
+					) ||
+					rowHtml.match(
+						/data-testid="[^"]*form-guide[^"]*"[^>]*>([\s\S]*?)<\/(?:div|ul)>/i
+					);
 				if (testidMatch) contentToParse = testidMatch[1];
 			}
-			
+
 			const tokens = this._parseFormTokens(contentToParse);
-			
+
 			// If we found tokens in the whole row but not the specific cell, use those
 			if (tokens.length === 0 && contentToParse !== rowHtml) {
 				return this._parseFormTokens(rowHtml);
@@ -89,29 +143,33 @@ class BaseParser {
 
 			return tokens;
 		} catch (error) {
-			console.error(" MMM-MyTeams-LeagueTable: [BaseParser] Error in getForm:", error);
+			console.error(
+				" MMM-MyTeams-LeagueTable: [BaseParser] Error in getForm:",
+				error
+			);
 			return [];
 		}
 	}
 
 	/**
 	 * Internal helper to parse tokens from form HTML
-	 * @param {string} formContent 
+	 * @param {string} formContent
 	 * @returns {Array}
 	 */
 	_parseFormTokens(formContent) {
 		const results = [];
 		let m;
-		
+
 		// Strategy 0: Look for data-testid="form-accessible-letter"
 		// This is very reliable on the new BBC structure
-		const accessibleRegex = /data-testid="form-accessible-letter"[^>]*>Result\s+(Win|Loss|Draw|Won|Lost|Drawn|W|L|D)/gi;
+		const accessibleRegex =
+			/data-testid="form-accessible-letter"[^>]*>Result\s+(Win|Loss|Draw|Won|Lost|Drawn|W|L|D)/gi;
 		while ((m = accessibleRegex.exec(formContent)) !== null) {
 			const fullText = m[1].toLowerCase();
 			let res = "D";
 			if (fullText.startsWith("w")) res = "W";
 			else if (fullText.startsWith("l")) res = "L";
-			
+
 			results.push({
 				result: res,
 				details: `Result ${m[1]}`
@@ -120,7 +178,8 @@ class BaseParser {
 
 		// Strategy 0.5: Look for modern BBC form tokens (span with visually hidden text)
 		if (results.length === 0) {
-			const tokenRegex = /<span[^>]*class="[^"]*VisuallyHidden[^"]*"[^>]*>(Win|Loss|Draw|Won|Lost|Drawn)<\/span>/gi;
+			const tokenRegex =
+				/<span[^>]*class="[^"]*VisuallyHidden[^"]*"[^>]*>(Win|Loss|Draw|Won|Lost|Drawn)<\/span>/gi;
 			while ((m = tokenRegex.exec(formContent)) !== null) {
 				const fullText = m[1].toLowerCase();
 				let res = "D";
@@ -139,11 +198,13 @@ class BaseParser {
 				if (content && content.length === 1 && "WDL".includes(content)) {
 					const res = content;
 					const pos = simpleRegex.lastIndex;
-					
+
 					// Look ahead for details
 					const lookAhead = formContent.substring(pos, pos + 200);
-					const detailMatch = lookAhead.match(/Result\s+(Win|Loss|Draw|Won|Lost|Drawn)/i);
-					
+					const detailMatch = lookAhead.match(
+						/Result\s+(Win|Loss|Draw|Won|Lost|Drawn)/i
+					);
+
 					results.push({
 						result: res,
 						details: detailMatch ? `Result ${detailMatch[1]}` : ""
@@ -154,7 +215,8 @@ class BaseParser {
 
 		// Strategy 2: If previous strategies found nothing, try older aria-label pattern
 		if (results.length === 0) {
-			const tokenRegex = /<[^>]*aria-label="([^"]*(?:Win|Loss|Draw|Won|Lost|Drawn)[^"]*)"[^>]*>.*?data-testid="letter-content"[^>]*>([WDL])<\/div>/gi;
+			const tokenRegex =
+				/<[^>]*aria-label="([^"]*(?:Win|Loss|Draw|Won|Lost|Drawn)[^"]*)"[^>]*>.*?data-testid="letter-content"[^>]*>([WDL])<\/div>/gi;
 			while ((m = tokenRegex.exec(formContent)) !== null) {
 				results.push({
 					result: m[2],
@@ -204,13 +266,8 @@ class BaseParser {
 	 */
 	_inferStageFromBlock(block) {
 		const b = block || "";
-		if (
-			/Round of 32|Rd32/i.test(b)
-		)
-			return "Rd32";
-		if (
-			/Play-offs?|Playoffs?|Knockout[- ]round play-offs?/i.test(b)
-		)
+		if (/Round of 32|Rd32/i.test(b)) return "Rd32";
+		if (/Play-offs?|Playoffs?|Knockout[- ]round play-offs?/i.test(b))
 			return "Playoff";
 		if (/Round of 16|Rd16/i.test(b)) return "Rd16";
 		if (/Quarter[- ]?finals?|QF/i.test(b)) return "QF";
@@ -233,11 +290,11 @@ class BaseParser {
 				const d = new Date(iso);
 				if (!isNaN(d.getTime())) return d.getTime();
 			}
-			
+
 			// If we have a fallback date, construct a timestamp
 			if (fallbackDateStr) {
 				let dt = fallbackDateStr;
-				
+
 				// Handle time
 				let time = "00:00";
 				if (fallbackTimeStr && /\d\d:\d\d/.test(fallbackTimeStr)) {
@@ -245,18 +302,18 @@ class BaseParser {
 				} else if (fallbackTimeStr && /\d\d\.\d\d/.test(fallbackTimeStr)) {
 					time = fallbackTimeStr.replace(".", ":");
 				}
-				
+
 				// Combine date and time
 				// Use T for ISO format
 				const isoStr = `${dt}T${time}:00`;
 				const d2 = new Date(isoStr);
-				
+
 				if (!isNaN(d2.getTime())) return d2.getTime();
-				
+
 				// If ISO failed, try space separator
 				const d3 = new Date(`${dt} ${time}`);
 				if (!isNaN(d3.getTime())) return d3.getTime();
-				
+
 				// Last resort: just the date
 				const d4 = new Date(dt);
 				if (!isNaN(d4.getTime())) return d4.getTime();

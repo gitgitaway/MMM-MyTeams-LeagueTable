@@ -10,6 +10,8 @@ class LogoResolver {
 	constructor() {
 		this.normalizedTeamLogoMap = {};
 		this.fuzzyTeamLogoMap = {};
+		this.normalizedNameCache = new Map(); // LRU cache for normalized names (max 500 entries)
+		this.maxNormalizedCacheSize = 500;
 		this.commonSuffixes = [
 			"fc",
 			"sc",
@@ -45,7 +47,7 @@ class LogoResolver {
 			"Viet Nam": "Vietnam",
 			Eswatini: "Swaziland"
 		};
-		
+
 		// Initial build with default mappings
 		this.buildNormalizedTeamMap(TEAM_LOGO_MAPPINGS);
 	}
@@ -62,14 +64,36 @@ class LogoResolver {
 	}
 
 	/**
-	 * Standard normalization for lookup keys
+	 * Standard normalization for lookup keys (with LRU caching)
 	 */
 	normalize(str) {
-		return this.removeDiacritics(str || "")
+		if (!str) return "";
+		
+		// Check cache first
+		if (this.normalizedNameCache.has(str)) {
+			const cached = this.normalizedNameCache.get(str);
+			// LRU: Move to end by deleting and re-adding
+			this.normalizedNameCache.delete(str);
+			this.normalizedNameCache.set(str, cached);
+			return cached;
+		}
+		
+		// Perform normalization
+		const normalized = this.removeDiacritics(str)
 			.toLowerCase()
 			.replace(/\s+/g, " ")
 			.trim()
 			.replace(/[.,]/g, "");
+		
+		// Add to cache with LRU eviction
+		if (this.normalizedNameCache.size >= this.maxNormalizedCacheSize) {
+			// Remove oldest entry (first in Map)
+			const oldestKey = this.normalizedNameCache.keys().next().value;
+			this.normalizedNameCache.delete(oldestKey);
+		}
+		this.normalizedNameCache.set(str, normalized);
+		
+		return normalized;
 	}
 
 	/**
@@ -167,7 +191,8 @@ class LogoResolver {
 			const targetName = this.teamAliases[alias];
 			const normalizedAlias = this.normalize(alias);
 			const logoPath =
-				baseMap[targetName] || this.normalizedTeamLogoMap[this.normalize(targetName)];
+				baseMap[targetName] ||
+				this.normalizedTeamLogoMap[this.normalize(targetName)];
 
 			if (logoPath && !this.normalizedTeamLogoMap[normalizedAlias]) {
 				this.normalizedTeamLogoMap[normalizedAlias] = logoPath;
@@ -193,7 +218,7 @@ class LogoResolver {
 
 		// 1. Check custom mappings from config first
 		if (customMappings[teamName]) return customMappings[teamName];
-		
+
 		const normalizedCustom = this.normalize(teamName);
 		// Check if any custom mapping matches normalized name
 		for (const key of Object.keys(customMappings)) {
@@ -205,21 +230,28 @@ class LogoResolver {
 
 		// 3. Check normalized map
 		const normalized = this.normalize(teamName);
-		if (this.normalizedTeamLogoMap[normalized]) return this.normalizedTeamLogoMap[normalized];
+		if (this.normalizedTeamLogoMap[normalized])
+			return this.normalizedTeamLogoMap[normalized];
 
 		// 4. Check stripped version
 		const stripped = this.stripSuffixes(teamName);
-		if (this.normalizedTeamLogoMap[stripped]) return this.normalizedTeamLogoMap[stripped];
+		if (this.normalizedTeamLogoMap[stripped])
+			return this.normalizedTeamLogoMap[stripped];
 
 		// 5. Check fuzzy map (AGGRESSIVE)
 		const fuzzy = this.fuzzyNormalize(teamName);
 		if (this.fuzzyTeamLogoMap[fuzzy]) {
-			if (debug) console.log(` [LogoResolver] Fuzzy match found: '${teamName}' -> '${fuzzy}'`);
+			if (debug)
+				console.log(
+					` [LogoResolver] Fuzzy match found: '${teamName}' -> '${fuzzy}'`
+				);
 			return this.fuzzyTeamLogoMap[fuzzy];
 		}
 
 		if (debug) {
-			console.warn(` [LogoResolver] NO LOGO FOUND for '${teamName}'. Tried: exact, normalized ('${normalized}'), stripped ('${stripped}'), fuzzy ('${fuzzy}')`);
+			console.warn(
+				` [LogoResolver] NO LOGO FOUND for '${teamName}'. Tried: exact, normalized ('${normalized}'), stripped ('${stripped}'), fuzzy ('${fuzzy}')`
+			);
 		}
 
 		return null;

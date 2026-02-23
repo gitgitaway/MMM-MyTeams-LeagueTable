@@ -146,9 +146,9 @@ const TEAM_LOGO_MAPPINGS = {
 	// Azerbaijan
 	// ==========================================================================
 	Qarabag: "crests/Azerbaijan/qarabağ.png",
-	"Qarabağ": "crests/Azerbaijan/qarabağ.png",
+	Qarabağ: "crests/Azerbaijan/qarabağ.png",
 	"Qarabag FK": "crests/Azerbaijan/qarabağ.png",
-	"Quarbag": "crests/Azerbaijan/qarabağ.png",
+	Quarbag: "crests/Azerbaijan/qarabağ.png",
 
 	// ==========================================================================
 	// Belgium
@@ -172,8 +172,8 @@ const TEAM_LOGO_MAPPINGS = {
 	"Kaa Gent": "crests/Belgium/jong-gent.png",
 	"KAA Gent": "crests/Belgium/jong-gent.png",
 	Gent: "crests/Belgium/jong-gent.png",
-	"Genk": "crests/Belgium/jong-gent.png",
-	"La": "crests/Belgium/la-louviere.png",
+	Genk: "crests/Belgium/jong-gent.png",
+	La: "crests/Belgium/la-louviere.png",
 	"RAAL La Louvière": "crests/Belgium/la-louviere.png",
 	"Raal La Louviere": "crests/Belgium/la-louviere.png",
 	Lierse: "crests/Belgium/lierse.png",
@@ -233,7 +233,7 @@ const TEAM_LOGO_MAPPINGS = {
 	"Velez Mostar": "crests/Bosnia and Herzegovina/Velez Mostar.png",
 	Zeljeznicar: "crests/Bosnia and Herzegovina/Zeljeznicar.png",
 	"Zrinjski Mostar": "crests/Bosnia and Herzegovina/Zrinjski Mostar.png",
-	"Zrinjski": "crests/Bosnia and Herzegovina/Zrinjski Mostar.png",
+	Zrinjski: "crests/Bosnia and Herzegovina/Zrinjski Mostar.png",
 
 	// ==========================================================================
 	// Brazil
@@ -700,8 +700,7 @@ const TEAM_LOGO_MAPPINGS = {
 	// ==========================================================================
 	// Gibraltar
 	// ==========================================================================
-       "Lincoln Red Imps": "crests/Gibraltar/lincoln_red_imps.png",
-
+	"Lincoln Red Imps": "crests/Gibraltar/lincoln_red_imps.png",
 
 	// ==========================================================================
 	// Greece
@@ -777,8 +776,8 @@ const TEAM_LOGO_MAPPINGS = {
 	"KR Reykjavik": "crests/Iceland/KR Reykjavik.png",
 	Stjarnan: "crests/Iceland/Stjarnan.png",
 	"Vikingur Reykjavik": "crests/Iceland/Vikingur Reykjavik.png",
-	"Breiðablik": "crests/Iceland/Breidablik.png",
-	"Breidablik": "crests/Iceland/Breidablik.png",
+	Breiðablik: "crests/Iceland/Breidablik.png",
+	Breidablik: "crests/Iceland/Breidablik.png",
 
 	// ==========================================================================
 	// India
@@ -1115,8 +1114,8 @@ const TEAM_LOGO_MAPPINGS = {
 	Floriana: "crests/Malta/floriana.png",
 	"Gżira United": "crests/Malta/gżira-united.png",
 	"Ħamrun Spartans": "crests/Malta/hamrun.png",
-	"Ħamrun": "crests/Malta/hamrun.png",
-	"Hamrun": "crests/Malta/hamrun.png",
+	Ħamrun: "crests/Malta/hamrun.png",
+	Hamrun: "crests/Malta/hamrun.png",
 	"Hamrun Spartans": "crests/Malta/hamrun.png",
 	Hibernians: "crests/Malta/hibernians.png",
 	Hibs: "crests/Malta/hibernians.png",
@@ -1127,7 +1126,6 @@ const TEAM_LOGO_MAPPINGS = {
 	"Tarxien Rainbows": "crests/Malta/tarxien-rainbows.png",
 	Valletta: "crests/Malta/valletta.png",
 	"Żabbar St Patrick": "crests/Malta/żabbar-st-patrick.png",
-	
 
 	// ==========================================================================
 	// Moldova
@@ -1279,15 +1277,15 @@ const TEAM_LOGO_MAPPINGS = {
 	"Górnik Zabrze": "crests/Poland/górnik-zabrze.png",
 	"Jagiellonia Białystok": "crests/Poland/jagiellonia-białystok.png",
 	"Jagiellonia Bialystok": "crests/Poland/jagiellonia-białystok.png",
-	"Jagiellonia": "crests/Poland/jagiellonia-białystok.png",
-	"Białystok": "crests/Poland/jagiellonia-białystok.png",
-	"Bialystok": "crests/Poland/jagiellonia-białystok.png",
+	Jagiellonia: "crests/Poland/jagiellonia-białystok.png",
+	Białystok: "crests/Poland/jagiellonia-białystok.png",
+	Bialystok: "crests/Poland/jagiellonia-białystok.png",
 	"Korona Kielce": "crests/Poland/korona-kielce.png",
 	"Lech Poznań": "crests/Poland/lech-poznań.png",
 	"Lech Poznan": "crests/Poland/lech-poznań.png",
-	"Lech": "crests/Poland/lech-poznań.png",
-	"Poznań": "crests/Poland/lech-poznań.png",
-	"Poznan": "crests/Poland/lech-poznań.png",
+	Lech: "crests/Poland/lech-poznań.png",
+	Poznań: "crests/Poland/lech-poznań.png",
+	Poznan: "crests/Poland/lech-poznań.png",
 	"Lechia Gdańsk": "crests/Poland/lechia-gdańsk.png",
 	"Łks Łódź": "crests/Poland/łks-łódź.png",
 	"Miedź Legnica": "crests/Poland/miedź-legnica.png",
@@ -1304,9 +1302,9 @@ const TEAM_LOGO_MAPPINGS = {
 	"Radomiak Radom": "crests/Poland/radomiak-radom.png",
 	"Raków Częstochowa": "crests/Poland/raków-częstochowa.png",
 	"Rakow Czestochowa": "crests/Poland/raków-częstochowa.png",
-	"Rakow": "crests/Poland/raków-częstochowa.png",
-	"Częstochowa": "crests/Poland/raków-częstochowa.png",
-	"Czestochowa": "crests/Poland/raków-częstochowa.png",
+	Rakow: "crests/Poland/raków-częstochowa.png",
+	Częstochowa: "crests/Poland/raków-częstochowa.png",
+	Czestochowa: "crests/Poland/raków-częstochowa.png",
 	"Ruch Chorzów": "crests/Poland/ruch-chorzów.png",
 	"Śląsk Wrocław": "crests/Poland/śląsk-wrocław.png",
 	"Stal Mielec": "crests/Poland/stal-mielec.png",
@@ -1327,15 +1325,15 @@ const TEAM_LOGO_MAPPINGS = {
 	Boavista: "crests/Portugal/Boavista.png",
 	"Casa Pia": "crests/Portugal/casa_pia.png",
 	"Estoril Praia": "crests/Portugal/estoril_praia.png",
-	"Estoril": "crests/Portugal/estoril_praia.png",
+	Estoril: "crests/Portugal/estoril_praia.png",
 	"Estrela Amadora": "crests/Portugal/estrela_amadora.png",
-	"Estrela": "crests/Portugal/estrela_amadora.png",
+	Estrela: "crests/Portugal/estrela_amadora.png",
 	Famalicao: "crests/Portugal/famalicao.png",
 	Farense: "crests/Portugal/Farense.png",
 	"Gil Vicente": "crests/Portugal/gil_vicente.png",
 	Moreirense: "crests/Portugal/moreirense.png",
 	"Nacional De Mad": "crests/Portugal/national_de_mad.png",
-	"Nacional": "crests/Portugal/national_de_mad.png",
+	Nacional: "crests/Portugal/national_de_mad.png",
 	"Rio Ave": "crests/Portugal/rio_ave.png",
 	"Santa Clara": "crests/Portugal/santa_clara.png",
 	"CD Santa Clara": "crests/Portugal/santa_clara.png",
@@ -1441,8 +1439,8 @@ const TEAM_LOGO_MAPPINGS = {
 	"Uta Arad": "crests/Romania/uta-arad.png",
 	Voluntari: "crests/Romania/voluntari.png",
 	FCSB: "crests/Romania/fcsb.png",
-	"Steaua București":"crests/Romania/fcsb.png",
-	"Steau Bucharest":"crests/Romania/fcsb.png",
+	"Steaua București": "crests/Romania/fcsb.png",
+	"Steau Bucharest": "crests/Romania/fcsb.png",
 	// ==========================================================================
 	// Russia
 	// ==========================================================================
@@ -1641,14 +1639,14 @@ const TEAM_LOGO_MAPPINGS = {
 	"Heracles Almelo": "crests/The_Netherlands/heracles-almelo.png",
 	"SC Heracles Almelo": "crests/The_Netherlands/heracles-almelo.png",
 	"Sc Heracles": "crests/The_Netherlands/heracles-almelo.png",
-	"Heracles": "crests/The_Netherlands/heracles-almelo.png",
+	Heracles: "crests/The_Netherlands/heracles-almelo.png",
 	"Jong Az": "crests/The_Netherlands/jong-az.png",
 	"Jong Psv": "crests/The_Netherlands/jong-psv.png",
 	"Jong Utrecht": "crests/The_Netherlands/jong-utrecht.png",
 	"Mvv Maastricht": "crests/The_Netherlands/mvv-maastricht.png",
 	"NAC Breda": "crests/The_Netherlands/nac-breda.png",
 	"NEC Nijmegen": "crests/The_Netherlands/nec-nijmegen.png",
-	"NEC": "crests/The_Netherlands/nec-nijmegen.png",
+	NEC: "crests/The_Netherlands/nec-nijmegen.png",
 	"PEC Zwolle": "crests/The_Netherlands/pec-zwolle.png",
 	"RKC Waalwijk": "crests/The_Netherlands/rkc-waalwijk.png",
 	"Roda Jc": "crests/The_Netherlands/roda-jc.png",
@@ -1675,7 +1673,7 @@ const TEAM_LOGO_MAPPINGS = {
 	Sivasspor: "crests/Turkey/Sivasspor.png",
 	Trabzonspor: "crests/Turkey/Trabzonspor.png",
 	Turkey: "crests/Turkey/turkey.png",
-    "Samsunspor": "crests/Turkey/samsunspor.png",
+	Samsunspor: "crests/Turkey/samsunspor.png",
 	// ==========================================================================
 	// UEFA-Champions-League
 	// ==========================================================================
@@ -1762,12 +1760,14 @@ const TEAM_LOGO_MAPPINGS = {
 	Dinamo: "crests/UEFA-Conference-League/dinamo-minsk.png",
 	Fiorentina: "crests/UEFA-Conference-League/fiorentina.png",
 	Viola: "crests/UEFA-Conference-League/fiorentina.png",
-	"Heart Of Midlothian":"crests/UEFA-Conference-League/heart-of-midlothian.png",
+	"Heart Of Midlothian":
+		"crests/UEFA-Conference-League/heart-of-midlothian.png",
 	HoM: "crests/UEFA-Conference-League/heart-of-midlothian.png",
 	"Hjk Helsinki": "crests/UEFA-Conference-League/hjk-helsinki.png",
 	HJK: "crests/UEFA-Conference-League/hjk-helsinki.png",
 	"HJK Helsinki": "crests/UEFA-Conference-League/hjk-helsinki.png",
-	"Istanbul Başakşehir":"crests/UEFA-Conference-League/istanbul-başakşehir.png",
+	"Istanbul Başakşehir":
+		"crests/UEFA-Conference-League/istanbul-başakşehir.png",
 	Basaksehir: "crests/UEFA-Conference-League/istanbul-başakşehir.png",
 	Larne: "crests/UEFA-Conference-League/larne.png",
 	"Larne FC": "crests/UEFA-Conference-League/larne.png",
@@ -1854,7 +1854,7 @@ const TEAM_LOGO_MAPPINGS = {
 	Paok: "crests/UEFA-Europa-League/paok.png",
 	PAOK: "crests/UEFA-Europa-League/paok.png",
 	"PAOK Thessaloniki": "crests/UEFA-Europa-League/paok.png",
-	"Karabag": "crests/UEFA-Europa-League/qarabağ.png",
+	Karabag: "crests/UEFA-Europa-League/qarabağ.png",
 	Rangers: "crests/UEFA-Europa-League/rangers.png",
 	"Rangers FC": "crests/UEFA-Europa-League/rangers.png",
 	"Real Sociedad": "crests/UEFA-Europa-League/real-sociedad.png",
@@ -2065,7 +2065,6 @@ const TEAM_LOGO_MAPPINGS = {
 	Telone: "crests/Zimbabwe/telone.png",
 	"Triangle United": "crests/Zimbabwe/triangle-united.png",
 	Yadah: "crests/Zimbabwe/yadah.png"
-	
 };
 
 // Export for CommonJS/Node.js

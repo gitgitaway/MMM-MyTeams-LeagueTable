@@ -104,6 +104,16 @@ Module.register("MMM-MyTeams-LeagueTable", {
 		//firstPlaceColor: "rgba(255, 255, 255, 0.1)", // Color for the team in first position
 		highlightedColor: "rgba(255, 255, 255, 0.1)", // Color for highlighted teams
 
+		// ===== UX Options (Phase 4) =====
+		tableDensity: "normal", // Table row density: "compact", "normal", "comfortable"
+		fixtureDateFilter: null, // Filter fixtures by date range: null (show all), "today", "week", "month", or {start: "YYYY-MM-DD", end: "YYYY-MM-DD"}
+		enableVirtualScrolling: false, // Enable virtual scrolling for large tables (>50 rows)
+		virtualScrollThreshold: 50, // Number of rows before virtual scrolling activates
+
+		// ===== Theme Options (Phase 4) =====
+		theme: "auto", // Color theme: "auto" (follows system), "light", "dark"
+		customTeamColors: {}, // Custom colors for specific teams: {"Team Name": "#HEXCOLOR"}
+
 		// ===== Auto-cycling options =====
 		autoCycle: false, // Enable auto-cycling between leagues
 		cycleInterval: 15 * 1000, // Time to display each league (15 seconds)
@@ -143,7 +153,7 @@ Module.register("MMM-MyTeams-LeagueTable", {
 			UEFA_EUROPA_CONFERENCE_LEAGUE: "UEFA Europa Conference League",
 			UEFA_EUROPA_LEAGUE: "UEFA Europa League",
 			UEFA_CHAMPIONS_LEAGUE: "UEFA Champions League",
-			
+
 			// World Cup
 			WORLD_CUP_2026: "WC26"
 		},
@@ -155,6 +165,7 @@ Module.register("MMM-MyTeams-LeagueTable", {
 
 		// Debug
 		debug: true, // Set to true to enable console logging
+		dateTimeOverride: null, // Override system date/time for testing. Use ISO date format (e.g., "2026-01-15" or "2026-01-15T14:30:00Z"). null = use system date
 
 		// Cache controls
 		clearCacheButton: true,
@@ -199,12 +210,24 @@ Module.register("MMM-MyTeams-LeagueTable", {
 		this.error = null;
 		this.retryCount = 0;
 
+		// Initialize screen reader announcement system (A11Y-04)
+		this.lastAnnouncement = Date.now();
+		this.announcementThrottle = 3000; // 3 seconds minimum between announcements
+		this.createAriaLiveRegion();
+
+		// Initialize lazy image loading system (PERF-08)
+		this.setupLazyLoading();
+
+		// Initialize offline mode detection (UX-07)
+		this.isOnline = navigator.onLine;
+		this.setupOfflineDetection();
+
 		// Set current league to first enabled league
 		this.currentLeague =
 			this.enabledLeagueCodes.length > 0
 				? this.enabledLeagueCodes[0]
 				: "SCOTLAND_PREMIERSHIP";
-		
+
 		const uefaLeagues = [
 			"UEFA_CHAMPIONS_LEAGUE",
 			"UEFA_EUROPA_LEAGUE",
@@ -213,7 +236,7 @@ Module.register("MMM-MyTeams-LeagueTable", {
 			"UEL",
 			"ECL"
 		];
-		
+
 		if (this.currentLeague === "WORLD_CUP_2026") {
 			this.currentSubTab = this.config.defaultWCSubTab || "A";
 		} else if (uefaLeagues.includes(this.currentLeague)) {
@@ -240,7 +263,8 @@ Module.register("MMM-MyTeams-LeagueTable", {
 
 		// Optionally clear cache once at startup
 		if (this.config.clearCacheOnStart === true) {
-			if (this.config.debug) Log.info(" MMM-MyTeams-LeagueTable: Clearing cache on start");
+			if (this.config.debug)
+				Log.info(" MMM-MyTeams-LeagueTable: Clearing cache on start");
 			this.sendSocketNotification("CACHE_CLEAR_ALL");
 		}
 
@@ -266,6 +290,59 @@ Module.register("MMM-MyTeams-LeagueTable", {
 				` MMM-MyTeams-LeagueTable: Module started with config: ${JSON.stringify(this.config)}`
 			);
 		}
+	},
+
+	/**
+	 * Gets the current date, with optional override for testing.
+	 * Validates dateTimeOverride to prevent invalid date exploits.
+	 * @returns {Date} The current or overridden date
+	 */
+	getCurrentDate() {
+		if (this.config.dateTimeOverride) {
+			const validated = this.validateDateTimeOverride(this.config.dateTimeOverride);
+			if (validated) {
+				if (this.config.debug) {
+					Log.info(
+						` MMM-MyTeams-LeagueTable: Using validated date override: ${this.config.dateTimeOverride} -> ${validated.toISOString()}`
+					);
+				}
+				return validated;
+			}
+		}
+		return new Date();
+	},
+
+	/**
+	 * Security helper: Validates dateTimeOverride input to prevent invalid dates and exploits.
+	 * @param {string} dateString - The ISO date string to validate
+	 * @returns {Date|null} The validated Date object or null if invalid
+	 */
+	validateDateTimeOverride(dateString) {
+		if (!dateString || typeof dateString !== "string") {
+			if (this.config.debug) {
+				Log.warn(` MMM-MyTeams-LeagueTable: Invalid dateTimeOverride type: ${typeof dateString}`);
+			}
+			return null;
+		}
+
+		const override = new Date(dateString);
+		
+		if (isNaN(override.getTime())) {
+			Log.warn(` MMM-MyTeams-LeagueTable: Invalid dateTimeOverride format: ${dateString}`);
+			return null;
+		}
+
+		const year = override.getFullYear();
+		if (year < 1900 || year > 2100) {
+			Log.warn(` MMM-MyTeams-LeagueTable: dateTimeOverride year out of range (1900-2100): ${dateString} (year: ${year})`);
+			return null;
+		}
+
+		return override;
+	},
+
+	getCurrentDateString() {
+		return this.getCurrentDate().toLocaleDateString("en-CA");
 	},
 
 	// ===== NEW: Build normalized team lookup map =====
@@ -487,7 +564,7 @@ Module.register("MMM-MyTeams-LeagueTable", {
 		// Phase 1: Logic moved to server (node_helper.js)
 		// We still keep this helper for potential client-side needs or backward compatibility,
 		// but we prioritize server-resolved logos.
-		
+
 		// If we already have a mapping for this name in our local maps (initialized at startup),
 		// we can still return it as a backup.
 		if (this.mergedTeamLogoMap && this.mergedTeamLogoMap[teamName]) {
@@ -714,7 +791,10 @@ Module.register("MMM-MyTeams-LeagueTable", {
 
 		// Ensure currentLeague is valid and present in enabledLeagueCodes
 		// If currentLeague is not set or not enabled, set it to the first enabled league
-		if (!this.currentLeague || !this.enabledLeagueCodes.includes(this.currentLeague)) {
+		if (
+			!this.currentLeague ||
+			!this.enabledLeagueCodes.includes(this.currentLeague)
+		) {
 			if (this.enabledLeagueCodes.length > 0) {
 				this.currentLeague = this.enabledLeagueCodes[0];
 			} else {
@@ -803,32 +883,41 @@ Module.register("MMM-MyTeams-LeagueTable", {
 			// UEFA Competitions
 			UEFA_CHAMPIONS_LEAGUE: {
 				table: "https://www.bbc.co.uk/sport/football/champions-league/table",
-				fixtures: "https://www.bbc.co.uk/sport/football/champions-league/scores-fixtures"
+				fixtures:
+					"https://www.bbc.co.uk/sport/football/champions-league/scores-fixtures"
 			},
 			UEFA_EUROPA_LEAGUE: {
 				table: "https://www.bbc.co.uk/sport/football/europa-league/table",
-				fixtures: "https://www.bbc.co.uk/sport/football/europa-league/scores-fixtures"
+				fixtures:
+					"https://www.bbc.co.uk/sport/football/europa-league/scores-fixtures"
 			},
 			UEFA_EUROPA_CONFERENCE_LEAGUE: {
-				table: "https://www.bbc.co.uk/sport/football/europa-conference-league/table",
-				fixtures: "https://www.bbc.co.uk/sport/football/europa-conference-league/scores-fixtures"
+				table:
+					"https://www.bbc.co.uk/sport/football/europa-conference-league/table",
+				fixtures:
+					"https://www.bbc.co.uk/sport/football/europa-conference-league/scores-fixtures"
 			},
 
 			// World Cup
-			WORLD_CUP_2026: "https://www.bbc.co.uk/sport/football/world-cup/scores-fixtures/2026-06",
+			WORLD_CUP_2026:
+				"https://www.bbc.co.uk/sport/football/world-cup/scores-fixtures/2026-06",
 
 			// Legacy code support
 			UCL: {
 				table: "https://www.bbc.co.uk/sport/football/champions-league/table",
-				fixtures: "https://www.bbc.co.uk/sport/football/champions-league/scores-fixtures"
+				fixtures:
+					"https://www.bbc.co.uk/sport/football/champions-league/scores-fixtures"
 			},
 			UEL: {
 				table: "https://www.bbc.co.uk/sport/football/europa-league/table",
-				fixtures: "https://www.bbc.co.uk/sport/football/europa-league/scores-fixtures"
+				fixtures:
+					"https://www.bbc.co.uk/sport/football/europa-league/scores-fixtures"
 			},
 			ECL: {
-				table: "https://www.bbc.co.uk/sport/football/europa-conference-league/table",
-				fixtures: "https://www.bbc.co.uk/sport/football/europa-conference-league/scores-fixtures"
+				table:
+					"https://www.bbc.co.uk/sport/football/europa-conference-league/table",
+				fixtures:
+					"https://www.bbc.co.uk/sport/football/europa-conference-league/scores-fixtures"
 			}
 		};
 
@@ -877,6 +966,184 @@ Module.register("MMM-MyTeams-LeagueTable", {
 				});
 			}, index * 500);
 		});
+	},
+
+	/**
+	 * Security helper: Creates a FontAwesome icon element safely without innerHTML.
+	 * Prevents XSS vulnerabilities by using DOM manipulation instead of innerHTML.
+	 * @param {string} iconClass - The FontAwesome class (e.g., 'fas fa-sync-alt')
+	 * @returns {HTMLElement} The icon element
+	 */
+	createIcon(iconClass) {
+		const icon = document.createElement("i");
+		icon.className = iconClass;
+		return icon;
+	},
+
+	/**
+	 * Accessibility helper: Creates a table header cell with proper ARIA attributes.
+	 * @param {string} text - The header text
+	 * @param {string} className - The CSS class name
+	 * @returns {HTMLElement} The th element with ARIA attributes
+	 */
+	createTableHeader(text, className) {
+		const th = document.createElement("th");
+		th.textContent = text;
+		th.className = className;
+		th.setAttribute("role", "columnheader");
+		th.setAttribute("aria-sort", "none");
+		return th;
+	},
+
+	/**
+	 * Accessibility helper: Creates a table cell with proper ARIA attributes.
+	 * @param {string} content - The cell content (optional)
+	 * @param {string} className - The CSS class name (optional)
+	 * @returns {HTMLElement} The td element with ARIA attributes
+	 */
+	createTableCell(content = "", className = "") {
+		const td = document.createElement("td");
+		if (content) td.textContent = content;
+		if (className) td.className = className;
+		td.setAttribute("role", "cell");
+		return td;
+	},
+
+	/**
+	 * Accessibility helper: Adds keyboard navigation to an interactive element.
+	 * Makes the element focusable and responds to Enter/Space keys like a button.
+	 * @param {HTMLElement} element - The element to make keyboard accessible
+	 * @param {Function} callback - The function to call when activated
+	 */
+	addKeyboardNavigation(element, callback) {
+		if (!element) return;
+		
+		element.setAttribute("tabindex", "0");
+		
+		element.addEventListener("keydown", (e) => {
+			if (e.key === "Enter" || e.key === " " || e.key === "Spacebar") {
+				e.preventDefault();
+				if (callback) callback(e);
+			}
+		});
+	},
+
+	/**
+	 * Performance optimization: Setup Intersection Observer for lazy image loading (PERF-08).
+	 * Provides better cross-browser consistency than native loading="lazy".
+	 */
+	setupLazyLoading() {
+		// Check if Intersection Observer is supported
+		if (!('IntersectionObserver' in window)) {
+			// Fallback to immediate loading on older browsers
+			this.imageObserver = null;
+			if (this.config.debug) {
+				Log.info('[PERF-08] IntersectionObserver not supported - using immediate loading');
+			}
+			return;
+		}
+
+		this.imageObserver = new IntersectionObserver((entries) => {
+			entries.forEach(entry => {
+				if (entry.isIntersecting) {
+					const img = entry.target;
+					const dataSrc = img.getAttribute('data-src');
+					if (dataSrc) {
+						img.src = dataSrc;
+						img.removeAttribute('data-src');
+						this.imageObserver.unobserve(img);
+						
+						if (this.config.debug) {
+							Log.info(`[PERF-08] Lazy loaded image: ${dataSrc.substring(dataSrc.lastIndexOf('/') + 1)}`);
+						}
+					}
+				}
+			});
+		}, {
+			rootMargin: '50px' // Start loading 50px before entering viewport
+		});
+
+		if (this.config.debug) {
+			Log.info('[PERF-08] Intersection Observer initialized for lazy loading');
+		}
+	},
+
+	/**
+	 * Performance helper: Setup lazy loading for an image element (PERF-08).
+	 * @param {HTMLImageElement} img - The image element
+	 * @param {string} src - The image source URL
+	 */
+	setupImageLazyLoading(img, src) {
+		if (this.imageObserver) {
+			// Use Intersection Observer
+			img.setAttribute('data-src', src);
+			// Use transparent SVG as placeholder
+			img.src = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg"%3E%3C/svg%3E';
+			img.loading = 'lazy'; // Keep as fallback for browsers without IntersectionObserver
+			this.imageObserver.observe(img);
+		} else {
+			// Fallback to immediate loading
+			img.src = src;
+			img.loading = 'lazy';
+		}
+	},
+
+	/**
+	 * UX helper: Setup offline/online detection and status updates (UX-07).
+	 */
+	setupOfflineDetection() {
+		window.addEventListener('online', () => this.handleOnlineStatus(true));
+		window.addEventListener('offline', () => this.handleOnlineStatus(false));
+
+		if (this.config.debug) {
+			Log.info(`[UX-07] Offline detection initialized. Current status: ${this.isOnline ? 'Online' : 'Offline'}`);
+		}
+	},
+
+	/**
+	 * UX helper: Handle online/offline status changes (UX-07).
+	 * @param {boolean} isOnline - Whether the browser is online
+	 */
+	handleOnlineStatus(isOnline) {
+		const wasOffline = !this.isOnline;
+		this.isOnline = isOnline;
+
+		if (!isOnline) {
+			this.announceToScreenReader('Internet connection lost - showing cached data', true);
+			if (this.config.debug) {
+				Log.warn('[UX-07] Connection lost - entering offline mode');
+			}
+		} else if (wasOffline) {
+			this.announceToScreenReader('Internet connection restored - updating data', true);
+			if (this.config.debug) {
+				Log.info('[UX-07] Connection restored - updating data');
+			}
+			// Trigger data refresh
+			this.requestAllLeagueData();
+		}
+
+		this.updateDom();
+	},
+
+	/**
+	 * UX helper: Create offline mode indicator element (UX-07).
+	 * @returns {HTMLElement|null} The offline indicator or null if online
+	 */
+	createOfflineIndicator() {
+		if (this.isOnline) return null;
+
+		const offlineIndicator = document.createElement('div');
+		offlineIndicator.className = 'offline-indicator';
+		offlineIndicator.setAttribute('role', 'status');
+		offlineIndicator.setAttribute('aria-live', 'polite');
+
+		const icon = this.createIcon('fas fa-wifi-slash');
+		const text = document.createTextNode(' Offline Mode - Showing Cached Data');
+
+		offlineIndicator.appendChild(icon);
+		offlineIndicator.appendChild(text);
+
+		return offlineIndicator;
 	},
 
 	// Utility: determine if a WC stage is complete based on available data
@@ -1006,23 +1273,25 @@ Module.register("MMM-MyTeams-LeagueTable", {
 
 		// Schedule next update
 		let nextUpdate = this.config.updateInterval;
-		
+
 		// Task: Reduce refresh time for live matches to once per 3 mins
 		let hasLiveGames = false;
 		if (this.leagueData) {
-			Object.values(this.leagueData).forEach(data => {
+			Object.values(this.leagueData).forEach((data) => {
 				if (data && data.fixtures && Array.isArray(data.fixtures)) {
-					if (data.fixtures.some(f => f.live)) {
+					if (data.fixtures.some((f) => f.live)) {
 						hasLiveGames = true;
 					}
 				}
 			});
 		}
-		
+
 		if (hasLiveGames) {
 			nextUpdate = 3 * 60 * 1000; // 3 minutes
 			if (this.config.debug) {
-				Log.info(" MMM-MyTeams-LeagueTable: Live games detected, increasing refresh rate to 3 minutes.");
+				Log.info(
+					" MMM-MyTeams-LeagueTable: Live games detected, increasing refresh rate to 3 minutes."
+				);
 			}
 		}
 
@@ -1085,6 +1354,10 @@ Module.register("MMM-MyTeams-LeagueTable", {
 		this.error = null;
 		this.retryCount = 0;
 
+		// Announce data update to screen readers (A11Y-04)
+		const leagueName = this.config.leagueHeaders[leagueType] || leagueType;
+		this.announceDataUpdate(leagueName);
+
 		// Use debounced DOM update to batch multiple league updates together
 		this.debouncedUpdateDom(this.config.animationSpeed);
 	},
@@ -1105,9 +1378,17 @@ Module.register("MMM-MyTeams-LeagueTable", {
 
 	// Process error from data fetch
 	processError(error) {
+		const errorMessage = error.userMessage || error.message || String(error);
+		const errorCategory = error.category || "Unknown";
+		const errorSuggestion = error.suggestion || "Please try again later";
+		
 		Log.error(
-			` MMM-MyTeams-LeagueTable: Error fetching data: ${error && error.message ? error.message : String(error)}`
+			` MMM-MyTeams-LeagueTable: [${errorCategory}] ${errorMessage}`
 		);
+		
+		if (this.config.debug && error.originalError) {
+			Log.error(` MMM-MyTeams-LeagueTable: Original error: ${error.originalError}`);
+		}
 
 		this.error = error;
 		this.retryCount++;
@@ -1124,7 +1405,7 @@ Module.register("MMM-MyTeams-LeagueTable", {
 				self.requestAllLeagueData();
 			}, this.config.retryDelay);
 		} else {
-			Log.error(" MMM-MyTeams-LeagueTable: Max retries exceeded, giving up");
+			Log.error(` MMM-MyTeams-LeagueTable: Max retries exceeded. ${errorSuggestion}`);
 			this.updateDom(this.config.animationSpeed);
 		}
 	},
@@ -1313,7 +1594,6 @@ Module.register("MMM-MyTeams-LeagueTable", {
 				countryCode: "EU",
 				logo: "modules/MMM-MyTeams-LeagueTable/images/crests/UEFA-Conference-League/UECL_Trophy.png"
 			}
-			
 		};
 
 		return leagueMapping[leagueCode] || null;
@@ -1381,7 +1661,10 @@ Module.register("MMM-MyTeams-LeagueTable", {
 		let button = event.currentTarget;
 
 		// If currentTarget is null or not the button, use target and find the closest button
-		if (!button || (button.classList && !button.classList.contains("league-btn"))) {
+		if (
+			!button ||
+			(button.classList && !button.classList.contains("league-btn"))
+		) {
 			if (event.target && typeof event.target.closest === "function") {
 				button = event.target.closest(".league-btn");
 			}
@@ -1390,7 +1673,9 @@ Module.register("MMM-MyTeams-LeagueTable", {
 		// Final check: if we still don't have a valid button, return
 		if (!button || typeof button.getAttribute !== "function") {
 			if (this.config.debug) {
-				Log.warn(" MMM-MyTeams-LeagueTable: No valid league button found in click event");
+				Log.warn(
+					" MMM-MyTeams-LeagueTable: No valid league button found in click event"
+				);
 			}
 			return;
 		}
@@ -1402,7 +1687,9 @@ Module.register("MMM-MyTeams-LeagueTable", {
 
 		if (!leagueCode) {
 			if (this.config.debug) {
-				Log.warn(" MMM-MyTeams-LeagueTable: Clicked element has no data-league attribute");
+				Log.warn(
+					" MMM-MyTeams-LeagueTable: Clicked element has no data-league attribute"
+				);
 			}
 			return;
 		}
@@ -1431,7 +1718,7 @@ Module.register("MMM-MyTeams-LeagueTable", {
 					this.currentSubTab = this.config.defaultWCSubTab || "A";
 				} else if (uefaLeagues.includes(league)) {
 					// For UEFA leagues, default to Playoff in February, otherwise Table
-					const month = new Date().getMonth(); // 1 = February
+					const month = this.getCurrentDate().getMonth(); // 1 = February
 					if (month === 1) {
 						this.currentSubTab = "Playoff";
 					} else {
@@ -1459,13 +1746,15 @@ Module.register("MMM-MyTeams-LeagueTable", {
 		const root = document.getElementById(`mtlt-${this.identifier}`);
 		// FIX: Handle both regular tables and UEFA split-view (which has multiple scroll containers)
 		const tableContainer = root
-			? root.querySelector(".league-body-scroll") || 
-			  root.querySelector(".league-content-container")
+			? root.querySelector(".league-body-scroll") ||
+				root.querySelector(".league-content-container")
 			: null;
-		
+
 		// For UEFA split-view, scroll all section containers to top
-		const uefaScrollContainers = root ? root.querySelectorAll(".uefa-section-scroll") : null;
-		
+		const uefaScrollContainers = root
+			? root.querySelectorAll(".uefa-section-scroll")
+			: null;
+
 		if (tableContainer) {
 			// Regular table - single scroll container
 			tableContainer.scrollTo({
@@ -1474,7 +1763,7 @@ Module.register("MMM-MyTeams-LeagueTable", {
 			});
 		} else if (uefaScrollContainers && uefaScrollContainers.length > 0) {
 			// UEFA split-view - scroll all sections to top
-			uefaScrollContainers.forEach(container => {
+			uefaScrollContainers.forEach((container) => {
 				container.scrollTo({
 					top: 0,
 					behavior: "smooth"
@@ -1493,9 +1782,9 @@ Module.register("MMM-MyTeams-LeagueTable", {
 		const root = document.getElementById(`mtlt-${this.identifier}`);
 		// FIX: Also check for UEFA split-view scroll containers
 		const tableContainer = root
-			? root.querySelector(".league-body-scroll") || 
-			  root.querySelector(".league-content-container") ||
-			  root.querySelector(".uefa-section-scroll")
+			? root.querySelector(".league-body-scroll") ||
+				root.querySelector(".league-content-container") ||
+				root.querySelector(".uefa-section-scroll")
 			: null;
 		const backToTopControls = root
 			? root.querySelector(".back-to-top-controls")
@@ -1508,7 +1797,7 @@ Module.register("MMM-MyTeams-LeagueTable", {
 			// Footer is now always visible via CSS sticky behavior
 			// We just update the internal isScrolling state for other components
 			this.isScrolling = isScrolled;
-			
+
 			// Always ensure the visible class is present for internal consistency
 			if (!backToTopControls.classList.contains("visible")) {
 				backToTopControls.classList.add("visible");
@@ -1559,6 +1848,169 @@ Module.register("MMM-MyTeams-LeagueTable", {
 		if (this._lastRenderedKey === key) return true;
 		this._lastRenderedKey = key;
 		return false;
+	},
+
+	/**
+	 * Create hidden ARIA live region for screen reader announcements (A11Y-04)
+	 */
+	createAriaLiveRegion() {
+		if (!this.ariaLiveRegion) {
+			this.ariaLiveRegion = document.createElement("div");
+			this.ariaLiveRegion.setAttribute("role", "status");
+			this.ariaLiveRegion.setAttribute("aria-live", "polite");
+			this.ariaLiveRegion.setAttribute("aria-atomic", "true");
+			this.ariaLiveRegion.className = "sr-only"; // Visually hidden
+			this.ariaLiveRegion.style.position = "absolute";
+			this.ariaLiveRegion.style.left = "-10000px";
+			this.ariaLiveRegion.style.width = "1px";
+			this.ariaLiveRegion.style.height = "1px";
+			this.ariaLiveRegion.style.overflow = "hidden";
+			document.body.appendChild(this.ariaLiveRegion);
+		}
+	},
+
+	/**
+	 * Announce message to screen readers with throttling (A11Y-04)
+	 * @param {string} message - Message to announce
+	 * @param {boolean} force - Force announcement bypassing throttle
+	 */
+	announceToScreenReader(message, force = false) {
+		if (!message) return;
+		
+		const now = Date.now();
+		
+		// Throttle announcements to prevent spam
+		if (!force && now - this.lastAnnouncement < this.announcementThrottle) {
+			if (this.config.debug) {
+				Log.info(`[A11Y] Throttled announcement: ${message}`);
+			}
+			return;
+		}
+		
+		this.lastAnnouncement = now;
+		
+		if (!this.ariaLiveRegion) {
+			this.createAriaLiveRegion();
+		}
+		
+		// Clear and set new message (forces screen reader to announce)
+		this.ariaLiveRegion.textContent = "";
+		setTimeout(() => {
+			this.ariaLiveRegion.textContent = message;
+			if (this.config.debug) {
+				Log.info(`[A11Y] Screen reader announcement: ${message}`);
+			}
+		}, 100);
+	},
+
+	/**
+	 * Announce league data update (A11Y-04)
+	 */
+	announceDataUpdate(leagueName) {
+		const message = `League data updated for ${leagueName}`;
+		this.announceToScreenReader(message);
+	},
+
+	/**
+	 * Announce live match update (A11Y-04)
+	 */
+	announceLiveMatch(homeTeam, awayTeam, homeScore, awayScore, status) {
+		const message = `Live match: ${homeTeam} ${homeScore} - ${awayScore} ${awayTeam}, ${status}`;
+		this.announceToScreenReader(message);
+	},
+
+	/**
+	 * Announce match finished (A11Y-04)
+	 */
+	announceMatchFinished(homeTeam, awayTeam, homeScore, awayScore) {
+		const message = `Match finished: Final score ${homeTeam} ${homeScore} - ${awayScore} ${awayTeam}`;
+		this.announceToScreenReader(message);
+	},
+
+	/**
+	 * Filter fixtures based on date range configuration (UX-05)
+	 * @param {Array} fixtures - Array of fixture objects
+	 * @returns {Array} - Filtered fixtures
+	 */
+	filterFixturesByDate(fixtures) {
+		if (!fixtures || !Array.isArray(fixtures) || fixtures.length === 0) {
+			return fixtures;
+		}
+
+		const filter = this.config.fixtureDateFilter;
+		
+		// No filtering if filter is null/undefined
+		if (!filter) {
+			return fixtures;
+		}
+
+		const now = new Date();
+		const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+		
+		let startDate, endDate;
+
+		// Handle preset filters
+		if (typeof filter === "string") {
+			switch (filter.toLowerCase()) {
+				case "today":
+					startDate = new Date(today);
+					endDate = new Date(today);
+					endDate.setDate(endDate.getDate() + 1); // Include all of today
+					break;
+				case "week":
+					startDate = new Date(today);
+					endDate = new Date(today);
+					endDate.setDate(endDate.getDate() + 7);
+					break;
+				case "month":
+					startDate = new Date(today);
+					endDate = new Date(today);
+					endDate.setMonth(endDate.getMonth() + 1);
+					break;
+				default:
+					// Invalid filter string, return all
+					if (this.config.debug) {
+						Log.warn(`[FILTER] Invalid filter preset: ${filter}. Use "today", "week", or "month"`);
+					}
+					return fixtures;
+			}
+		}
+		// Handle custom date range {start: "YYYY-MM-DD", end: "YYYY-MM-DD"}
+		else if (typeof filter === "object" && filter.start && filter.end) {
+			startDate = new Date(filter.start);
+			endDate = new Date(filter.end);
+			
+			// Validate dates
+			if (isNaN(startDate.getTime()) || isNaN(endDate.getTime())) {
+				if (this.config.debug) {
+					Log.warn(`[FILTER] Invalid custom date range: ${filter.start} to ${filter.end}`);
+				}
+				return fixtures;
+			}
+		}
+		else {
+			// Invalid filter format
+			if (this.config.debug) {
+				Log.warn(`[FILTER] Invalid filter format:`, filter);
+			}
+			return fixtures;
+		}
+
+		// Filter fixtures within date range
+		const filtered = fixtures.filter((fix) => {
+			if (!fix.date) return false; // Skip fixtures without dates
+			
+			const fixtureDate = new Date(fix.date);
+			if (isNaN(fixtureDate.getTime())) return false; // Skip invalid dates
+			
+			return fixtureDate >= startDate && fixtureDate <= endDate;
+		});
+
+		if (this.config.debug) {
+			Log.info(`[FILTER] Filtered ${fixtures.length} fixtures to ${filtered.length} (${startDate.toLocaleDateString()} - ${endDate.toLocaleDateString()})`);
+		}
+
+		return filtered;
 	},
 
 	// Pause all cycling timers
@@ -1615,15 +2067,31 @@ Module.register("MMM-MyTeams-LeagueTable", {
 		wrapper.className = "spfl-league-table";
 		wrapper.id = `mtlt-${this.identifier}`;
 		wrapper.setAttribute("data-league", this.currentLeague);
+		
+		// Apply table density class (UX-04)
+		if (this.config.tableDensity && ["compact", "normal", "comfortable"].includes(this.config.tableDensity)) {
+			wrapper.classList.add(`density-${this.config.tableDensity}`);
+		}
+		
+		// Apply theme class (DES-02)
+		if (this.config.theme && ["light", "dark", "auto"].includes(this.config.theme)) {
+			wrapper.classList.add(`theme-${this.config.theme}`);
+		}
 		if (this.isContentHidden) {
 			wrapper.classList.add("content-hidden");
+		}
+
+		// Add offline mode indicator if offline (UX-07)
+		const offlineIndicator = this.createOfflineIndicator();
+		if (offlineIndicator) {
+			wrapper.appendChild(offlineIndicator);
 		}
 
 		// If content is hidden, return wrapper with toggle icon and source in footer
 		if (this.isContentHidden) {
 			const hiddenWrapper = document.createElement("div");
 			hiddenWrapper.className = "spfl-league-table content-hidden";
-			
+
 			const footer = document.createElement("div");
 			footer.className = "back-to-top-controls visible"; // Always visible when hidden
 			footer.style.display = "flex";
@@ -1631,7 +2099,7 @@ Module.register("MMM-MyTeams-LeagueTable", {
 			footer.style.alignItems = "center";
 			footer.style.width = "100%";
 			footer.style.boxSizing = "border-box";
-			
+
 			// Left: Toggle icon
 			const toggleIcon = this._createToggleIcon();
 			footer.appendChild(toggleIcon);
@@ -1643,12 +2111,28 @@ Module.register("MMM-MyTeams-LeagueTable", {
 				sourceContainer.style.flex = "1";
 				sourceContainer.style.textAlign = "center";
 				sourceContainer.style.margin = "0 10px";
-				
+
 				const src = currentData.source || "BBC Sport";
-				const tsDate = currentData.meta && currentData.meta.lastUpdated ? new Date(currentData.meta.lastUpdated) : new Date();
-				const ts = tsDate.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
-				
-				sourceContainer.innerHTML = `<span class="dimmed xsmall">Source: ${src}</span> • <span class="dimmed xsmall last-updated">${this.translate("LAST_UPDATED")}: ${ts}</span>`;
+				const tsDate =
+					currentData.meta && currentData.meta.lastUpdated
+						? new Date(currentData.meta.lastUpdated)
+						: new Date();
+				const ts = tsDate.toLocaleTimeString([], {
+					hour: "2-digit",
+					minute: "2-digit"
+				});
+
+				const sourceSpan = document.createElement("span");
+		sourceSpan.className = "dimmed xsmall";
+		sourceSpan.textContent = `Source: ${src}`;
+		sourceContainer.appendChild(sourceSpan);
+
+		sourceContainer.appendChild(document.createTextNode(" • "));
+
+		const updatedSpan = document.createElement("span");
+		updatedSpan.className = "dimmed xsmall last-updated";
+		updatedSpan.textContent = `${this.translate("LAST_UPDATED")}: ${ts}`;
+		sourceContainer.appendChild(updatedSpan);
 				footer.appendChild(sourceContainer);
 			}
 
@@ -1656,13 +2140,20 @@ Module.register("MMM-MyTeams-LeagueTable", {
 			const spacer = document.createElement("div");
 			spacer.style.width = "40px"; // Roughly the width of the toggle icon
 			footer.appendChild(spacer);
-			
+
 			hiddenWrapper.appendChild(footer);
 			return hiddenWrapper;
 		}
 
 		// Apply league-specific mode classes for selective CSS styling
-		const uefaLeagues = ["UEFA_CHAMPIONS_LEAGUE", "UEFA_EUROPA_LEAGUE", "UEFA_EUROPA_CONFERENCE_LEAGUE", "UCL", "UEL", "ECL"];
+		const uefaLeagues = [
+			"UEFA_CHAMPIONS_LEAGUE",
+			"UEFA_EUROPA_LEAGUE",
+			"UEFA_EUROPA_CONFERENCE_LEAGUE",
+			"UCL",
+			"UEL",
+			"ECL"
+		];
 		if (this.currentLeague === "WORLD_CUP_2026") {
 			wrapper.classList.add("league-mode-wc");
 		} else if (uefaLeagues.includes(this.currentLeague)) {
@@ -1676,7 +2167,11 @@ Module.register("MMM-MyTeams-LeagueTable", {
 		this._applyThemeOverrides();
 
 		// Skip re-render when content is identical and no error/loading change
-		if (!this.error && this.loaded[this.currentLeague] && this._shouldSkipRender()) {
+		if (
+			!this.error &&
+			this.loaded[this.currentLeague] &&
+			this._shouldSkipRender()
+		) {
 			const placeholder = document.createElement("div");
 			placeholder.style.display = "none";
 			return placeholder;
@@ -1694,10 +2189,18 @@ Module.register("MMM-MyTeams-LeagueTable", {
 		if (this.config.onlyShowWorldCup2026) {
 			leagueTitle.textContent = null; // "FIFA World Cup 2026";
 		} else {
-			let baseTitle = this.config.leagueHeaders[this.currentLeague] || this.currentLeague;
+			let baseTitle =
+				this.config.leagueHeaders[this.currentLeague] || this.currentLeague;
 			if (this.currentLeague === "WORLD_CUP_2026" && this.currentSubTab) {
 				const sub = this.currentSubTab;
-				const stageMap = { Rd32: "Round of 32", Rd16: "Round of 16", QF: "Quarter-finals", SF: "Semi-finals", TP: "Third Place", Final: "Final" };
+				const stageMap = {
+					Rd32: "Round of 32",
+					Rd16: "Round of 16",
+					QF: "Quarter-finals",
+					SF: "Semi-finals",
+					TP: "Third Place",
+					Final: "Final"
+				};
 				if (/^[A-L]$/.test(sub)) baseTitle += ` • Group ${sub}`;
 				else if (stageMap[sub]) baseTitle += ` • ${stageMap[sub]}`;
 			}
@@ -1725,22 +2228,69 @@ Module.register("MMM-MyTeams-LeagueTable", {
 			metaInfo.appendChild(lastUpdated);
 		}
 
-		// Add Stale Data warning if we are showing a cache fallback (fetch failed) OR data is incomplete
+		// Add Enhanced Stale Data warning with timestamps (UX-03)
 		if (currentData && (currentData.cacheFallback || currentData.incomplete)) {
 			const staleWarning = document.createElement("span");
 			staleWarning.className = "stale-warning xsmall";
-			staleWarning.style.color = "#ffa500"; // Orange alert color
 			staleWarning.style.marginLeft = "8px";
 			staleWarning.style.fontWeight = "bold";
+			staleWarning.style.padding = "2px 8px";
+			staleWarning.style.borderRadius = "3px";
 			
-			if (currentData.cacheFallback) {
-				staleWarning.innerHTML = '<i class="fas fa-history"></i> STALE';
-				staleWarning.title = "Live fetch failed: Showing last cached result";
-			} else {
-				staleWarning.innerHTML = '<i class="fas fa-exclamation-circle"></i> INCOMPLETE';
-				staleWarning.title = "Live data missing statistics: Parser may need update or data not yet available";
+			// Calculate age of data (UX-03)
+			let dataAge = 0;
+			let ageColor = "#ffa500"; // Default orange
+			let ageSeverity = "medium";
+			
+			if (currentData.meta && currentData.meta.lastUpdated) {
+				const lastUpdate = new Date(currentData.meta.lastUpdated);
+				const now = new Date();
+				dataAge = Math.floor((now - lastUpdate) / (1000 * 60)); // Age in minutes
+				
+				// Color gradient based on age (UX-03)
+				if (dataAge < 60) {
+					// < 1 hour: Green
+					ageColor = "#4CAF50";
+					ageSeverity = "fresh";
+				} else if (dataAge < 360) {
+					// 1-6 hours: Yellow
+					ageColor = "#FFC107";
+					ageSeverity = "moderate";
+				} else {
+					// > 6 hours: Red
+					ageColor = "#FF5252";
+					ageSeverity = "stale";
+				}
 			}
 			
+			staleWarning.style.color = ageColor;
+			staleWarning.style.border = `1px solid ${ageColor}`;
+			staleWarning.setAttribute("data-severity", ageSeverity);
+
+			if (currentData.cacheFallback) {
+				staleWarning.appendChild(this.createIcon("fas fa-history"));
+				
+				// Enhanced message with age (UX-03)
+				let ageText = " STALE";
+				if (dataAge > 0) {
+					if (dataAge < 60) {
+						ageText = ` ${dataAge}m ago`;
+					} else if (dataAge < 1440) {
+						ageText = ` ${Math.floor(dataAge / 60)}h ago`;
+					} else {
+						ageText = ` ${Math.floor(dataAge / 1440)}d ago`;
+					}
+				}
+				
+				staleWarning.appendChild(document.createTextNode(ageText));
+				staleWarning.title = `Live fetch failed: Showing cached data from ${Math.floor(dataAge / 60)} hours ${dataAge % 60} minutes ago`;
+			} else {
+				staleWarning.appendChild(this.createIcon("fas fa-exclamation-circle"));
+				staleWarning.appendChild(document.createTextNode(" INCOMPLETE"));
+				staleWarning.title =
+					"Live data missing statistics: Parser may need update or data not yet available";
+			}
+
 			metaInfo.appendChild(staleWarning);
 		}
 
@@ -1753,11 +2303,15 @@ Module.register("MMM-MyTeams-LeagueTable", {
 			refreshBtn.setAttribute("role", "button");
 			refreshBtn.style.cursor = "pointer";
 			refreshBtn.style.marginLeft = "8px";
-			refreshBtn.addEventListener("click", () => {
+			
+			const refreshHandler = () => {
 				this.requestAllLeagueData();
 				refreshBtn.classList.add("fa-spin");
 				setTimeout(() => refreshBtn.classList.remove("fa-spin"), 2000);
-			});
+			};
+			
+			refreshBtn.addEventListener("click", refreshHandler);
+			this.addKeyboardNavigation(refreshBtn, refreshHandler);
 			metaInfo.appendChild(refreshBtn);
 
 			// Add Clear Cache button when enabled
@@ -1769,49 +2323,67 @@ Module.register("MMM-MyTeams-LeagueTable", {
 				clearBtn.setAttribute("role", "button");
 				clearBtn.style.cursor = "pointer";
 				clearBtn.style.marginLeft = "8px";
-				clearBtn.addEventListener("click", () => {
-					// Send clear cache notification
+				
+				const clearHandler = () => {
 					this.sendSocketNotification("CACHE_CLEAR_ALL");
-					// Visual feedback – pulse/spin briefly
 					clearBtn.classList.add("fa-spin");
 					setTimeout(() => clearBtn.classList.remove("fa-spin"), 1500);
-				});
+				};
+				
+				clearBtn.addEventListener("click", clearHandler);
+				this.addKeyboardNavigation(clearBtn, clearHandler);
 				metaInfo.appendChild(clearBtn);
 			}
 		}
 
 		// Pin control and countdown in header
-	const pinBtn = document.createElement("span");
-	pinBtn.className = "pin-btn fas fa-thumbtack small dimmed";
-	pinBtn.setAttribute("role", "button");
-	pinBtn.setAttribute("aria-pressed", this._pinned);
-	pinBtn.setAttribute("aria-label", this._pinned ? "Unpin (resume auto-cycling)" : "Pin (pause auto-cycling)");
-	pinBtn.title = this._pinned ? "Unpin (resume auto-cycling)" : "Pin (pause auto-cycling)";
-	pinBtn.style.cursor = "pointer";
-	pinBtn.style.marginLeft = "8px";
-	pinBtn.addEventListener("click", () => {
-		this._pinned = !this._pinned;
-		pinBtn.classList.toggle("active", this._pinned);
+		const pinBtn = document.createElement("span");
+		pinBtn.className = "pin-btn fas fa-thumbtack small dimmed";
+		pinBtn.setAttribute("role", "button");
 		pinBtn.setAttribute("aria-pressed", this._pinned);
-		pinBtn.setAttribute("aria-label", this._pinned ? "Unpin (resume auto-cycling)" : "Pin (pause auto-cycling)");
-		pinBtn.title = this._pinned ? "Unpin (resume auto-cycling)" : "Pin (pause auto-cycling)";
-		if (this._pinned) {
-			this._pauseCycling();
-			this._stopHeaderCountdown();
-		} else {
-			this._resumeCyclingIfNeeded();
-			this._startHeaderCountdown();
-		}
-	});
-	metaInfo.appendChild(pinBtn);
-	const countdown = document.createElement("span");
-	countdown.className = "cycle-countdown xsmall dimmed";
-	countdown.style.marginLeft = "8px";
-	this._countdownEl = countdown;
-	metaInfo.appendChild(countdown);
+		pinBtn.setAttribute(
+			"aria-label",
+			this._pinned ? "Unpin (resume auto-cycling)" : "Pin (pause auto-cycling)"
+		);
+		pinBtn.title = this._pinned
+			? "Unpin (resume auto-cycling)"
+			: "Pin (pause auto-cycling)";
+		pinBtn.style.cursor = "pointer";
+		pinBtn.style.marginLeft = "8px";
+		
+		const pinHandler = () => {
+			this._pinned = !this._pinned;
+			pinBtn.classList.toggle("active", this._pinned);
+			pinBtn.setAttribute("aria-pressed", this._pinned);
+			pinBtn.setAttribute(
+				"aria-label",
+				this._pinned
+					? "Unpin (resume auto-cycling)"
+					: "Pin (pause auto-cycling)"
+			);
+			pinBtn.title = this._pinned
+				? "Unpin (resume auto-cycling)"
+				: "Pin (pause auto-cycling)";
+			if (this._pinned) {
+				this._pauseCycling();
+				this._stopHeaderCountdown();
+			} else {
+				this._resumeCyclingIfNeeded();
+				this._startHeaderCountdown();
+			}
+		};
+		
+		pinBtn.addEventListener("click", pinHandler);
+		this.addKeyboardNavigation(pinBtn, pinHandler);
+		metaInfo.appendChild(pinBtn);
+		const countdown = document.createElement("span");
+		countdown.className = "cycle-countdown xsmall dimmed";
+		countdown.style.marginLeft = "8px";
+		this._countdownEl = countdown;
+		metaInfo.appendChild(countdown);
 
-	headerContainer.appendChild(metaInfo);
-	wrapperFragment.appendChild(headerContainer);
+		headerContainer.appendChild(metaInfo);
+		wrapperFragment.appendChild(headerContainer);
 
 		// Create league buttons container
 		var buttonsContainer = document.createElement("div");
@@ -1871,9 +2443,8 @@ Module.register("MMM-MyTeams-LeagueTable", {
 					if (leagueInfo.logo) {
 						const logoImg = document.createElement("img");
 						logoImg.className = "flag-image"; // Reuse existing class for consistent sizing
-						logoImg.loading = "lazy";
 						logoImg.alt = leagueInfo.name;
-						logoImg.src = leagueInfo.logo;
+						this.setupImageLazyLoading(logoImg, leagueInfo.logo);
 						logoImg.onload = function () {
 							fallbackText.style.display = "none";
 						};
@@ -1887,13 +2458,13 @@ Module.register("MMM-MyTeams-LeagueTable", {
 					else if (leagueInfo.countryFolder) {
 						const flagImg = document.createElement("img");
 						flagImg.className = "flag-image";
-						flagImg.loading = "lazy";
 						flagImg.alt = leagueInfo.name;
 						// Construct path to flag image (e.g., "modules/MMM-MyTeams-LeagueTable/images/crests/Scotland/scotland.png")
 						const countryName = leagueInfo.countryFolder
 							.toLowerCase()
 							.replace(/\s+/g, "-");
-						flagImg.src = `modules/MMM-MyTeams-LeagueTable/images/crests/${leagueInfo.countryFolder}/${countryName}.png`;
+						const flagSrc = `modules/MMM-MyTeams-LeagueTable/images/crests/${leagueInfo.countryFolder}/${countryName}.png`;
+						this.setupImageLazyLoading(flagImg, flagSrc);
 
 						// Enhanced fallback handling with multiple filename attempts
 						let fallbackAttempts = 0;
@@ -1977,8 +2548,14 @@ Module.register("MMM-MyTeams-LeagueTable", {
 
 						btn.className = `league-btn${isCurrentlyActive ? " active" : ""}`;
 						btn.textContent = league.text;
-						btn.setAttribute("aria-label", `Switch to ${league.text} league table`);
-						btn.setAttribute("aria-pressed", isCurrentlyActive ? "true" : "false");
+						btn.setAttribute(
+							"aria-label",
+							`Switch to ${league.text} league table`
+						);
+						btn.setAttribute(
+							"aria-pressed",
+							isCurrentlyActive ? "true" : "false"
+						);
 						btn.setAttribute("role", "tab");
 
 						// Set data attributes using setAttribute for maximum compatibility
@@ -2001,8 +2578,14 @@ Module.register("MMM-MyTeams-LeagueTable", {
 
 						btn.className = `league-btn${isCurrentlyActive ? " active" : ""}`;
 						btn.textContent = league.text;
-						btn.setAttribute("aria-label", `Switch to ${league.text} league table`);
-						btn.setAttribute("aria-pressed", isCurrentlyActive ? "true" : "false");
+						btn.setAttribute(
+							"aria-label",
+							`Switch to ${league.text} league table`
+						);
+						btn.setAttribute(
+							"aria-pressed",
+							isCurrentlyActive ? "true" : "false"
+						);
 						btn.setAttribute("role", "tab");
 
 						// Set data attributes using setAttribute for maximum compatibility
@@ -2015,13 +2598,16 @@ Module.register("MMM-MyTeams-LeagueTable", {
 					}
 				});
 			}
-		buttonsContainer.appendChild(buttonsFragment);
-	}
+			buttonsContainer.appendChild(buttonsFragment);
+		}
 
-	this._addHorizontalScrollIndicators(buttonsContainer, wrapperFragment);
+		this._addHorizontalScrollIndicators(buttonsContainer, wrapperFragment);
 
-	// ===== NEW: Sub-tabs (World Cup & UEFA Competitions) =====
-		if (this.currentLeague === "WORLD_CUP_2026" || uefaLeagues.includes(this.currentLeague)) {
+		// ===== NEW: Sub-tabs (World Cup & UEFA Competitions) =====
+		if (
+			this.currentLeague === "WORLD_CUP_2026" ||
+			uefaLeagues.includes(this.currentLeague)
+		) {
 			var subTabsContainer = document.createElement("div");
 			subTabsContainer.className = "wc-subtabs-container single-line";
 			const subTabsFragment = document.createDocumentFragment();
@@ -2029,12 +2615,14 @@ Module.register("MMM-MyTeams-LeagueTable", {
 			// Add manual refresh button to the left of the tabs
 			const refreshBtn = document.createElement("button");
 			refreshBtn.className = "wc-btn refresh-btn-wc";
-			refreshBtn.innerHTML = '<i class="fas fa-sync-alt"></i>';
+			refreshBtn.appendChild(this.createIcon("fas fa-sync-alt"));
 			refreshBtn.addEventListener("click", () => {
 				this.requestAllLeagueData();
 				const icon = refreshBtn.querySelector("i");
 				if (icon) icon.classList.add("fa-spin");
-				setTimeout(() => { if (icon) icon.classList.remove("fa-spin"); }, 2000);
+				setTimeout(() => {
+					if (icon) icon.classList.remove("fa-spin");
+				}, 2000);
 			});
 			subTabsFragment.appendChild(refreshBtn);
 
@@ -2043,14 +2631,38 @@ Module.register("MMM-MyTeams-LeagueTable", {
 
 			if (this.currentLeague === "WORLD_CUP_2026") {
 				// Generate Group Tabs (A-L) for World Cup
-				const groupsToShow = this.config.showWC2026Groups || ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L"];
+				const groupsToShow = this.config.showWC2026Groups || [
+					"A",
+					"B",
+					"C",
+					"D",
+					"E",
+					"F",
+					"G",
+					"H",
+					"I",
+					"J",
+					"K",
+					"L"
+				];
 				groupsToShow.forEach((groupLetter) => {
-					if (isTestMode || (currentData && currentData.groups && currentData.groups[groupLetter])) {
+					if (
+						isTestMode ||
+						(currentData &&
+							currentData.groups &&
+							currentData.groups[groupLetter])
+					) {
 						const btn = document.createElement("button");
 						btn.className = `wc-btn${this.currentSubTab === groupLetter ? " active" : ""}`;
 						btn.textContent = groupLetter;
-						btn.setAttribute("aria-label", `Show Group ${groupLetter} standings`);
-						btn.setAttribute("aria-pressed", this.currentSubTab === groupLetter ? "true" : "false");
+						btn.setAttribute(
+							"aria-label",
+							`Show Group ${groupLetter} standings`
+						);
+						btn.setAttribute(
+							"aria-pressed",
+							this.currentSubTab === groupLetter ? "true" : "false"
+						);
 						btn.setAttribute("role", "tab");
 						btn.addEventListener("click", () => {
 							this.currentSubTab = groupLetter;
@@ -2074,7 +2686,10 @@ Module.register("MMM-MyTeams-LeagueTable", {
 						let shouldShow = isTestMode;
 						if (!shouldShow && currentData && currentData.knockouts) {
 							const koKey = ko.id.toLowerCase();
-							if (currentData.knockouts[koKey] && currentData.knockouts[koKey].length > 0) {
+							if (
+								currentData.knockouts[koKey] &&
+								currentData.knockouts[koKey].length > 0
+							) {
 								shouldShow = true;
 							}
 						}
@@ -2083,7 +2698,10 @@ Module.register("MMM-MyTeams-LeagueTable", {
 							btn.className = `wc-btn ko-btn${this.currentSubTab === ko.id ? " active" : ""}`;
 							btn.textContent = ko.label;
 							btn.setAttribute("aria-label", `Show ${ko.label} fixtures`);
-							btn.setAttribute("aria-pressed", this.currentSubTab === ko.id ? "true" : "false");
+							btn.setAttribute(
+								"aria-pressed",
+								this.currentSubTab === ko.id ? "true" : "false"
+							);
 							btn.setAttribute("role", "tab");
 							btn.addEventListener("click", () => {
 								this.currentSubTab = ko.id;
@@ -2096,7 +2714,7 @@ Module.register("MMM-MyTeams-LeagueTable", {
 			} else {
 				// Generate UEFA League/Table Tab
 				const tableBtn = document.createElement("button");
-				tableBtn.className = `wc-btn${(!this.currentSubTab || this.currentSubTab === "Table") ? " active" : ""}`;
+				tableBtn.className = `wc-btn${!this.currentSubTab || this.currentSubTab === "Table" ? " active" : ""}`;
 				tableBtn.textContent = "Table";
 				tableBtn.addEventListener("click", () => {
 					this.currentSubTab = "Table";
@@ -2117,7 +2735,10 @@ Module.register("MMM-MyTeams-LeagueTable", {
 						let shouldShow = isTestMode;
 						if (!shouldShow && currentData && currentData.knockouts) {
 							const koKey = ko.id.toLowerCase();
-							if (currentData.knockouts[koKey] && currentData.knockouts[koKey].length > 0) {
+							if (
+								currentData.knockouts[koKey] &&
+								currentData.knockouts[koKey].length > 0
+							) {
 								shouldShow = true;
 							}
 						}
@@ -2126,7 +2747,10 @@ Module.register("MMM-MyTeams-LeagueTable", {
 							btn.className = `wc-btn ko-btn${this.currentSubTab === ko.id ? " active" : ""}`;
 							btn.textContent = ko.label;
 							btn.setAttribute("aria-label", `Show ${ko.label} fixtures`);
-							btn.setAttribute("aria-pressed", this.currentSubTab === ko.id ? "true" : "false");
+							btn.setAttribute(
+								"aria-pressed",
+								this.currentSubTab === ko.id ? "true" : "false"
+							);
 							btn.setAttribute("role", "tab");
 							btn.addEventListener("click", () => {
 								this.currentSubTab = ko.id;
@@ -2155,37 +2779,120 @@ Module.register("MMM-MyTeams-LeagueTable", {
 		// Show loading message if data not loaded yet
 		if (!this.loaded[this.currentLeague] && !this.error) {
 			if (this.config.debug) {
-				Log.info(` MMM-MyTeams-LeagueTable: Data not loaded for ${this.currentLeague}. Loaded states: ${JSON.stringify(this.loaded)}`);
+				Log.info(
+					` MMM-MyTeams-LeagueTable: Data not loaded for ${this.currentLeague}. Loaded states: ${JSON.stringify(this.loaded)}`
+				);
 			}
 
 			// Safety: If for some reason this league is not being loaded, request it now
 			if (this.loaded[this.currentLeague] === undefined) {
-				if (this.config.debug) Log.warn(` MMM-MyTeams-LeagueTable: ${this.currentLeague} was not in loaded map, requesting now`);
+				if (this.config.debug)
+					Log.warn(
+						` MMM-MyTeams-LeagueTable: ${this.currentLeague} was not in loaded map, requesting now`
+					);
 				this.loaded[this.currentLeague] = false;
 				this.requestAllLeagueData();
 			}
 
 			// Get readable league name for loading message
 			let leagueDisplayName = this.currentLeague;
-			if (typeof EUROPEAN_LEAGUES !== "undefined" && EUROPEAN_LEAGUES[this.currentLeague]) {
-				leagueDisplayName = EUROPEAN_LEAGUES[this.currentLeague].name || this.currentLeague;
+			if (
+				typeof EUROPEAN_LEAGUES !== "undefined" &&
+				EUROPEAN_LEAGUES[this.currentLeague]
+			) {
+				leagueDisplayName =
+					EUROPEAN_LEAGUES[this.currentLeague].name || this.currentLeague;
 			} else if (this.currentLeague === "WORLD_CUP_2026") {
 				leagueDisplayName = "FIFA World Cup 2026";
 			}
+
+			// Show skeleton loading state for better perceived performance (DES-05)
+			const skeletonLoader = document.createElement("div");
+			skeletonLoader.className = "skeleton-loader";
+			skeletonLoader.setAttribute("role", "status");
+			skeletonLoader.setAttribute("aria-label", `Loading ${leagueDisplayName} data`);
+
+			// Skeleton header
+			const skeletonHeader = document.createElement("div");
+			skeletonHeader.className = "skeleton-header";
 			
-			// Show league-specific loading state with spinner
-			const loadingState = document.createElement("div");
-			loadingState.className = "loading-state";
+			const skeletonTitle = document.createElement("div");
+			skeletonTitle.className = "skeleton-title";
+			skeletonHeader.appendChild(skeletonTitle);
+			
+			const skeletonMeta = document.createElement("div");
+			skeletonMeta.className = "skeleton-meta";
+			skeletonHeader.appendChild(skeletonMeta);
+			
+			skeletonLoader.appendChild(skeletonHeader);
 
-			const spinner = document.createElement("i");
-			spinner.className = "fas fa-spinner fa-spin";
-			loadingState.appendChild(spinner);
+			// Skeleton table rows (show 10 rows as placeholder)
+			const skeletonTable = document.createElement("div");
+			skeletonTable.className = "skeleton-table";
+			
+			for (let i = 0; i < 10; i++) {
+				const skeletonRow = document.createElement("div");
+				skeletonRow.className = "skeleton-row";
+				
+				// Position
+				const posCell = document.createElement("div");
+				posCell.className = "skeleton-cell position";
+				skeletonRow.appendChild(posCell);
+				
+				// Logo
+				const logoCell = document.createElement("div");
+				logoCell.className = "skeleton-cell logo";
+				skeletonRow.appendChild(logoCell);
+				
+				// Team name
+				const teamCell = document.createElement("div");
+				teamCell.className = "skeleton-cell team";
+				skeletonRow.appendChild(teamCell);
+				
+				// Stats (P, W, D, L, GF, GA, GD, Pts)
+				for (let j = 0; j < 8; j++) {
+					const statCell = document.createElement("div");
+					statCell.className = "skeleton-cell stat";
+					skeletonRow.appendChild(statCell);
+				}
+				
+				// Form
+				const formCell = document.createElement("div");
+				formCell.className = "skeleton-cell form";
+				skeletonRow.appendChild(formCell);
+				
+				skeletonTable.appendChild(skeletonRow);
+			}
+			
+			skeletonLoader.appendChild(skeletonTable);
+			
+			// Add subtle loading text below skeleton
+			const loadingText = document.createElement("div");
+			loadingText.className = "dimmed xsmall";
+			loadingText.style.textAlign = "center";
+			loadingText.style.marginTop = "15px";
+			loadingText.textContent = `${this.translate("LOADING")} ${leagueDisplayName}...`;
+			loadingText.setAttribute("aria-live", "polite");
+			skeletonLoader.appendChild(loadingText);
+			
+			// Add loading timeout warning after 10 seconds
+			if (!this._loadingWarningTimer) {
+				this._loadingWarningTimer = setTimeout(() => {
+					if (!this.loaded[this.currentLeague] && loadingText) {
+						const slowWarning = document.createElement("div");
+						slowWarning.className = "loading-slow-warning xsmall";
+						slowWarning.style.textAlign = "center";
+						slowWarning.style.marginTop = "10px";
+						slowWarning.style.color = "#FFC107";
+						slowWarning.textContent = "Still loading... This is taking longer than expected";
+						slowWarning.setAttribute("role", "alert");
+						skeletonLoader.appendChild(slowWarning);
+					}
+					this._loadingWarningTimer = null;
+				}, 10000);
+			}
 
-			const loadingText = document.createElement("span");
-			loadingText.textContent = ` ${this.translate("LOADING")} ${leagueDisplayName}...`;
-			loadingState.appendChild(loadingText);
-
-			contentContainer.appendChild(loadingState);
+			contentContainer.appendChild(skeletonLoader);
 			contentContainer.className += " dimmed light small";
 			wrapper.appendChild(wrapperFragment);
 			wrapper.appendChild(contentContainer);
@@ -2196,18 +2903,32 @@ Module.register("MMM-MyTeams-LeagueTable", {
 		if (this.error && this.retryCount > this.config.maxRetries) {
 			const errorState = document.createElement("div");
 			errorState.className = "error-state dimmed light small";
-			
+			errorState.setAttribute("role", "alert");
+
 			const errorIcon = document.createElement("i");
 			errorIcon.className = "fas fa-exclamation-triangle error-icon";
+			errorIcon.setAttribute("aria-hidden", "true");
 			errorState.appendChild(errorIcon);
-			
-			const errorText = document.createElement("span");
-			errorText.textContent = ` ${this.translate("ERROR")}: ${this.error && this.error.message ? String(this.error.message) : "Source Unavailable"}`;
+
+			// Display enhanced error message with category
+			const errorText = document.createElement("div");
+			const errorCategory = this.error.category ? `[${this.error.category}] ` : "";
+			const errorMessage = this.error.userMessage || this.error.message || "Source Unavailable";
+			errorText.textContent = ` ${errorCategory}${errorMessage}`;
 			errorState.appendChild(errorText);
+			
+			// Display suggestion if available
+			if (this.error.suggestion) {
+				const suggestionText = document.createElement("div");
+				suggestionText.className = "error-suggestion xsmall";
+				suggestionText.textContent = `💡 ${this.error.suggestion}`;
+				errorState.appendChild(suggestionText);
+			}
 
 			const retryBtn = document.createElement("button");
 			retryBtn.className = "retry-btn-error";
 			retryBtn.textContent = "Retry Now";
+			retryBtn.setAttribute("aria-label", "Retry fetching data");
 			retryBtn.addEventListener("click", () => {
 				this.retryCount = 0;
 				this.error = null;
@@ -2226,11 +2947,11 @@ Module.register("MMM-MyTeams-LeagueTable", {
 		if (this.error && this.retryCount <= this.config.maxRetries) {
 			const retryState = document.createElement("div");
 			retryState.className = "retry-state dimmed light small";
-			
+
 			const retryIcon = document.createElement("i");
 			retryIcon.className = "fas fa-sync fa-spin retry-icon";
 			retryState.appendChild(retryIcon);
-			
+
 			const retryText = document.createElement("span");
 			retryText.textContent = ` ${this.translate("RETRYING")} (${this.retryCount}/${this.config.maxRetries})...`;
 			retryState.appendChild(retryText);
@@ -2243,7 +2964,10 @@ Module.register("MMM-MyTeams-LeagueTable", {
 
 		// Create the table
 		if (currentData) {
-			if (this.currentLeague === "WORLD_CUP_2026" || uefaLeagues.includes(this.currentLeague)) {
+			if (
+				this.currentLeague === "WORLD_CUP_2026" ||
+				uefaLeagues.includes(this.currentLeague)
+			) {
 				contentContainer.appendChild(this.createWorldCupView(currentData));
 			} else if (currentData.teams) {
 				if (this.config.debug) {
@@ -2286,12 +3010,28 @@ Module.register("MMM-MyTeams-LeagueTable", {
 			sourceContainer.style.flex = "1";
 			sourceContainer.style.textAlign = "center";
 			sourceContainer.style.margin = "0 10px";
-			
+
 			const src = currentData.source || "BBC Sport";
-			const tsDate = currentData.meta && currentData.meta.lastUpdated ? new Date(currentData.meta.lastUpdated) : new Date();
-			const ts = tsDate.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
-			
-			sourceContainer.innerHTML = `<span class="dimmed xsmall">Source: ${src}</span> • <span class="dimmed xsmall last-updated">${this.translate("LAST_UPDATED")}: ${ts}</span>`;
+			const tsDate =
+				currentData.meta && currentData.meta.lastUpdated
+					? new Date(currentData.meta.lastUpdated)
+					: new Date();
+			const ts = tsDate.toLocaleTimeString([], {
+				hour: "2-digit",
+				minute: "2-digit"
+			});
+
+			const sourceSpan = document.createElement("span");
+		sourceSpan.className = "dimmed xsmall";
+		sourceSpan.textContent = `Source: ${src}`;
+		sourceContainer.appendChild(sourceSpan);
+
+		sourceContainer.appendChild(document.createTextNode(" • "));
+
+		const updatedSpan = document.createElement("span");
+		updatedSpan.className = "dimmed xsmall last-updated";
+		updatedSpan.textContent = `${this.translate("LAST_UPDATED")}: ${ts}`;
+		sourceContainer.appendChild(updatedSpan);
 			backToTopControls.appendChild(sourceContainer);
 		}
 
@@ -2299,7 +3039,15 @@ Module.register("MMM-MyTeams-LeagueTable", {
 		var backToTopBtn = document.createElement("button");
 		backToTopBtn.type = "button";
 		backToTopBtn.className = "back-to-top-btn";
-		backToTopBtn.textContent = "↑ Top"; // Shortened to fit better
+		
+		// Use FontAwesome icon for consistency (DES-01)
+		const topIcon = this.createIcon("fas fa-chevron-up");
+		topIcon.style.marginRight = "4px";
+		backToTopBtn.appendChild(topIcon);
+		
+		const topText = document.createTextNode(" Top");
+		backToTopBtn.appendChild(topText);
+		
 		backToTopBtn.addEventListener(
 			"click",
 			this.handleBackToTopClick.bind(this)
@@ -2314,9 +3062,10 @@ Module.register("MMM-MyTeams-LeagueTable", {
 		// Set up scroll event listener and initialize visibility
 		setTimeout(() => {
 			// FIX: Also check for UEFA split-view scroll containers
-			const tableContainer = wrapper.querySelector(".league-body-scroll") || 
-								   wrapper.querySelector(".league-content-container") ||
-								   wrapper.querySelector(".uefa-section-scroll");
+			const tableContainer =
+				wrapper.querySelector(".league-body-scroll") ||
+				wrapper.querySelector(".league-content-container") ||
+				wrapper.querySelector(".uefa-section-scroll");
 			const backToTopControls = wrapper.querySelector(".back-to-top-controls");
 			if (tableContainer && backToTopControls) {
 				// Attach scroll event listener for visibility state and pause/resume behavior
@@ -2349,7 +3098,10 @@ Module.register("MMM-MyTeams-LeagueTable", {
 
 		// Get the country folder from league configuration for use in team logo fallbacks
 		var countryFolder = "";
-		if (typeof EUROPEAN_LEAGUES !== "undefined" && EUROPEAN_LEAGUES[leagueKey]) {
+		if (
+			typeof EUROPEAN_LEAGUES !== "undefined" &&
+			EUROPEAN_LEAGUES[leagueKey]
+		) {
 			countryFolder = EUROPEAN_LEAGUES[leagueKey].countryFolder || "";
 		}
 
@@ -2358,75 +3110,45 @@ Module.register("MMM-MyTeams-LeagueTable", {
 		headerContainer.className = "league-header-sticky";
 		const headerTable = document.createElement("table");
 		headerTable.className = "small spfl-table header-only";
-		
+		headerTable.setAttribute("role", "table");
+		headerTable.setAttribute("aria-label", `${this.config.leagueHeaders[this.currentLeague] || this.currentLeague} Standings Table`);
+
 		const thead = document.createElement("thead");
 		const headerRow = document.createElement("tr");
-		
+		headerRow.setAttribute("role", "row");
+
 		if (this.config.showPosition) {
-			const th = document.createElement("th");
-			th.textContent = "#";
-			th.className = "position-header";
-			headerRow.appendChild(th);
+			headerRow.appendChild(this.createTableHeader("#", "position-header"));
 		}
 
-		const teamHeader = document.createElement("th");
-		teamHeader.textContent = "Team";
-		teamHeader.className = "team-header";
-		headerRow.appendChild(teamHeader);
+		headerRow.appendChild(this.createTableHeader("Team", "team-header"));
 
 		if (this.config.showPlayedGames) {
-			const th = document.createElement("th");
-			th.textContent = "P";
-			th.className = "played-header";
-			headerRow.appendChild(th);
+			headerRow.appendChild(this.createTableHeader("P", "played-header"));
 		}
 		if (this.config.showWon) {
-			const th = document.createElement("th");
-			th.textContent = "W";
-			th.className = "won-header";
-			headerRow.appendChild(th);
+			headerRow.appendChild(this.createTableHeader("W", "won-header"));
 		}
 		if (this.config.showDrawn) {
-			const th = document.createElement("th");
-			th.textContent = "D";
-			th.className = "drawn-header";
-			headerRow.appendChild(th);
+			headerRow.appendChild(this.createTableHeader("D", "drawn-header"));
 		}
 		if (this.config.showLost) {
-			const th = document.createElement("th");
-			th.textContent = "L";
-			th.className = "lost-header";
-			headerRow.appendChild(th);
+			headerRow.appendChild(this.createTableHeader("L", "lost-header"));
 		}
 		if (this.config.showGoalsFor) {
-			const th = document.createElement("th");
-			th.textContent = "F";
-			th.className = "gf-header";
-			headerRow.appendChild(th);
+			headerRow.appendChild(this.createTableHeader("F", "gf-header"));
 		}
 		if (this.config.showGoalsAgainst) {
-			const th = document.createElement("th");
-			th.textContent = "A";
-			th.className = "ga-header";
-			headerRow.appendChild(th);
+			headerRow.appendChild(this.createTableHeader("A", "ga-header"));
 		}
 		if (this.config.showGoalDifference) {
-			const th = document.createElement("th");
-			th.textContent = "GD";
-			th.className = "gd-header";
-			headerRow.appendChild(th);
+			headerRow.appendChild(this.createTableHeader("GD", "gd-header"));
 		}
 		if (this.config.showPoints) {
-			const th = document.createElement("th");
-			th.textContent = "Pts";
-			th.className = "points-header";
-			headerRow.appendChild(th);
+			headerRow.appendChild(this.createTableHeader("Pts", "points-header"));
 		}
 		if (this.config.showForm) {
-			const th = document.createElement("th");
-			th.textContent = "Form";
-			th.className = "form-header";
-			headerRow.appendChild(th);
+			headerRow.appendChild(this.createTableHeader("Form", "form-header"));
 		}
 
 		thead.appendChild(headerRow);
@@ -2439,6 +3161,8 @@ Module.register("MMM-MyTeams-LeagueTable", {
 		scrollContainer.className = "league-body-scroll";
 		const bodyTable = document.createElement("table");
 		bodyTable.className = "small spfl-table body-only";
+		bodyTable.setAttribute("role", "table");
+		bodyTable.setAttribute("aria-label", `${this.config.leagueHeaders[this.currentLeague] || this.currentLeague} Standings Data`);
 		const tbody = document.createElement("tbody");
 
 		var teamsToShow = leagueData.teams || [];
@@ -2446,27 +3170,52 @@ Module.register("MMM-MyTeams-LeagueTable", {
 			teamsToShow = teamsToShow.slice(0, this.config.maxTeams);
 		}
 
-		teamsToShow.forEach((team) => {
+		teamsToShow.forEach((team, index) => {
 			var row = document.createElement("tr");
 			row.className = "team-row";
+			row.setAttribute("role", "row");
+			row.setAttribute("aria-rowindex", index + 1);
 			const pos = team.position || "-";
 			const pts = team.points || "0";
 
-			row.setAttribute("aria-label", `${team.name}, rank ${pos}, ${pts} points`);
+			row.setAttribute(
+				"aria-label",
+				`${team.name}, rank ${pos}, ${pts} points`
+			);
 
 			if (this.config.colored) {
 				if (team.position <= 2) row.classList.add("champions-league");
 				else if (team.position <= 4) row.classList.add("europa-league");
-				else if (team.position >= teamsToShow.length - 1) row.classList.add("relegation");
+				else if (team.position >= teamsToShow.length - 1)
+					row.classList.add("relegation");
 			}
 
 			if (this.config.highlightTeams.includes(team.name)) {
 				row.classList.add("highlighted");
 			}
 
+			// Apply custom team colors (DES-06)
+			if (this.config.customTeamColors && typeof this.config.customTeamColors === "object") {
+				const customColor = this.config.customTeamColors[team.name];
+				if (customColor) {
+					// Validate hex color format
+					if (/^#[0-9A-F]{6}$/i.test(customColor)) {
+						row.style.backgroundColor = customColor;
+						row.setAttribute("data-custom-color", customColor);
+						if (this.config.debug) {
+							Log.info(`[CUSTOM-COLOR] Applied ${customColor} to ${team.name}`);
+						}
+					} else if (this.config.debug) {
+						Log.warn(`[CUSTOM-COLOR] Invalid color format for ${team.name}: ${customColor}. Use #RRGGBB format.`);
+					}
+				}
+			}
+
 			if (this.config.showPosition) {
 				var posCell = document.createElement("td");
-				posCell.textContent = Number.isFinite(team.position) ? team.position : "-";
+				posCell.textContent = Number.isFinite(team.position)
+					? team.position
+					: "-";
 				posCell.className = "position-cell";
 				row.appendChild(posCell);
 			}
@@ -2477,12 +3226,14 @@ Module.register("MMM-MyTeams-LeagueTable", {
 			if (this.config.showTeamLogos) {
 				var img = document.createElement("img");
 				img.className = "team-logo";
-				img.loading = "lazy";
 				img.width = 18;
 				img.height = 18;
 
 				var resolvedLogo = team.logo || this.getTeamLogoMapping(team.name);
-				var slug = (team.name || "").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
+				var slug = (team.name || "")
+					.toLowerCase()
+					.replace(/[^a-z0-9]+/g, "-")
+					.replace(/^-+|-+$/g, "");
 				var candidates = [];
 
 				if (resolvedLogo) candidates.push(resolvedLogo);
@@ -2498,15 +3249,25 @@ Module.register("MMM-MyTeams-LeagueTable", {
 
 				var basePath = "modules/MMM-MyTeams-LeagueTable/images/";
 				var tryIndex = 0;
+				const moduleInstance = this;
 				function tryNext(imgEl) {
 					if (tryIndex >= candidates.length) {
 						imgEl.remove();
 						return;
 					}
-					imgEl.src = basePath + candidates[tryIndex];
+					const logoSrc = basePath + candidates[tryIndex];
+					// Use lazy loading for the first image attempt
+					if (tryIndex === 0) {
+						moduleInstance.setupImageLazyLoading(imgEl, logoSrc);
+					} else {
+						// Fallbacks load immediately
+						imgEl.src = logoSrc;
+					}
 					tryIndex++;
 				}
-				img.onerror = function () { tryNext(this); };
+				img.onerror = function () {
+					tryNext(this);
+				};
 				tryNext(img);
 				teamCell.appendChild(img);
 			}
@@ -2549,13 +3310,17 @@ Module.register("MMM-MyTeams-LeagueTable", {
 			}
 			if (this.config.showGoalsAgainst) {
 				var td = document.createElement("td");
-				td.textContent = Number.isFinite(team.goalsAgainst) ? team.goalsAgainst : "-";
+				td.textContent = Number.isFinite(team.goalsAgainst)
+					? team.goalsAgainst
+					: "-";
 				td.className = "ga-cell";
 				row.appendChild(td);
 			}
 			if (this.config.showGoalDifference) {
 				var td = document.createElement("td");
-				var gd = Number.isFinite(team.goalDifference) ? team.goalDifference : null;
+				var gd = Number.isFinite(team.goalDifference)
+					? team.goalDifference
+					: null;
 				td.textContent = gd === null ? "-" : gd > 0 ? `+${gd}` : String(gd);
 				td.className = "gd-cell";
 				if (gd > 0) td.classList.add("positive");
@@ -2573,11 +3338,11 @@ Module.register("MMM-MyTeams-LeagueTable", {
 				formCell.className = "form-cell";
 				var formWrapper = document.createElement("div");
 				formWrapper.className = "form-tokens";
-				
+
 				var formArr = Array.isArray(team.form) ? team.form : [];
 				var maxGames = Math.max(1, Number(this.config.formMaxGames) || 5);
 				if (formArr.length > maxGames) formArr = formArr.slice(-maxGames);
-				
+
 				for (var p = 0; p < maxGames - formArr.length; p++) {
 					var span = document.createElement("span");
 					span.textContent = "-";
@@ -2602,14 +3367,27 @@ Module.register("MMM-MyTeams-LeagueTable", {
 		});
 
 		bodyTable.appendChild(tbody);
-		
+
 		scrollContainer.appendChild(bodyTable);
+		
+		// Apply virtual scrolling optimizations if enabled and threshold exceeded (PERF-03)
+		if (this.config.enableVirtualScrolling && teamsToShow.length >= this.config.virtualScrollThreshold) {
+			scrollContainer.classList.add("virtual-scroll-container");
+			bodyTable.classList.add("virtual-scrolling-enabled");
+			if (this.config.debug) {
+				Log.info(`[VIRTUAL-SCROLL] Enabled for ${teamsToShow.length} rows (threshold: ${this.config.virtualScrollThreshold})`);
+			}
+		}
+		
 		outerWrapper.appendChild(scrollContainer);
 
 		setTimeout(() => {
 			const firstHighlighted = scrollContainer.querySelector(".highlighted");
 			if (firstHighlighted) {
-				firstHighlighted.scrollIntoView({ behavior: "smooth", block: "center" });
+				firstHighlighted.scrollIntoView({
+					behavior: "smooth",
+					block: "center"
+				});
 			}
 		}, 1000);
 
@@ -2636,7 +3414,10 @@ Module.register("MMM-MyTeams-LeagueTable", {
 		}
 
 		// Only run when WC league is active and autoCycle is enabled
-		if (this.currentLeague !== "WORLD_CUP_2026" || !(this.config.autoCycle || this.config.onlyShowWorldCup2026)) {
+		if (
+			this.currentLeague !== "WORLD_CUP_2026" ||
+			!(this.config.autoCycle || this.config.onlyShowWorldCup2026)
+		) {
 			return;
 		}
 
@@ -2650,7 +3431,10 @@ Module.register("MMM-MyTeams-LeagueTable", {
 			// If Playoff complete, set Rd16; then QF; then SF; then TP; then Final
 			const order = ["Playoff", "Rd32", "Rd16", "QF", "SF", "TP", "Final"];
 			for (let i = 0; i < order.length - 1; i++) {
-				if (this.currentSubTab === order[i] && this.isWorldCupStageComplete(order[i])) {
+				if (
+					this.currentSubTab === order[i] &&
+					this.isWorldCupStageComplete(order[i])
+				) {
 					this.currentSubTab = order[i + 1];
 					this.updateDom(this.config.animationSpeed || 300);
 					break;
@@ -2713,25 +3497,25 @@ Module.register("MMM-MyTeams-LeagueTable", {
 			"UEL",
 			"ECL"
 		];
-		
+
 		if (!uefaLeagues.includes(this.currentLeague)) return false;
 
 		const now = new Date();
 		const month = now.getMonth(); // 0 = Jan, 6 = July, 7 = Aug
-		
+
 		// Window starts July 1st (roughly 30 days after late May finals)
 		// Window ends when draw is made (usually late August)
 		if (month === 6 || month === 7) {
 			const currentData = this.leagueData[this.currentLeague];
-			const hasData = currentData && (
-				(currentData.teams && currentData.teams.length > 0) || 
-				(currentData.fixtures && currentData.fixtures.length > 0)
-			);
-			
+			const hasData =
+				currentData &&
+				((currentData.teams && currentData.teams.length > 0) ||
+					(currentData.fixtures && currentData.fixtures.length > 0));
+
 			// If we are in July or August and have no data, it's off-season
 			return !hasData;
 		}
-		
+
 		return false;
 	},
 
@@ -2754,11 +3538,21 @@ Module.register("MMM-MyTeams-LeagueTable", {
 	_startHeaderCountdown() {
 		this._stopHeaderCountdown();
 		if (!this._countdownEl) return;
-		if (this._pinned || this.isScrolling) { this._countdownEl.textContent = "(Paused)"; return; }
-		const base = this.currentLeague === "WORLD_CUP_2026" ? (this.config.wcSubtabCycleInterval || 15000) : (this.config.cycleInterval || 15000);
-		if (!base || base <= 0) { this._countdownEl.textContent = ""; return; }
+		if (this._pinned || this.isScrolling) {
+			this._countdownEl.textContent = "(Paused)";
+			return;
+		}
+		const base =
+			this.currentLeague === "WORLD_CUP_2026"
+				? this.config.wcSubtabCycleInterval || 15000
+				: this.config.cycleInterval || 15000;
+		if (!base || base <= 0) {
+			this._countdownEl.textContent = "";
+			return;
+		}
 		let remaining = Math.ceil(base / 1000);
-		const label = this.currentLeague === "WORLD_CUP_2026" ? "sub-tab" : "league";
+		const label =
+			this.currentLeague === "WORLD_CUP_2026" ? "sub-tab" : "league";
 		const tick = () => {
 			if (!this._countdownEl) return;
 			this._countdownEl.textContent = `Next ${label} in ${remaining}s`;
@@ -2774,7 +3568,8 @@ Module.register("MMM-MyTeams-LeagueTable", {
 			this._countdownTimer = null;
 		}
 		if (this._countdownEl) {
-			this._countdownEl.textContent = (this._pinned || this.isScrolling) ? "(Paused)" : "";
+			this._countdownEl.textContent =
+				this._pinned || this.isScrolling ? "(Paused)" : "";
 		}
 	},
 
@@ -2794,7 +3589,9 @@ Module.register("MMM-MyTeams-LeagueTable", {
 					source: currentData.source,
 					lastUpdated: currentData.lastUpdated
 				};
-				fragment.appendChild(this.createTable(mockLeagueData, this.currentLeague));
+				fragment.appendChild(
+					this.createTable(mockLeagueData, this.currentLeague)
+				);
 				container.appendChild(fragment);
 				return container;
 			} else if (this.isUEFAOffSeason()) {
@@ -2810,43 +3607,66 @@ Module.register("MMM-MyTeams-LeagueTable", {
 		}
 
 		// Handle Knockout Rounds (World Cup: Rd32, Rd16, QF, SF, TP, Final; UEFA: Playoff, Rd16, QF, SF, Final)
-		const allKnockoutStages = ["Rd32", "Rd16", "QF", "SF", "TP", "Final", "Playoff"];
+		const allKnockoutStages = [
+			"Rd32",
+			"Rd16",
+			"QF",
+			"SF",
+			"TP",
+			"Final",
+			"Playoff"
+		];
 		if (allKnockoutStages.includes(subTab)) {
 			const koKey = subTab.toLowerCase();
-			const knockoutFixtures = (currentData.knockouts && currentData.knockouts[koKey]) || [];
+			const knockoutFixtures =
+				(currentData.knockouts && currentData.knockouts[koKey]) || [];
 
 			// STAGED APPROACH (Task: UEFA 3-stage display for ALL knockout rounds)
 			// FIX: Apply to ALL UEFA knockout stages (Playoff, Rd16, QF, SF), not just Playoff
-			const isUEFA = ["UEFA_CHAMPIONS_LEAGUE", "UEFA_EUROPA_LEAGUE", "UEFA_EUROPA_CONFERENCE_LEAGUE", "UCL", "UEL", "ECL"].includes(this.currentLeague);
+			const isUEFA = [
+				"UEFA_CHAMPIONS_LEAGUE",
+				"UEFA_EUROPA_LEAGUE",
+				"UEFA_EUROPA_CONFERENCE_LEAGUE",
+				"UCL",
+				"UEL",
+				"ECL"
+			].includes(this.currentLeague);
 			const uefaTwoLeggedStages = ["Playoff", "Rd16", "QF", "SF"];
-			
-			if (isUEFA && uefaTwoLeggedStages.includes(subTab) && currentData.uefaStages) {
+
+			if (
+				isUEFA &&
+				uefaTwoLeggedStages.includes(subTab) &&
+				currentData.uefaStages
+			) {
 				const stages = currentData.uefaStages;
-				
+
 				// Map each stage to its typical month(s) for filtering
 				const stageMonthMap = {
-					"Playoff": ["02"],      // February
-					"Rd16": ["03"],         // March
-					"QF": ["04"],           // April
-					"SF": ["05"]            // May
+					Playoff: ["02"], // February
+					Rd16: ["03"], // March
+					QF: ["04"], // April
+					SF: ["05"] // May
 				};
-				
+
 				const allowedMonths = stageMonthMap[subTab] || [];
-				
+
 				// Filter fixtures to only show those in the appropriate month(s) for this stage
 				const filterStageFixtures = (fixtures) => {
-					return fixtures.filter(f => {
+					return fixtures.filter((f) => {
 						if (!f.date) return false;
 						const month = f.date.split("-")[1];
 						// Also check stage field to ensure we're showing the right fixtures
 						const fixtureStage = (f.stage || "").toUpperCase();
 						const currentStageUpper = subTab.toUpperCase();
-						
+
 						// Match by month OR by explicit stage field
-						return allowedMonths.includes(month) || fixtureStage === currentStageUpper;
+						return (
+							allowedMonths.includes(month) ||
+							fixtureStage === currentStageUpper
+						);
 					});
 				};
-				
+
 				// Sort fixtures by date and time
 				const sortByDateTime = (a, b) => {
 					if (a.date !== b.date) return a.date.localeCompare(b.date);
@@ -2854,61 +3674,65 @@ Module.register("MMM-MyTeams-LeagueTable", {
 					const timeB = b.time || "00:00";
 					return timeA.localeCompare(timeB);
 				};
-				
+
 				const stageResults = filterStageFixtures(stages.results || []);
 				const stageToday = filterStageFixtures(stages.today || []);
 				const stageFuture = filterStageFixtures(stages.future || []);
-				
+
 				stageResults.sort(sortByDateTime);
 				stageToday.sort(sortByDateTime);
 				stageFuture.sort(sortByDateTime);
-				
+
 				// FIX: Create split-view layout for Results and Future Fixtures
 				// Each section gets 50% height with independent scrolling
 				const splitViewContainer = document.createElement("div");
 				splitViewContainer.className = "uefa-split-view-container";
-				
+
 				// Section 1: Results (Finished and Live matches)
 				if (stageResults.length > 0) {
 					const resultsWrapper = document.createElement("div");
 					resultsWrapper.className = "uefa-section-wrapper results-section";
-					
+
 					const resultsTitle = document.createElement("div");
 					resultsTitle.className = "wc-title";
 					resultsTitle.textContent = "RESULTS";
 					resultsWrapper.appendChild(resultsTitle);
-					
+
 					const resultsScroll = document.createElement("div");
 					resultsScroll.className = "uefa-section-scroll";
-					resultsScroll.appendChild(this.createFixturesTable(stageResults, false));
+					resultsScroll.appendChild(
+						this.createFixturesTable(stageResults, false)
+					);
 					resultsWrapper.appendChild(resultsScroll);
-					
+
 					splitViewContainer.appendChild(resultsWrapper);
 				}
-				
+
 				// Section 2: Today's Fixtures (if any)
 				// Merge today's fixtures into Future section for cleaner layout
 				const allUpcoming = [...stageToday, ...stageFuture];
 				allUpcoming.sort(sortByDateTime);
-				
+
 				// Section 3: Future Fixtures (Upcoming matches including second legs)
 				if (allUpcoming.length > 0) {
 					const futureWrapper = document.createElement("div");
 					futureWrapper.className = "uefa-section-wrapper future-section";
-					
+
 					const futureTitle = document.createElement("div");
 					futureTitle.className = "wc-title";
 					futureTitle.textContent = "UPCOMING FIXTURES";
 					futureWrapper.appendChild(futureTitle);
-					
+
 					const futureScroll = document.createElement("div");
 					futureScroll.className = "uefa-section-scroll";
-					futureScroll.appendChild(this.createFixturesTable(allUpcoming, false));
+					futureScroll.appendChild(
+						this.createFixturesTable(allUpcoming, false)
+					);
 					futureWrapper.appendChild(futureScroll);
-					
+
 					splitViewContainer.appendChild(futureWrapper);
 				}
-				
+
 				// Only append split view if we have at least one section
 				if (stageResults.length > 0 || allUpcoming.length > 0) {
 					fragment.appendChild(splitViewContainer);
@@ -2947,7 +3771,7 @@ Module.register("MMM-MyTeams-LeagueTable", {
 		}
 
 		// Handle Group View (A-L) - for World Cup
-		const groupData = (currentData.groups && currentData.groups[subTab]);
+		const groupData = currentData.groups && currentData.groups[subTab];
 		if (groupData) {
 			const stickyWrapper = document.createElement("div");
 			stickyWrapper.className = "wc-sticky-top";
@@ -2964,14 +3788,16 @@ Module.register("MMM-MyTeams-LeagueTable", {
 				lastUpdated: currentData.lastUpdated
 			};
 			// We append the table to the sticky wrapper
-			stickyWrapper.appendChild(this.createTable(mockLeagueData, "WORLD_CUP_2026"));
-			
+			stickyWrapper.appendChild(
+				this.createTable(mockLeagueData, "WORLD_CUP_2026")
+			);
+
 			// Add subtitles to the sticky wrapper too
 			var fixTitle = document.createElement("div");
 			fixTitle.className = "wc-subtitle";
 			fixTitle.textContent = `FIXTURES _ GROUP ${subTab}`;
 			stickyWrapper.appendChild(fixTitle);
-			
+
 			fragment.appendChild(stickyWrapper);
 
 			// Add fixtures for this group (outside the sticky wrapper so they scroll)
@@ -2999,16 +3825,37 @@ Module.register("MMM-MyTeams-LeagueTable", {
 	createFixturesTable(fixtures, showHeader = true) {
 		const outerWrapper = document.createElement("div");
 		outerWrapper.className = "fixtures-container";
-		
+
 		if (!fixtures || fixtures.length === 0) return outerWrapper;
 
 		// Sort fixtures by timestamp or date
 		fixtures.sort((a, b) => (a.timestamp || 0) - (b.timestamp || 0));
 
+		// Apply date range filter (UX-05)
+		fixtures = this.filterFixturesByDate(fixtures);
+
 		// Check if we should use the enhanced scrollable view (World Cup or UEFA)
-		const uefaLeagues = ["UEFA_CHAMPIONS_LEAGUE", "UEFA_EUROPA_LEAGUE", "UEFA_EUROPA_CONFERENCE_LEAGUE", "UCL", "UEL", "ECL"];
-		const useEnhancedView = this.currentLeague === "WORLD_CUP_2026" || uefaLeagues.includes(this.currentLeague);
-		let columnNames = ["Date", "Time", "Home Team", "Home Logo", "Score", "Away Logo", "Away Team", "Venue"];
+		const uefaLeagues = [
+			"UEFA_CHAMPIONS_LEAGUE",
+			"UEFA_EUROPA_LEAGUE",
+			"UEFA_EUROPA_CONFERENCE_LEAGUE",
+			"UCL",
+			"UEL",
+			"ECL"
+		];
+		const useEnhancedView =
+			this.currentLeague === "WORLD_CUP_2026" ||
+			uefaLeagues.includes(this.currentLeague);
+		let columnNames = [
+			"Date",
+			"Time",
+			"Home Team",
+			"Home Logo",
+			"Score",
+			"Away Logo",
+			"Away Team",
+			"Venue"
+		];
 
 		if (useEnhancedView) {
 			const wrapperV2 = document.createElement("div");
@@ -3020,11 +3867,11 @@ Module.register("MMM-MyTeams-LeagueTable", {
 				headerContainer.className = "fixtures-header-container";
 				const headerTable = document.createElement("table");
 				headerTable.className = "wc-fixtures-table-v2 header-only";
-				
+
 				const thead = document.createElement("thead");
 				const headerRow = document.createElement("tr");
 				// Order: Date, Time, Home Team, Home Logo, Score, Away Logo, Away Team, Venue
-				columnNames.forEach(col => {
+				columnNames.forEach((col) => {
 					const th = document.createElement("th");
 					th.textContent = col;
 					th.className = `fixture-header-${col.toLowerCase().replace(/\s+/g, "-")}`;
@@ -3039,9 +3886,17 @@ Module.register("MMM-MyTeams-LeagueTable", {
 			// 2. Body Scroll Container
 			const scrollContainer = document.createElement("div");
 			scrollContainer.className = "fixtures-body-scroll";
-			
+
 			// Apply restricted-height to all UEFA knockout stages and World Cup knockout rounds
-			const restrictedStages = ["Playoff", "Rd32", "Rd16", "QF", "SF", "TP", "Final"];
+			const restrictedStages = [
+				"Playoff",
+				"Rd32",
+				"Rd16",
+				"QF",
+				"SF",
+				"TP",
+				"Final"
+			];
 			if (restrictedStages.includes(this.currentSubTab)) {
 				scrollContainer.classList.add("restricted-height");
 			}
@@ -3051,18 +3906,22 @@ Module.register("MMM-MyTeams-LeagueTable", {
 			const tbody = document.createElement("tbody");
 
 			let foundCurrent = false;
-			const now = Date.now();
+			const now = this.getCurrentDate().getTime();
 			// Use local date in YYYY-MM-DD format for comparison
-			const today = new Date().toLocaleDateString("en-CA"); 
+			const today = this.getCurrentDateString();
 
 			fixtures.forEach((fix, index) => {
 				const row = document.createElement("tr");
 				row.className = "fixture-row-v2";
-				
+
 				// Task: Color indicators for live, finished and upcoming fixtures
 				if (fix.live) {
 					row.classList.add("live");
-				} else if (fix.status === "FT" || fix.status === "AET" || fix.status === "PEN") {
+				} else if (
+					fix.status === "FT" ||
+					fix.status === "AET" ||
+					fix.status === "PEN"
+				) {
 					row.classList.add("finished");
 				} else {
 					row.classList.add("upcoming");
@@ -3071,9 +3930,18 @@ Module.register("MMM-MyTeams-LeagueTable", {
 				// Special auto-scroll logic for two-legged knockout rounds
 				const twoLeggedMap = { Playoff: 8, Rd32: 8, Rd16: 8, QF: 4, SF: 2 };
 				const firstLegCount = twoLeggedMap[this.currentSubTab];
-				if (firstLegCount && !foundCurrent && fixtures.length >= firstLegCount * 2) {
+				if (
+					firstLegCount &&
+					!foundCurrent &&
+					fixtures.length >= firstLegCount * 2
+				) {
 					// Check if all of the first leg matches are finished
-					const firstLegsFinished = fixtures.slice(0, firstLegCount).every(f => f.status === "FT" || f.status === "PEN" || f.status === "AET");
+					const firstLegsFinished = fixtures
+						.slice(0, firstLegCount)
+						.every(
+							(f) =>
+								f.status === "FT" || f.status === "PEN" || f.status === "AET"
+						);
 					if (firstLegsFinished && index === firstLegCount) {
 						row.classList.add("current-fixture");
 						foundCurrent = true;
@@ -3083,7 +3951,11 @@ Module.register("MMM-MyTeams-LeagueTable", {
 				// Standard Identification of current fixture for auto-scroll
 				// Priority: 1. Live matches, 2. Today's matches, 3. First upcoming match
 				if (!foundCurrent) {
-					if (fix.live || fix.date === today || (fix.timestamp && fix.timestamp > now)) {
+					if (
+						fix.live ||
+						fix.date === today ||
+						(fix.timestamp && fix.timestamp > now)
+					) {
 						row.classList.add("current-fixture");
 						foundCurrent = true;
 					}
@@ -3115,8 +3987,17 @@ Module.register("MMM-MyTeams-LeagueTable", {
 		table.className = "wc-fixtures-table-v2";
 		const thead = document.createElement("thead");
 		const headerRow = document.createElement("tr");
-		columnNames = ["Date", "Time", "Home Team", "Home Logo", "Score", "Away Logo", "Away Team", "Location"];
-		columnNames.forEach(col => {
+		columnNames = [
+			"Date",
+			"Time",
+			"Home Team",
+			"Home Logo",
+			"Score",
+			"Away Logo",
+			"Away Team",
+			"Location"
+		];
+		columnNames.forEach((col) => {
 			const th = document.createElement("th");
 			th.textContent = col;
 			th.className = `fixture-header-${col.toLowerCase().replace(/\s+/g, "-")}`;
@@ -3126,14 +4007,18 @@ Module.register("MMM-MyTeams-LeagueTable", {
 		table.appendChild(thead);
 
 		const tbody = document.createElement("tbody");
-		fixtures.forEach(fix => {
+		fixtures.forEach((fix) => {
 			const row = document.createElement("tr");
 			row.className = "fixture-row-v2";
-			
+
 			// Task: Color indicators for live, finished and upcoming fixtures
 			if (fix.live) {
 				row.classList.add("live");
-			} else if (fix.status === "FT" || fix.status === "AET" || fix.status === "PEN") {
+			} else if (
+				fix.status === "FT" ||
+				fix.status === "AET" ||
+				fix.status === "PEN"
+			) {
 				row.classList.add("finished");
 			} else {
 				row.classList.add("upcoming");
@@ -3149,23 +4034,28 @@ Module.register("MMM-MyTeams-LeagueTable", {
 
 	// Helper to build the content of a fixture row
 	_buildFixtureRowContent(row, fix, columnNames) {
-		columnNames.forEach(col => {
+		columnNames.forEach((col) => {
 			const cell = document.createElement("td");
-			
+
 			if (col === "Date") {
 				cell.className = "fixture-date-v2";
 				if (fix.timestamp) {
 					const d = new Date(fix.timestamp);
-					const dayShort = d.toLocaleDateString(this.config.language || "en", { weekday: "short" });
+					const dayShort = d.toLocaleDateString(this.config.language || "en", {
+						weekday: "short"
+					});
 					const dayNum = String(d.getDate()).padStart(2, "0");
-					const monthShort = d.toLocaleDateString(this.config.language || "en", { month: "short" });
+					const monthShort = d.toLocaleDateString(
+						this.config.language || "en",
+						{ month: "short" }
+					);
 					cell.textContent = `${dayShort} ${dayNum} ${monthShort}`;
 				} else {
 					cell.textContent = fix.date || "";
 				}
 			} else if (col === "Time") {
 				cell.className = "fixture-time-v2";
-				
+
 				// Time column is always blank - time is shown in Score column for upcoming matches
 				// This prevents redundancy and follows the new design pattern
 				cell.textContent = "";
@@ -3177,9 +4067,9 @@ Module.register("MMM-MyTeams-LeagueTable", {
 				const logoPath = fix.homeLogo || this.getTeamLogoMapping(fix.homeTeam);
 				if (logoPath) {
 					const img = document.createElement("img");
-					img.src = `modules/MMM-MyTeams-LeagueTable/images/${logoPath}`;
 					img.className = "fixture-logo-v2";
-					img.loading = "lazy";
+					const logoSrc = `modules/MMM-MyTeams-LeagueTable/images/${logoPath}`;
+					this.setupImageLazyLoading(img, logoSrc);
 					img.onerror = () => (img.style.display = "none");
 					cell.appendChild(img);
 				}
@@ -3190,34 +4080,43 @@ Module.register("MMM-MyTeams-LeagueTable", {
 				const mainScore = document.createElement("div");
 				mainScore.className = "main-score-v2";
 				if (fix.live) mainScore.classList.add("bright");
-				
+
 				// Determine if fixture is upcoming (not played yet) or live/finished
 				// FIX: More robust upcoming detection with multiple checks
 				const status = (fix.status || "").toUpperCase();
-				const isFinished = status === "FT" || status === "AET" || status === "PEN";
+				const isFinished =
+					status === "FT" || status === "AET" || status === "PEN";
 				const isLive = fix.live === true || /\d+'|HT|LIVE/i.test(status);
-				
+
 				// A fixture is upcoming if ALL of the following are true:
 				// 1. NOT live (no live flag and no live status)
 				// 2. NOT finished (no FT/AET/PEN status)
 				// 3. Either has no scores OR has aggregate score but no actual match score
-				const hasMatchScore = fix.homeScore !== undefined && fix.awayScore !== undefined;
+				const hasMatchScore =
+					fix.homeScore !== undefined && fix.awayScore !== undefined;
 				const isUpcoming = !isLive && !isFinished;
-				
+
 				// Additional safety: if fixture has time but no status, it's definitely upcoming
-				const hasKickoffTime = fix.time && fix.time !== "vs" && /\d{1,2}:\d{2}/.test(fix.time);
+				const hasKickoffTime =
+					fix.time && fix.time !== "vs" && /\d{1,2}:\d{2}/.test(fix.time);
 				const definitelyUpcoming = hasKickoffTime && !status && !hasMatchScore;
-				
+
 				// DEBUG: Log ALL fixtures to diagnose issues
-				console.log(`[FIXTURE-DISPLAY] "${fix.homeTeam}" vs "${fix.awayTeam}" | date=${fix.date} | time=${fix.time} | live=${fix.live} | status="${fix.status || 'none'}" | score="${fix.score || 'none'}" | homeScore=${fix.homeScore} | awayScore=${fix.awayScore} | hasMatchScore=${hasMatchScore} | isUpcoming=${isUpcoming} | isLive=${isLive} | isFinished=${isFinished} | aggregateScore="${fix.aggregateScore || 'none'}"`);
-				
+				if (this.config.debug) {
+					Log.info(
+						`[FIXTURE-DISPLAY] "${fix.homeTeam}" vs "${fix.awayTeam}" | date=${fix.date} | time=${fix.time} | live=${fix.live} | status="${fix.status || "none"}" | score="${fix.score || "none"}" | homeScore=${fix.homeScore} | awayScore=${fix.awayScore} | hasMatchScore=${hasMatchScore} | isUpcoming=${isUpcoming} | isLive=${isLive} | isFinished=${isFinished} | aggregateScore="${fix.aggregateScore || "none"}"`
+					);
+				}
+
 				let scoreText = "";
-				
+
 				// For upcoming fixtures: ALWAYS show kickoff time (never scores)
 				if (isUpcoming || definitelyUpcoming) {
 					scoreText = fix.time || "TBD";
-					console.log(`[FIXTURE-DISPLAY] Upcoming fixture - showing time: "${scoreText}"`);
-				} 
+					if (this.config.debug) {
+						Log.info(`[FIXTURE-DISPLAY] Upcoming fixture - showing time: "${scoreText}"`);
+					}
+				}
 				// For live fixtures: show current match score
 				else if (isLive) {
 					// Use match score if available, otherwise default to "0 - 0"
@@ -3226,7 +4125,9 @@ Module.register("MMM-MyTeams-LeagueTable", {
 					} else {
 						scoreText = fix.score || "0 - 0";
 					}
-					console.log(`[FIXTURE-DISPLAY] Live fixture - showing score: "${scoreText}"`);
+					if (this.config.debug) {
+						Log.info(`[FIXTURE-DISPLAY] Live fixture - showing score: "${scoreText}"`);
+					}
 				}
 				// For finished fixtures: show final score
 				else if (isFinished) {
@@ -3235,19 +4136,25 @@ Module.register("MMM-MyTeams-LeagueTable", {
 					} else {
 						scoreText = fix.score || "vs";
 					}
-					console.log(`[FIXTURE-DISPLAY] Finished fixture - showing score: "${scoreText}"`);
+					if (this.config.debug) {
+						Log.info(`[FIXTURE-DISPLAY] Finished fixture - showing score: "${scoreText}"`);
+					}
 				}
 				// Fallback: if we can't determine state, prefer time over score
 				else {
 					if (hasKickoffTime) {
 						scoreText = fix.time;
-						console.log(`[FIXTURE-DISPLAY] Unknown state but has time - showing time: "${scoreText}"`);
+						if (this.config.debug) {
+							Log.info(`[FIXTURE-DISPLAY] Unknown state but has time - showing time: "${scoreText}"`);
+						}
 					} else {
 						scoreText = fix.score || "vs";
-						console.log(`[FIXTURE-DISPLAY] Unknown state - showing score: "${scoreText}"`);
+						if (this.config.debug) {
+							Log.info(`[FIXTURE-DISPLAY] Unknown state - showing score: "${scoreText}"`);
+						}
 					}
 				}
-				
+
 				mainScore.textContent = scoreText;
 				scoreWrapper.appendChild(mainScore);
 
@@ -3257,7 +4164,7 @@ Module.register("MMM-MyTeams-LeagueTable", {
 					const statusDiv = document.createElement("div");
 					statusDiv.className = "fixture-status-tag-v2";
 					if (isLive) statusDiv.classList.add("live-tag");
-					
+
 					// Format live minutes as "90+x" if over 90 minutes
 					let displayStatus = fix.status;
 					const minuteMatch = fix.status.match(/^(\d+)'$/);
@@ -3269,9 +4176,13 @@ Module.register("MMM-MyTeams-LeagueTable", {
 					}
 					statusDiv.textContent = displayStatus;
 					scoreWrapper.appendChild(statusDiv);
-					console.log(`[FIXTURE-DISPLAY] Showing status tag: "${displayStatus}"`);
+					if (this.config.debug) {
+						Log.info(`[FIXTURE-DISPLAY] Showing status tag: "${displayStatus}"`);
+					}
 				} else if (isUpcoming || definitelyUpcoming) {
-					console.log(`[FIXTURE-DISPLAY] Upcoming fixture - NOT showing status`);
+					if (this.config.debug) {
+						Log.info(`[FIXTURE-DISPLAY] Upcoming fixture - NOT showing status`);
+					}
 				}
 
 				// FIX: Show aggregate score for second leg fixtures in brackets below the time/score
@@ -3280,12 +4191,12 @@ Module.register("MMM-MyTeams-LeagueTable", {
 				if (fix.aggregateScore) {
 					const aggScore = document.createElement("div");
 					aggScore.className = "aggregate-score-v2";
-					
+
 					// For upcoming fixtures, make aggregate score more prominent
 					if (isUpcoming) {
 						aggScore.classList.add("upcoming-agg");
 					}
-					
+
 					aggScore.textContent = `(agg ${fix.aggregateScore})`;
 					scoreWrapper.appendChild(aggScore);
 				}
@@ -3293,7 +4204,10 @@ Module.register("MMM-MyTeams-LeagueTable", {
 				// try to calculate it from first leg data if available
 				else if (fix.isSecondLeg && fix.firstLegFixture) {
 					const firstLeg = fix.firstLegFixture;
-					if (firstLeg.homeScore !== undefined && firstLeg.awayScore !== undefined) {
+					if (
+						firstLeg.homeScore !== undefined &&
+						firstLeg.awayScore !== undefined
+					) {
 						const aggScore = document.createElement("div");
 						aggScore.className = "aggregate-score-v2";
 						if (isUpcoming) {
@@ -3313,9 +4227,9 @@ Module.register("MMM-MyTeams-LeagueTable", {
 				const logoPath = fix.awayLogo || this.getTeamLogoMapping(fix.awayTeam);
 				if (logoPath) {
 					const img = document.createElement("img");
-					img.src = `modules/MMM-MyTeams-LeagueTable/images/${logoPath}`;
 					img.className = "fixture-logo-v2";
-					img.loading = "lazy";
+					const logoSrc = `modules/MMM-MyTeams-LeagueTable/images/${logoPath}`;
+					this.setupImageLazyLoading(img, logoSrc);
 					img.onerror = () => (img.style.display = "none");
 					cell.appendChild(img);
 				}
@@ -3323,7 +4237,7 @@ Module.register("MMM-MyTeams-LeagueTable", {
 				cell.className = "fixture-location-v2";
 				cell.textContent = fix.venue || "";
 			}
-			
+
 			row.appendChild(cell);
 		});
 	},
@@ -3348,15 +4262,15 @@ Module.register("MMM-MyTeams-LeagueTable", {
 
 		// Use provided logoPath or fall back to mapping
 		const finalLogoPath = logoPath || this.getTeamLogoMapping(teamName);
-		
+
 		if (finalLogoPath) {
 			const img = document.createElement("img");
 			img.className = "inline-flag";
-			img.loading = "lazy";
 			img.decoding = "async";
 			img.width = 14; // stabilize layout
 			img.height = 10;
-			img.src = `modules/MMM-MyTeams-LeagueTable/images/${finalLogoPath}`;
+			const logoSrc = `modules/MMM-MyTeams-LeagueTable/images/${finalLogoPath}`;
+			this.setupImageLazyLoading(img, logoSrc);
 			img.onerror = () => (img.style.display = "none");
 			flagSpan.appendChild(img);
 		}
@@ -3390,7 +4304,8 @@ Module.register("MMM-MyTeams-LeagueTable", {
 			"UEL",
 			"ECL"
 		];
-		const isTournament = leagueCode === "WORLD_CUP_2026" || uefaLeagues.includes(leagueCode);
+		const isTournament =
+			leagueCode === "WORLD_CUP_2026" || uefaLeagues.includes(leagueCode);
 		if (!isTournament) return;
 
 		// 1. Check for LIVE matches across all knockout stages
@@ -3409,7 +4324,9 @@ Module.register("MMM-MyTeams-LeagueTable", {
 					const targetTab = stageIdMap[stage] || stage;
 					if (this.currentSubTab !== targetTab) {
 						if (this.config.debug) {
-							Log.info(` MMM-MyTeams-LeagueTable: Auto-focusing LIVE knockout stage: ${targetTab}`);
+							Log.info(
+								` MMM-MyTeams-LeagueTable: Auto-focusing LIVE knockout stage: ${targetTab}`
+							);
 						}
 						this.currentSubTab = targetTab;
 						return;
@@ -3420,11 +4337,15 @@ Module.register("MMM-MyTeams-LeagueTable", {
 
 		// 2. Check for LIVE matches in World Cup Groups
 		if (leagueCode === "WORLD_CUP_2026" && data.fixtures) {
-			const liveGroupMatch = data.fixtures.find((f) => f.stage === "GS" && f.live && f.group);
+			const liveGroupMatch = data.fixtures.find(
+				(f) => f.stage === "GS" && f.live && f.group
+			);
 			if (liveGroupMatch) {
 				if (this.currentSubTab !== liveGroupMatch.group) {
 					if (this.config.debug) {
-						Log.info(` MMM-MyTeams-LeagueTable: Auto-focusing LIVE Group: ${liveGroupMatch.group}`);
+						Log.info(
+							` MMM-MyTeams-LeagueTable: Auto-focusing LIVE Group: ${liveGroupMatch.group}`
+						);
 					}
 					this.currentSubTab = liveGroupMatch.group;
 					return;
@@ -3435,7 +4356,15 @@ Module.register("MMM-MyTeams-LeagueTable", {
 		// 3. Fallback: If no live matches, check for upcoming matches in knockout stages
 		// We look for matches with "vs" or a time in the score/time field that aren't finished
 		if (data.knockouts) {
-			const stagesOrder = ["playoff", "rd32", "rd16", "qf", "sf", "tp", "final"];
+			const stagesOrder = [
+				"playoff",
+				"rd32",
+				"rd16",
+				"qf",
+				"sf",
+				"tp",
+				"final"
+			];
 			for (const stage of stagesOrder) {
 				const fixtures = data.knockouts[stage];
 				if (fixtures && fixtures.length > 0) {
@@ -3456,7 +4385,9 @@ Module.register("MMM-MyTeams-LeagueTable", {
 						const targetTab = stageIdMap[stage] || stage;
 						if (this.currentSubTab !== targetTab) {
 							if (this.config.debug) {
-								Log.info(` MMM-MyTeams-LeagueTable: Auto-focusing upcoming knockout stage: ${targetTab}`);
+								Log.info(
+									` MMM-MyTeams-LeagueTable: Auto-focusing upcoming knockout stage: ${targetTab}`
+								);
 							}
 							this.currentSubTab = targetTab;
 							return;
@@ -3476,12 +4407,12 @@ Module.register("MMM-MyTeams-LeagueTable", {
 
 		const prevBtn = document.createElement("button");
 		prevBtn.className = "tab-scroll-btn prev";
-		prevBtn.innerHTML = '<i class="fas fa-chevron-left"></i>';
+		prevBtn.appendChild(this.createIcon("fas fa-chevron-left"));
 		prevBtn.setAttribute("aria-label", "Scroll tabs left");
 
 		const nextBtn = document.createElement("button");
 		nextBtn.className = "tab-scroll-btn next";
-		nextBtn.innerHTML = '<i class="fas fa-chevron-right"></i>';
+		nextBtn.appendChild(this.createIcon("fas fa-chevron-right"));
 		nextBtn.setAttribute("aria-label", "Scroll tabs right");
 
 		const updateArrows = () => {
@@ -3494,7 +4425,10 @@ Module.register("MMM-MyTeams-LeagueTable", {
 				prevBtn.classList.remove("visible");
 			}
 			// Show next if there's more content to the right
-			if (scrollLeft < scrollWidth - clientWidth - 5 && scrollWidth > clientWidth) {
+			if (
+				scrollLeft < scrollWidth - clientWidth - 5 &&
+				scrollWidth > clientWidth
+			) {
 				nextBtn.classList.add("visible");
 			} else {
 				nextBtn.classList.remove("visible");
@@ -3526,7 +4460,7 @@ Module.register("MMM-MyTeams-LeagueTable", {
 		// Re-check on window resize
 		const resizeHandler = () => updateArrows();
 		window.addEventListener("resize", resizeHandler);
-		
+
 		// Clean up listener when module is destroyed (if MM supported it better)
 		// For now we just add it.
 	},
@@ -3662,22 +4596,26 @@ Module.register("MMM-MyTeams-LeagueTable", {
 	_createToggleIcon() {
 		const toggleIcon = document.createElement("div");
 		toggleIcon.className = "LeagueTable-toggle-icon visible"; // Always visible in footer
-		toggleIcon.innerHTML = this.isContentHidden ? "▲" : "▼"; // Up arrow when hidden, down arrow when visible
 		toggleIcon.title = this.isContentHidden
 			? this.translate("SHOW_LEAGUE_TABLE")
 			: this.translate("HIDE_LEAGUE_TABLE");
+		
+		// Use FontAwesome icon for consistency (DES-01)
+		const iconClass = this.isContentHidden ? "fas fa-chevron-up" : "fas fa-chevron-down";
+		const icon = this.createIcon(iconClass);
+		toggleIcon.appendChild(icon);
 		toggleIcon.style.cursor = "pointer";
 		toggleIcon.style.fontSize = "14px";
 		toggleIcon.style.color = "#888";
 		toggleIcon.style.padding = "0 10px";
 		toggleIcon.style.transition = "transform 0.3s ease";
-		
+
 		toggleIcon.onclick = (e) => {
 			e.stopPropagation();
 			this.isContentHidden = !this.isContentHidden;
 			this.updateDom();
 		};
-		
+
 		return toggleIcon;
 	}
 });
