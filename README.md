@@ -77,7 +77,12 @@ cd ~/MagicMirror/modules/
 ```bash
 git clone https://github.com/gitgitaway/MMM-MyTeams-LeagueTable.git
 ```
+## Update
 
+```
+cd ~/MagicMirror/modules/MMM-MyTeams-LeagueTable
+git pull
+```
 ## Configuration
 
 To use this module, add it to the modules array in the `~/MagicMirror/config/config.js` file:
