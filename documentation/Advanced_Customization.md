@@ -68,6 +68,34 @@ If you are running on a low-power Raspberry Pi Zero:
 - Increase `updateInterval` to `3600000` (1 hour).
 - Reduce `maxTeams` to `10`.
 
+## Content Security Policy (CSP) Compatibility
+
+If your MagicMirror deployment uses Content Security Policy headers (common in enterprise kiosk or high-security environments), add the following directives to ensure the module works correctly.
+
+### Required CSP Directives
+
+| Directive | Required Value | Reason |
+| :-------- | :------------- | :----- |
+| `script-src` | `'self'` | Module JavaScript files served locally |
+| `img-src` | `'self' data:` | Team logos and SVG placeholders served locally |
+| `connect-src` | `'self' https://www.bbc.co.uk https://www.fifa.com` | Data sources for league tables and fixtures |
+| `style-src` | `'self' 'unsafe-inline'` | CSS variables and dynamic inline styles |
+
+### Example CSP Header
+
+```
+Content-Security-Policy: default-src 'self'; script-src 'self'; img-src 'self' data:; connect-src 'self' https://www.bbc.co.uk https://www.fifa.com; style-src 'self' 'unsafe-inline';
+```
+
+### Notes
+
+- All data fetching is performed server-side in `node_helper.js`, so `connect-src` restrictions apply to the **Node.js process**, not the browser. Browser-side CSP only affects client assets (scripts, images, styles).
+- The `data:` URI in `img-src` is required for transparent SVG placeholder images used during lazy-loading of team crests.
+- No third-party scripts, fonts, or frames are loaded by this module.
+- If `showTeamLogos: false` is set in config, the `data:` URI requirement is removed.
+
+---
+
 ## Developer Hooks
 
 The module broadcasts its state via `sendNotification`:

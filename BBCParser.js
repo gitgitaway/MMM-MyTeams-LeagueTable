@@ -488,40 +488,69 @@ class BBCParser extends BaseParser {
 				// FIX: Extract aggregate score FIRST, then exclude it when looking for match scores
 				let scores = [];
 
-				// Step 1: Extract aggregate score first (if present)
+				// Step 1: Extract aggregate score first (if present).
+				// BBC Sport uses multiple formats: "(agg 3-2)", "(3-2 agg)", "agg 3-2",
+				// "aggregate 3-2", and "(3-2 on aggregate)".
 				const aggMatch =
-					block.match(/\((?:agg\s*)?(\d+-\d+)\)/i) ||
-					block.match(/agg\s*(\d+-\d+)/i);
-				const aggregateScore = aggMatch ? aggMatch[1] : undefined;
+					block.match(/\((?:agg(?:regate)?\s*)?(\d+[-–]\d+)\s*(?:agg(?:regate)?)?\)/i) ||
+					block.match(/agg(?:regate)?\s*(\d+[-–]\d+)/i) ||
+					block.match(/(\d+[-–]\d+)\s*(?:on\s*)?agg(?:regate)?/i);
+				const aggregateScore = aggMatch ? aggMatch[1].replace("–", "-") : undefined;
+
+				// Step 1b: Look for "X-Y on the night" pattern — BBC often uses this for
+				// the 2nd-leg individual score when the aggregate is the displayed headline.
+				// Capture this BEFORE stripping anything so it can override step 3/4.
+				const onTheNightMatch =
+					block.match(/(\d+)[-–](\d+)\s+on\s+the\s+night/i) ||
+					block.match(/\((\d+)[-–](\d+)\s+on\s+the\s+night\)/i) ||
+					block.match(/2nd\s+leg\s*:\s*(\d+)[-–](\d+)/i);
 
 				// Create a cleaned block that excludes aggregate score text to avoid confusion
 				let blockForScoring = block;
 				if (aggregateScore) {
 					// Remove all variations of aggregate score notation from the block before score extraction
-					blockForScoring = block.replace(/\((?:agg\s*)?(\d+-\d+)\)/gi, "");
-					blockForScoring = blockForScoring.replace(/agg\s*(\d+-\d+)/gi, "");
+					blockForScoring = block.replace(/\((?:agg(?:regate)?\s*)?(\d+[-–]\d+)\s*(?:agg(?:regate)?)?\)/gi, "");
+					blockForScoring = blockForScoring.replace(/agg(?:regate)?\s*(\d+[-–]\d+)/gi, "");
+					blockForScoring = blockForScoring.replace(/(\d+[-–]\d+)\s*(?:on\s*)?agg(?:regate)?/gi, "");
 					blockForScoring = blockForScoring.replace(
 						/aggregate\s*score[^<]*(\d+-\d+)/gi,
 						""
 					);
 				}
 
-				// Step 2: Check aria-label first as it's very reliable for current scores
-				const ariaScoreMatch = blockForScoring.match(
-					/aria-label="[^"]+?\s*(\d+)\s*,\s*[^"]+?\s*(\d+)/i
-				);
+				// Step 1c: If "on the night" score was found, use it immediately — it is the
+				// definitive individual-leg score and avoids picking up the aggregate.
+				if (onTheNightMatch) {
+					scores = [onTheNightMatch[1], onTheNightMatch[2]];
+				}
+
+				// Step 2: Check aria-label first as it's very reliable for current scores.
+				// Skip if we already have scores from "on the night" match.
+				const ariaScoreMatch = scores.length < 2
+					? blockForScoring.match(
+						/aria-label="[^"]+?\s*(\d+)\s*,\s*[^"]+?\s*(\d+)/i
+					)
+					: null;
 				if (ariaScoreMatch) {
 					scores = [ariaScoreMatch[1], ariaScoreMatch[2]];
-				} else {
-					// Step 3: Try to find scores by modern BBC classes and data-testids
+				} else if (scores.length < 2) {
+					// Step 3: Try to find scores by modern BBC classes and data-testids.
+					// Only runs if "on the night" and ARIA extraction did not already yield scores.
 					const scoresRaw = Array.from(
 						blockForScoring.matchAll(
 							/<(?:span|div)[^>]*?(?:class="[^"]*?(?:sp-c-fixture__number|sp-c-fixture__number--[a-z]+|ScoreValue|MatchScore|FixtureScore|score-value)[^"]*?"|data-testid="[^"]*?(?:score-value|match-score|score)[^"]*?")[^>]*?>([\s\S]*?)<\/(?:span|div)>/gi
 						)
 					).map((x) => x[1]);
-					scores = scoresRaw
+					const candidateScores = scoresRaw
 						.map((s) => s.replace(/<[^>]*>/g, "").trim())
 						.filter((s) => /^\d+$/.test(s));
+					// Reject if the two scores together equal the aggregate (i.e. BBC rendered agg in score spans)
+					if (candidateScores.length >= 2) {
+						const candidatePair = `${candidateScores[0]}-${candidateScores[1]}`;
+						if (candidatePair !== aggregateScore) {
+							scores = candidateScores;
+						}
+					}
 				}
 
 				// Step 4: Fallback to hyphenated score match (but not if it's the aggregate we already found)
@@ -561,21 +590,41 @@ class BBCParser extends BaseParser {
 				let statusStr = "";
 				let isLive = false;
 
-				// Improved status detection (Task: Precision)
-				// FIX: Only set live status for ACTUALLY live matches, not upcoming ones
-				// Strict detection: must have explicit live indicators
+			// Improved status detection (Task: Precision)
+			// FIX: Only set live status for ACTUALLY live matches, not upcoming ones.
+			// BBC Sport has changed its CSS class names over time.  We therefore test
+			// MULTIPLE class name patterns so that either old or new BBC markup triggers
+			// correct live and finished detection.
 
-				// Priority 1: Check for finished status first
+			// Helper: detect whether any known "live" class appears in this block.
+			// Covers: legacy "LiveFixture", modern "sp-c-fixture--live", and related variants.
+			const hasLiveClass =
+				block.includes("LiveFixture") ||
+				block.includes("sp-c-fixture--live") ||
+				block.includes("fixture--live") ||
+				block.includes("live-fixture") ||
+				/class="[^"]*\blive\b[^"]*"/.test(block) ||
+				/data-[a-z-]*status[^=]*=["'][^"']*live[^"']*["']/i.test(block) ||
+				/aria-label="[^"]*\blive\b[^"]*"/i.test(block);
+
+			// Helper: detect finished class names (old and modern BBC markup).
+			const hasFinishedClass =
+				block.includes("FinishedFixture") ||
+				block.includes("sp-c-fixture--result") ||
+				block.includes("fixture--result");
+
+			// Priority 1: Check for finished status first
 				if (
-					block.includes("FinishedFixture") ||
+					hasFinishedClass ||
 					/\b(FT|PEN|Full time)\b/i.test(block)
 				) {
 					const sm = block.match(/\b(FT|PEN)\b/i);
 					statusStr = sm ? sm[1].toUpperCase() : "FT";
 				}
-				// Priority 2: Check for live status - must have BOTH LiveFixture class AND actual indicators
+				// Priority 2: Check for live status.
+				// Require live class OR ARIA evidence, AND at least one live-time indicator.
 				else if (
-					block.includes("LiveFixture") &&
+					(hasLiveClass || /\bin progress\b/i.test(block)) &&
 					block.match(/\d{1,2}'|HT|AET|in progress/i)
 				) {
 					isLive = true;
@@ -600,15 +649,14 @@ class BBCParser extends BaseParser {
 							if (minMatch2) {
 								statusStr = minMatch2[1] + "'";
 							}
-							// Pattern 4: Look for standalone minute numbers near "Live" text
-							else if (block.includes("Live") || block.includes("live")) {
+							// Pattern 4: Look for standalone minute numbers near live indicator
+							else if (hasLiveClass) {
 								const minMatch3 = block.match(
 									/Live[^<]*?(\d{1,2})[^<]*?(?:min|')/i
 								);
 								if (minMatch3) {
 									statusStr = minMatch3[1] + "'";
 								} else {
-									// Default to "LIVE" only if we have strong evidence of live match
 									statusStr = "LIVE";
 								}
 							} else {
@@ -1514,27 +1562,33 @@ class BBCParser extends BaseParser {
 								fixture.aggregateScore = `${other.awayScore}-${other.homeScore}`;
 							}
 
-							// Ensure second leg upcoming fixtures don't have scores that would categorize them as finished
-							// Only keep scores if the second leg has actually started (has status)
+							// Ensure second leg upcoming fixtures don't have scores that would categorise them as finished.
+							// Only clear scores when the second leg genuinely has not started yet.
+							// A fixture whose date is already in the past MUST have concluded — protect its
+							// scores even when live-detection failed (e.g. BBC changed class names).
 							const secondLegStatus = (fixture.status || "").toUpperCase();
+							const todayStr = this.getCurrentDateString();
+							const secondLegInPast = fixture.date < todayStr;
 							const hasStarted =
 								secondLegStatus === "FT" ||
 								secondLegStatus === "PEN" ||
 								secondLegStatus === "AET" ||
 								secondLegStatus === "LIVE" ||
 								fixture.live ||
-								/\d+'|HT/i.test(secondLegStatus);
+								/\d+'|HT/i.test(secondLegStatus) ||
+								secondLegInPast;
 
 							if (
 								!hasStarted &&
 								fixture.homeScore !== undefined &&
 								fixture.awayScore !== undefined
 							) {
-								// This is an upcoming second leg with scores (likely aggregate being misapplied)
-								// Clear the scores to prevent incorrect categorization
-								console.log(
-									`[BBCParser] Clearing premature scores from upcoming 2nd leg: ${fixture.homeTeam} vs ${fixture.awayTeam} (${fixture.date})`
-								);
+								// Genuinely upcoming second leg — scores are likely the aggregate misapplied.
+								if (this.config.debug) {
+									console.log(
+										`[BBCParser] Clearing premature scores from upcoming 2nd leg: ${fixture.homeTeam} vs ${fixture.awayTeam} (${fixture.date})`
+									);
+								}
 								delete fixture.homeScore;
 								delete fixture.awayScore;
 								fixture.score = "vs";
@@ -1551,24 +1605,29 @@ class BBCParser extends BaseParser {
 								other.aggregateScore = `${fixture.awayScore}-${fixture.homeScore}`;
 							}
 
-							// Same check for the other fixture
+							// Same check for the symmetric fixture — also uses past-date guard.
 							const otherStatus = (other.status || "").toUpperCase();
+							const todayStr2 = this.getCurrentDateString();
+							const otherInPast = other.date < todayStr2;
 							const otherHasStarted =
 								otherStatus === "FT" ||
 								otherStatus === "PEN" ||
 								otherStatus === "AET" ||
 								otherStatus === "LIVE" ||
 								other.live ||
-								/\d+'|HT/i.test(otherStatus);
+								/\d+'|HT/i.test(otherStatus) ||
+								otherInPast;
 
 							if (
 								!otherHasStarted &&
 								other.homeScore !== undefined &&
 								other.awayScore !== undefined
 							) {
-								console.log(
-									`[BBCParser] Clearing premature scores from upcoming 2nd leg: ${other.homeTeam} vs ${other.awayTeam} (${other.date})`
-								);
+								if (this.config.debug) {
+									console.log(
+										`[BBCParser] Clearing premature scores from upcoming 2nd leg: ${other.homeTeam} vs ${other.awayTeam} (${other.date})`
+									);
+								}
 								delete other.homeScore;
 								delete other.awayScore;
 								other.score = "vs";
@@ -1727,22 +1786,21 @@ class BBCParser extends BaseParser {
 
 	_inferUEFAStage(fixture) {
 		const stage = fixture.stage || "";
-		if (fixture.date) {
-			const parts = fixture.date.split("-");
-			if (parts.length >= 2) {
-				const month = parts[1];
-				// UEFA Knockout round play-offs (UCL/UEL/UECL) are in February
-				if (month === "02") return "Playoff";
-				// UEFA Round of 16 starts in March
-				if (month === "03") return "Rd16";
-				// QF in April
-				if (month === "04") return "QF";
-				// SF and Final in May/June
-				if (month === "05") return "SF";
-				if (month === "06") return "Final";
-			}
-		}
 
+		// Priority 1: If a recognised stage label was already set by the HTML section-header
+		// parser (_inferStageFromBlock), honour it and return immediately.  Month-based
+		// inference is only a fallback for fixtures whose stage is unknown or a raw text value
+		// that has not yet been normalised.  Without this guard, February Round-of-16 first-legs
+		// (which BBC Sport places inside an "Rd16" section) were being overwritten to "Playoff"
+		// purely because they fall in month 02.
+		if (/^playoff$/i.test(stage)) return "Playoff";
+		if (/^rd16$/i.test(stage)) return "Rd16";
+		if (/^qf$/i.test(stage)) return "QF";
+		if (/^sf$/i.test(stage)) return "SF";
+		if (/^final$/i.test(stage)) return "Final";
+		if (/^gs$/i.test(stage)) return "GS";
+
+		// Priority 2: Normalise verbose stage strings parsed from section headers
 		if (
 			stage === "Rd32" ||
 			/Round of 32|Rd32|Play-off|Playoff|Knockout round|KNOCKOUT ROUND PLAY-OFFS/i.test(
@@ -1754,6 +1812,21 @@ class BBCParser extends BaseParser {
 		if (/Quarter|QF/i.test(stage)) return "QF";
 		if (/Semi|SF/i.test(stage)) return "SF";
 		if (/Final/i.test(stage)) return "Final";
+
+		// Priority 3: Month-based fallback — only reached when the fixture has no recognisable
+		// stage value (e.g. stage is empty or a raw BBC Sport label not matched above).
+		// This avoids incorrectly overriding correctly-parsed stage codes.
+		if (fixture.date) {
+			const parts = fixture.date.split("-");
+			if (parts.length >= 2) {
+				const month = parts[1];
+				if (month === "02") return "Playoff";
+				if (month === "03") return "Rd16";
+				if (month === "04") return "QF";
+				if (month === "05") return "SF";
+				if (month === "06") return "Final";
+			}
+		}
 
 		return stage;
 	}

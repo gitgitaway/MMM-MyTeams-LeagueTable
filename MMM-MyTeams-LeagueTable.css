@@ -654,19 +654,23 @@
 }
 
 /* Row coloring based on league position */
-.league-row.promotion-zone {
-    background-color: rgba(0, 135, 73, 0.1);
+.team-row.promotion-zone {
+    background-color: rgba(0, 135, 73, 0.15);
 }
 
-.league-row.uefa-zone {
-    background-color: rgba(30, 144, 255, 0.1);
+.team-row.uefa-zone {
+    background-color: rgba(30, 144, 255, 0.15);
 }
 
-.league-row.relegation-zone {
-    background-color: rgba(220, 20, 60, 0.1);
+.team-row.relegation-zone {
+    background-color: rgba(220, 20, 60, 0.15);
 }
 
-.league-row.highlight-team {
+.team-row.uefa-elimination-zone {
+    background-color: rgba(255, 215, 0, 0.15) !important;
+}
+
+.team-row.highlighted {
     background-color: rgba(255, 215, 0, 0.15) !important;
     font-weight: bold;
 }
@@ -1256,24 +1260,37 @@
 }
 
 /* UEFA Split-View Layout - Equal height allocation for Results and Future Fixtures */
-/* Each section displays exactly 4 fixtures without scrolling */
+/* Container holds both results and upcoming sections with independent scrolling.
+   Height increased from 340px to 500px to accommodate up to 8 results
+   (e.g. 4 fixtures from leg 1 + 4 from leg 2 on back-to-back play-off nights). */
 .uefa-split-view-container {
     width: 100%;
     display: flex;
     flex-direction: column;
-    height: 340px; /* Fixed height for both sections: 2 sections × 165px + 10px gap */
-    gap: 10px;
+    height: 500px; /* 2 sections × 240px + 20px gap */
+    gap: 20px;
 }
 
-/* Each section wrapper contains title + scrollable content */
+/* Each section wrapper contains title + scrollable content.
+   Height increased from 165px to 240px so that up to 8 items can scroll
+   without clipping the last visible fixture row. */
 .uefa-section-wrapper {
     display: flex;
     flex-direction: column;
-    height: 165px; /* Fixed equal height for both sections - shows 4 fixtures without scrolling */
+    height: 240px; /* Increased from 165px — comfortably shows 6-8 fixtures with scroll */
     border: 1px solid rgba(255, 255, 255, 0.1);
     border-radius: 4px;
     overflow: hidden;
     background: rgba(34, 34, 34, 0.3);
+}
+
+/* Completion states: Maximized/Minimized heights for UEFA sections */
+.uefa-section-wrapper.maximized-section {
+    height: 400px;
+}
+
+.uefa-section-wrapper.minimized-section {
+    height: 80px;
 }
 
 /* Title for each section - reduced padding and font size to maximize fixture space */
@@ -1315,14 +1332,15 @@
     background: rgba(255, 255, 255, 0.4);
 }
 
-/* Equal sizing for both sections - no dynamic growth */
-/* Both sections maintain fixed 165px height to show exactly 4 fixtures */
+/* Equal sizing for both sections - no dynamic growth.
+   Both sections maintain the same fixed height (240px) to show up to ~6 fixtures
+   with scrolling available for more. */
 .uefa-section-wrapper.results-section {
-    height: 165px; /* Fixed height - equal to future section */
+    height: 240px;
 }
 
 .uefa-section-wrapper.future-section {
-    height: 165px; /* Fixed height - equal to results section */
+    height: 240px;
 }
 
 /* League Table Sticky Header & Scrollable Body */
@@ -1640,23 +1658,23 @@
 
     /* Tables */
     .standings-table,
-    .table-row,
+    .team-row,
     .table-header-row {
         border: 2px solid var(--hc-border);
         background-color: var(--hc-background);
     }
 
-    .table-row:nth-child(even) {
+    .team-row:nth-child(even) {
         background-color: #111111;
     }
 
-    .table-row:hover {
+    .team-row:hover {
         background-color: #222222;
         border: 2px solid var(--hc-text-secondary);
     }
 
     /* Table cells */
-    .table-row td,
+    .team-row td,
     .table-header-row th {
         color: var(--hc-text-primary);
         border: 1px solid var(--hc-border);
@@ -1796,7 +1814,7 @@
         border: 2px solid CanvasText;
     }
 
-    .table-row,
+    .team-row,
     button {
         border: 1px solid CanvasText;
     }
@@ -1940,7 +1958,7 @@
    ========================================== */
 
 /* Compact density - minimal padding for maximum information density */
-.spfl-league-table.density-compact .table-row td,
+.spfl-league-table.density-compact .team-row td,
 .spfl-league-table.density-compact .table-header-row th {
     padding: 3px 2px;
     line-height: 1.1;
@@ -1969,13 +1987,13 @@
 }
 
 /* Normal density - default balanced spacing (already defined in base styles) */
-.spfl-league-table.density-normal .table-row td,
+.spfl-league-table.density-normal .team-row td,
 .spfl-league-table.density-normal .table-header-row th {
     padding: 6px 4px;
 }
 
 /* Comfortable density - generous padding for better readability */
-.spfl-league-table.density-comfortable .table-row td,
+.spfl-league-table.density-comfortable .team-row td,
 .spfl-league-table.density-comfortable .table-header-row th {
     padding: 10px 6px;
     line-height: 1.4;
@@ -2068,14 +2086,14 @@
     border-color: var(--theme-border);
 }
 
-.spfl-league-table.theme-light .table-row,
-.spfl-league-table.theme-auto .table-row {
+.spfl-league-table.theme-light .team-row,
+.spfl-league-table.theme-auto .team-row {
     color: var(--theme-text-primary);
     border-bottom-color: var(--theme-border-light);
 }
 
-.spfl-league-table.theme-light .table-row:hover,
-.spfl-league-table.theme-auto .table-row:hover {
+.spfl-league-table.theme-light .team-row:hover,
+.spfl-league-table.theme-auto .team-row:hover {
     background-color: var(--theme-bg-hover);
 }
 
@@ -2159,12 +2177,12 @@
     border-color: var(--theme-border);
 }
 
-.spfl-league-table.theme-dark .table-row {
+.spfl-league-table.theme-dark .team-row {
     color: var(--theme-text-primary);
     border-bottom-color: var(--theme-border-light);
 }
 
-.spfl-league-table.theme-dark .table-row:hover {
+.spfl-league-table.theme-dark .team-row:hover {
     background-color: var(--theme-bg-hover);
 }
 
@@ -2248,7 +2266,7 @@
 }
 
 /* Optimize virtual scrolling performance */
-.virtual-scrolling-enabled .table-row {
+.virtual-scrolling-enabled .team-row {
     contain: layout style paint;
     will-change: transform;
 }
@@ -2325,25 +2343,26 @@
 /* ==========================================
    A11Y-10: ENHANCED FORM INDICATOR SHAPES
    Visual differentiation beyond color
+   Active when config enhancedIndicatorShapes: true
    ========================================== */
 
-/* Add shape differentiation to form tokens */
-.form-win {
+/* Shape differentiation - scoped to enhanced mode only */
+.form-tokens--enhanced .form-win {
     clip-path: circle(50%); /* Circular shape for wins */
 }
 
-.form-draw {
+.form-tokens--enhanced .form-draw {
     /* Square shape (default rectangle) for draws */
     clip-path: none;
 }
 
-.form-loss {
+.form-tokens--enhanced .form-loss {
     clip-path: polygon(50% 0%, 100% 100%, 0% 100%); /* Triangle shape for losses */
 }
 
-/* High contrast mode - add patterns for additional differentiation */
+/* High contrast mode patterns - enhanced mode only */
 @media (prefers-contrast: high) {
-    .form-win {
+    .form-tokens--enhanced .form-win {
         background-image: repeating-linear-gradient(
             45deg,
             transparent,
@@ -2352,8 +2371,8 @@
             rgba(255, 255, 255, 0.3) 4px
         );
     }
-    
-    .form-loss {
+
+    .form-tokens--enhanced .form-loss {
         background-image: repeating-linear-gradient(
             -45deg,
             transparent,
@@ -2362,8 +2381,8 @@
             rgba(255, 255, 255, 0.3) 4px
         );
     }
-    
-    .form-draw {
+
+    .form-tokens--enhanced .form-draw {
         background-image: repeating-linear-gradient(
             90deg,
             transparent,
@@ -2372,6 +2391,35 @@
             rgba(255, 255, 255, 0.2) 4px
         );
     }
+}
+
+/* ==========================================
+   FLAT FORM INDICATOR MODE
+   Active when config enhancedIndicatorShapes: false
+   No background; colored text only
+   ========================================== */
+
+.form-tokens--flat span {
+    background-color: transparent;
+    border: none;
+}
+
+.form-tokens--flat span.form-win {
+    background-color: transparent;
+    border: none;
+    color: #018749;
+}
+
+.form-tokens--flat span.form-draw {
+    background-color: transparent;
+    border: none;
+    color: #888888;
+}
+
+.form-tokens--flat span.form-loss {
+    background-color: transparent;
+    border: none;
+    color: #ff3333;
 }
 
 

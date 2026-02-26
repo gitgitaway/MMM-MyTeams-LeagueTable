@@ -633,8 +633,6 @@ module.exports = NodeHelper.create({
 
 			monthsToFetch.forEach((month) => {
 				const baseMonthlyUrl = `${urls.fixtures}/${month}`;
-				const isCurrentMonth = month === formatMonth(currentYear, currentMonth);
-
 				// STAGED APPROACH: Results and Today/Future base URLs
 				const variants = [
 					{ url: baseMonthlyUrl, type: "base" },
@@ -642,9 +640,6 @@ module.exports = NodeHelper.create({
 				];
 
 				variants.forEach((variant) => {
-					// Avoid redundant fetch of base URL for current month (already in index 0)
-					if (isCurrentMonth && variant.type === "base") return;
-
 					fixtureFetchPromises.push(
 						this.fetchWebPage(variant.url)
 							.then((html) => {

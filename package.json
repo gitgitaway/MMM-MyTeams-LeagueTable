@@ -37,16 +37,18 @@
 	"devDependencies": {
 		"clean-css-cli": "^5.6.0",
 		"eslint": "^8.0.0",
+		"mocha": "^10.0.0",
 		"prettier": "^2.0.0"
 	},
 	"scripts": {
-		"test": "echo \"Error: no test specified\" && exit 1",
+		"test": "npm run test:security",
+		"test:security": "mocha tests/security.test.js --timeout 10000",
 		"lint": "eslint *.js",
 		"format": "prettier --write *.js *.json *.md",
 		"minify-css": "cleancss -o MMM-MyTeams-LeagueTable.min.css MMM-MyTeams-LeagueTable.css",
 		"build": "npm run minify-css",
 		"audit": "npm audit --audit-level=moderate",
-    	"audit:fix": "npm audit fix"
+		"audit:fix": "npm audit fix"
 	},
 	"magicmirror": {
 		"moduleName": "MMM-MyTeams-LeagueTable",

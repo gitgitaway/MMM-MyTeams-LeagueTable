@@ -15,8 +15,9 @@ Module.register("MMM-MyTeams-LeagueTable", {
 	// Load external scripts
 	getScripts() {
 		return [
-			`modules/${this.name}/team-logo-mappings.js`,
 			`modules/${this.name}/european-leagues.js`
+			// team-logo-mappings.js (102KB) is loaded dynamically via loadLogoMappings()
+			// to reduce initial bundle size (PERF-09)
 		];
 	},
 
@@ -101,6 +102,7 @@ Module.register("MMM-MyTeams-LeagueTable", {
 		showPoints: true, // Show points
 		showForm: true, // Show recent form tokens (W/D/L)
 		formMaxGames: 6, // Max number of form games to display
+		enhancedIndicatorShapes: true, // true = shape differentiation on form tokens (circle/square/triangle); false = no background, colored text only (W=green, D=grey, L=red)
 		//firstPlaceColor: "rgba(255, 255, 255, 0.1)", // Color for the team in first position
 		highlightedColor: "rgba(255, 255, 255, 0.1)", // Color for highlighted teams
 
@@ -108,7 +110,7 @@ Module.register("MMM-MyTeams-LeagueTable", {
 		tableDensity: "normal", // Table row density: "compact", "normal", "comfortable"
 		fixtureDateFilter: null, // Filter fixtures by date range: null (show all), "today", "week", "month", or {start: "YYYY-MM-DD", end: "YYYY-MM-DD"}
 		enableVirtualScrolling: false, // Enable virtual scrolling for large tables (>50 rows)
-		virtualScrollThreshold: 50, // Number of rows before virtual scrolling activates
+		virtualScrollThreshold: 30, // Number of rows before virtual scrolling activates
 
 		// ===== Theme Options (Phase 4) =====
 		theme: "auto", // Color theme: "auto" (follows system), "light", "dark"
@@ -181,13 +183,10 @@ Module.register("MMM-MyTeams-LeagueTable", {
 		Log.info(`Starting module: ${this.name}`);
 
 		// ===== INITIALIZE TEAM LOGO MAPPINGS =====
-		// Merge centralized mappings from team-logo-mappings.js with config overrides
-		// TEAM_LOGO_MAPPINGS is loaded via getScripts() and available globally
-		this.mergedTeamLogoMap = Object.assign(
-			{},
-			window.TEAM_LOGO_MAPPINGS || {},
-			this.config.teamLogoMap || {}
-		);
+		// Initialize with config overrides only (empty map until dynamic load completes).
+		// team-logo-mappings.js (102KB) is loaded asynchronously via loadLogoMappings()
+		// so that the module renders standings immediately without blocking on that file.
+		this.mergedTeamLogoMap = Object.assign({}, this.config.teamLogoMap || {});
 
 		// Build normalized team lookup map for case-insensitive matching
 		this.normalizedTeamLogoMap = {};
@@ -221,6 +220,10 @@ Module.register("MMM-MyTeams-LeagueTable", {
 		// Initialize offline mode detection (UX-07)
 		this.isOnline = navigator.onLine;
 		this.setupOfflineDetection();
+
+		// Asynchronously load team logo mappings to reduce initial bundle size (PERF-09).
+		// Standings display immediately; logos appear once the 102KB mapping file loads.
+		this.loadLogoMappings();
 
 		// Set current league to first enabled league
 		this.currentLeague =
@@ -1029,6 +1032,58 @@ Module.register("MMM-MyTeams-LeagueTable", {
 	},
 
 	/**
+	 * A11Y-08: Save the current keyboard focus state before a DOM update.
+	 * Captures the focused team name and element class so focus can be restored
+	 * after MagicMirror replaces the DOM via updateDom().
+	 */
+	saveFocusState() {
+		const active = document.activeElement;
+		if (!active) {
+			this._savedFocusTeam = null;
+			this._savedFocusClass = null;
+			return;
+		}
+		const teamRow = active.closest("[data-team-name]");
+		this._savedFocusTeam = teamRow ? teamRow.getAttribute("data-team-name") : null;
+		this._savedFocusClass = active.className || null;
+		if (this.config.debug) {
+			Log.info(`[A11Y-08] Saved focus state: team="${this._savedFocusTeam}" class="${this._savedFocusClass}"`);
+		}
+	},
+
+	/**
+	 * A11Y-08: Restore keyboard focus after a DOM update.
+	 * Attempts to re-focus the element matching the previously saved team and class.
+	 * Falls back to the module wrapper if a precise match is not found.
+	 */
+	restoreFocusState() {
+		if (!this._savedFocusTeam) return;
+
+		const wrapper = document.getElementById(`mtlt-${this.identifier}`);
+		if (!wrapper) return;
+
+		const teamRow = wrapper.querySelector(`[data-team-name="${CSS.escape(this._savedFocusTeam)}"]`);
+		if (teamRow) {
+			let target = null;
+			if (this._savedFocusClass) {
+				target = teamRow.querySelector(`.${this._savedFocusClass.trim().split(/\s+/)[0]}`);
+			}
+			const focusEl = target || teamRow;
+			if (focusEl.getAttribute("tabindex") === null) {
+				focusEl.setAttribute("tabindex", "-1");
+			}
+			focusEl.focus({ preventScroll: true });
+			this.announceToScreenReader(`Table updated. Focus restored to ${this._savedFocusTeam}`, true);
+			if (this.config.debug) {
+				Log.info(`[A11Y-08] Restored focus to team="${this._savedFocusTeam}"`);
+			}
+		}
+
+		this._savedFocusTeam = null;
+		this._savedFocusClass = null;
+	},
+
+	/**
 	 * Performance optimization: Setup Intersection Observer for lazy image loading (PERF-08).
 	 * Provides better cross-browser consistency than native loading="lazy".
 	 */
@@ -1098,6 +1153,61 @@ Module.register("MMM-MyTeams-LeagueTable", {
 		if (this.config.debug) {
 			Log.info(`[UX-07] Offline detection initialized. Current status: ${this.isOnline ? 'Online' : 'Offline'}`);
 		}
+	},
+
+	/**
+	 * PERF-09: Dynamically inject a script tag and return a Promise that resolves on load.
+	 * Skips injection if the script URL is already present in the document to prevent
+	 * double-loading on module re-init.
+	 * @param {string} url - Relative or absolute script URL
+	 * @returns {Promise<void>}
+	 */
+	loadScript(url) {
+		return new Promise((resolve, reject) => {
+			if (document.querySelector(`script[src="${url}"]`)) {
+				resolve();
+				return;
+			}
+			const script = document.createElement("script");
+			script.src = url;
+			script.onload = resolve;
+			script.onerror = () => reject(new Error(`Failed to load script: ${url}`));
+			document.head.appendChild(script);
+		});
+	},
+
+	/**
+	 * PERF-09: Asynchronously load team-logo-mappings.js (102KB) on demand.
+	 * Defers this large file until after the initial render so that the module
+	 * displays standings immediately while logos load in the background.
+	 * After loading, rebuilds the normalized team map and triggers a DOM refresh
+	 * so logos appear without requiring a full page reload.
+	 * @returns {Promise<void>}
+	 */
+	loadLogoMappings() {
+		const url = `modules/${this.name}/team-logo-mappings.js`;
+
+		if (this.config.debug) {
+			Log.info("[PERF-09] Loading team-logo-mappings.js dynamically...");
+		}
+
+		return this.loadScript(url).then(() => {
+			this.mergedTeamLogoMap = Object.assign(
+				{},
+				window.TEAM_LOGO_MAPPINGS || {},
+				this.config.teamLogoMap || {}
+			);
+			this.buildNormalizedTeamMap();
+
+			if (this.config.debug) {
+				const count = Object.keys(this.mergedTeamLogoMap).length;
+				Log.info(`[PERF-09] Logo mappings ready: ${count} country groups loaded`);
+			}
+
+			this.updateDom(this.config.animationSpeed);
+		}).catch((err) => {
+			Log.error(`[PERF-09] Could not load team-logo-mappings.js: ${err.message}`);
+		});
 	},
 
 	/**
@@ -1274,23 +1384,48 @@ Module.register("MMM-MyTeams-LeagueTable", {
 		// Schedule next update
 		let nextUpdate = this.config.updateInterval;
 
-		// Task: Reduce refresh time for live matches to once per 3 mins
+		// Task: Reduce refresh time for live matches to once per 3 mins.
+		// Also increases refresh rate when today's fixtures have passed kick-off but
+		// no FT status has been detected yet — compensates for BBC Sport class-name
+		// changes that can prevent live detection from triggering correctly.
 		let hasLiveGames = false;
+		let mightHaveLiveGames = false;
+		const nowMs = Date.now();
+		const todayDateStr = (() => {
+			const d = new Date();
+			const mm = String(d.getMonth() + 1).padStart(2, '0');
+			const dd = String(d.getDate()).padStart(2, '0');
+			return `${d.getFullYear()}-${mm}-${dd}`;
+		})();
+
 		if (this.leagueData) {
 			Object.values(this.leagueData).forEach((data) => {
 				if (data && data.fixtures && Array.isArray(data.fixtures)) {
-					if (data.fixtures.some((f) => f.live)) {
-						hasLiveGames = true;
-					}
+					data.fixtures.forEach((f) => {
+						if (f.live) {
+							hasLiveGames = true;
+						}
+						// Today's fixture with kick-off passed but not marked finished — likely in play.
+						const st = (f.status || "").toUpperCase();
+						const finished = st === "FT" || st === "PEN" || st === "AET";
+						if (
+							f.date === todayDateStr &&
+							!finished &&
+							f.timestamp &&
+							f.timestamp < nowMs
+						) {
+							mightHaveLiveGames = true;
+						}
+					});
 				}
 			});
 		}
 
-		if (hasLiveGames) {
+		if (hasLiveGames || mightHaveLiveGames) {
 			nextUpdate = 3 * 60 * 1000; // 3 minutes
 			if (this.config.debug) {
 				Log.info(
-					" MMM-MyTeams-LeagueTable: Live games detected, increasing refresh rate to 3 minutes."
+					` MMM-MyTeams-LeagueTable: ${hasLiveGames ? 'Live' : 'Potential live'} games detected, increasing refresh rate to 3 minutes.`
 				);
 			}
 		}
@@ -1370,9 +1505,13 @@ Module.register("MMM-MyTeams-LeagueTable", {
 			clearTimeout(this.updateDomTimer);
 		}
 
+		this.saveFocusState();
+
 		this.updateDomTimer = setTimeout(() => {
 			this.updateDom(speed || this.config.animationSpeed);
 			this.updateDomTimer = null;
+			const restoreDelay = (speed || this.config.animationSpeed || 0) + 150;
+			setTimeout(() => this.restoreFocusState(), restoreDelay);
 		}, 200);
 	},
 
@@ -1717,13 +1856,39 @@ Module.register("MMM-MyTeams-LeagueTable", {
 				if (league === "WORLD_CUP_2026") {
 					this.currentSubTab = this.config.defaultWCSubTab || "A";
 				} else if (uefaLeagues.includes(league)) {
-					// For UEFA leagues, default to Playoff in February, otherwise Table
-					const month = this.getCurrentDate().getMonth(); // 1 = February
-					if (month === 1) {
-						this.currentSubTab = "Playoff";
-					} else {
-						this.currentSubTab = "Table";
+					// Pick the most relevant active knockout stage based on data, falling back
+					// to month-based defaults.  This prevents landing on an empty tab when the
+					// season schedule doesn't align with the hardcoded month assumption
+					// (e.g. Rd16 first legs in late February).
+					const leagueData = this.leagueData && this.leagueData[league];
+					const fixtures = (leagueData && leagueData.fixtures) || [];
+					const todayStr = this.getCurrentDate().toISOString().split("T")[0];
+					const nearWindow = 14 * 24 * 60 * 60 * 1000; // 14-day look-ahead
+					const nearMs = this.getCurrentDate().getTime() + nearWindow;
+					const nearDate = new Date(nearMs).toISOString().split("T")[0];
+
+					const stageOrder = ["Playoff", "Rd16", "QF", "SF", "Final"];
+					let detectedStage = null;
+					for (const s of stageOrder) {
+						const sLower = s.toLowerCase();
+						const hasNear = fixtures.some((f) => {
+							if (!f.date || !f.stage) return false;
+							return f.stage.toLowerCase() === sLower &&
+								f.date >= todayStr && f.date <= nearDate;
+						});
+						if (hasNear) { detectedStage = s; break; }
 					}
+
+					if (!detectedStage) {
+						// Month-based fallback
+						const month = this.getCurrentDate().getMonth();
+						if (month === 1) detectedStage = "Playoff";
+						else if (month === 2) detectedStage = "Rd16";
+						else if (month === 3) detectedStage = "QF";
+						else if (month === 4) detectedStage = "SF";
+					}
+
+					this.currentSubTab = detectedStage || "Table";
 				} else {
 					this.currentSubTab = null;
 				}
@@ -3175,6 +3340,9 @@ Module.register("MMM-MyTeams-LeagueTable", {
 			row.className = "team-row";
 			row.setAttribute("role", "row");
 			row.setAttribute("aria-rowindex", index + 1);
+			if (team.name) {
+				row.setAttribute("data-team-name", team.name);
+			}
 			const pos = team.position || "-";
 			const pts = team.points || "0";
 
@@ -3184,10 +3352,30 @@ Module.register("MMM-MyTeams-LeagueTable", {
 			);
 
 			if (this.config.colored) {
-				if (team.position <= 2) row.classList.add("champions-league");
-				else if (team.position <= 4) row.classList.add("europa-league");
-				else if (team.position >= teamsToShow.length - 1)
-					row.classList.add("relegation");
+				const uefaLeagues = [
+					"UEFA_CHAMPIONS_LEAGUE",
+					"UEFA_EUROPA_LEAGUE",
+					"UEFA_EUROPA_CONFERENCE_LEAGUE",
+					"UCL",
+					"UEL",
+					"ECL"
+				];
+				const isUEFA = uefaLeagues.includes(leagueKey);
+
+				if (isUEFA) {
+					// UEFA League Phase: 1-8 Promotion, 25-36 Elimination
+					if (team.position <= 8) {
+						row.classList.add("promotion-zone");
+					} else if (team.position >= 25 && team.position <= 36) {
+						row.classList.add("uefa-elimination-zone");
+					}
+				} else {
+					// Standard leagues
+					if (team.position <= 2) row.classList.add("promotion-zone");
+					else if (team.position <= 4) row.classList.add("uefa-zone");
+					else if (team.position >= teamsToShow.length - 1)
+						row.classList.add("relegation-zone");
+				}
 			}
 
 			if (this.config.highlightTeams.includes(team.name)) {
@@ -3250,21 +3438,19 @@ Module.register("MMM-MyTeams-LeagueTable", {
 				var basePath = "modules/MMM-MyTeams-LeagueTable/images/";
 				var tryIndex = 0;
 				const moduleInstance = this;
-				function tryNext(imgEl) {
+				const tryNext = (imgEl) => {
 					if (tryIndex >= candidates.length) {
 						imgEl.remove();
 						return;
 					}
 					const logoSrc = basePath + candidates[tryIndex];
-					// Use lazy loading for the first image attempt
 					if (tryIndex === 0) {
 						moduleInstance.setupImageLazyLoading(imgEl, logoSrc);
 					} else {
-						// Fallbacks load immediately
 						imgEl.src = logoSrc;
 					}
 					tryIndex++;
-				}
+				};
 				img.onerror = function () {
 					tryNext(this);
 				};
@@ -3337,7 +3523,9 @@ Module.register("MMM-MyTeams-LeagueTable", {
 				var formCell = document.createElement("td");
 				formCell.className = "form-cell";
 				var formWrapper = document.createElement("div");
-				formWrapper.className = "form-tokens";
+				formWrapper.className = this.config.enhancedIndicatorShapes
+					? "form-tokens form-tokens--enhanced"
+					: "form-tokens form-tokens--flat";
 
 				var formArr = Array.isArray(team.form) ? team.form : [];
 				var maxGames = Math.max(1, Number(this.config.formMaxGames) || 5);
@@ -3636,34 +3824,96 @@ Module.register("MMM-MyTeams-LeagueTable", {
 			if (
 				isUEFA &&
 				uefaTwoLeggedStages.includes(subTab) &&
-				currentData.uefaStages
+				(currentData.uefaStages || currentData.fixtures)
 			) {
-				const stages = currentData.uefaStages;
+				// Recompute results/today/future buckets from the raw fixture list using the
+				// ACTUAL current date.  The pre-computed uefaStages stored in the cache are
+				// built at parse time (server-side) and become stale on the following day —
+				// e.g. Feb 24 fixtures remain in "today" when the cache is served on Feb 25.
+				// Re-classifying here guarantees correct bucket membership regardless of when
+				// the cache was written.
+				const todayStr = this.getCurrentDate().toISOString().split("T")[0];
+				const allFixtures = currentData.fixtures || [];
 
-				// Map each stage to its typical month(s) for filtering
+				const recomputedResults = allFixtures.filter((f) => {
+					const status = (f.status || "").toUpperCase();
+					if (status === "FT" || status === "PEN" || status === "AET") return true;
+					if (f.live === true) return true;
+					if (/\d+'|HT|LIVE/i.test(status)) return true;
+					return false;
+				});
+
+				const recomputedLive = allFixtures.filter((f) => {
+					if (f.live === true) return true;
+					const status = (f.status || "").toUpperCase();
+					return /\d+'|HT|LIVE/i.test(status);
+				});
+
+				const recomputedToday = allFixtures.filter((f) => {
+					if (f.date !== todayStr) return false;
+					const status = (f.status || "").toUpperCase();
+					const isFinishedOrLive =
+						status === "FT" || status === "PEN" || status === "AET" ||
+						status === "LIVE" || f.live || /\d+'|HT/i.test(status);
+					return !isFinishedOrLive;
+				});
+
+				const recomputedFuture = allFixtures.filter((f) => {
+					if (f.date <= todayStr) return false;
+					const status = (f.status || "").toUpperCase();
+					const isFinishedOrLive =
+						status === "FT" || status === "PEN" || status === "AET" ||
+						status === "LIVE" || f.live || /\d+'|HT/i.test(status);
+					return !isFinishedOrLive;
+				});
+
+				const combinedResults = [...recomputedLive, ...recomputedResults.filter((f) => !recomputedLive.includes(f))];
+
+				const stages = {
+					results: combinedResults,
+					today: recomputedToday,
+					future: recomputedFuture
+				};
+
+				if (this.config.debug) {
+					Log.info(`[UEFA-STAGES] Recomputed for today=${todayStr}: results=${stages.results.length} today=${stages.today.length} future=${stages.future.length}`);
+				}
+
+				// Map each stage to its typical month(s) for filtering.
+				// Multiple months are listed per stage to handle season scheduling variations
+				// (e.g. Rd16 first legs occasionally fall in February).
 				const stageMonthMap = {
-					Playoff: ["02"], // February
-					Rd16: ["03"], // March
-					QF: ["04"], // April
-					SF: ["05"] // May
+					Playoff: ["02"],        // February
+					Rd16: ["02", "03"],     // Feb (occasional first legs) and March
+					QF: ["03", "04"],       // March (occasional) and April
+					SF: ["04", "05"]        // April (occasional) and May
 				};
 
 				const allowedMonths = stageMonthMap[subTab] || [];
 
-				// Filter fixtures to only show those in the appropriate month(s) for this stage
+				// Filter fixtures to only show those in the appropriate month(s) for this stage.
+				//
+				// BUG-G FIX: The previous OR logic (month match || stage match) caused fixtures
+				// from one stage (e.g. Playoff) to bleed onto another tab (e.g. Rd16) when both
+				// stages share the same month (February).  Correct priority:
+				//   1. Fixture has a recognised stage label  -> MUST match current tab exactly.
+				//   2. Fixture has no/unknown stage          -> fall back to month-based check.
+				const knownStages = ["PLAYOFF", "RD16", "QF", "SF", "FINAL", "GS"];
+				const currentStageUpper = subTab.toUpperCase();
+
 				const filterStageFixtures = (fixtures) => {
 					return fixtures.filter((f) => {
 						if (!f.date) return false;
-						const month = f.date.split("-")[1];
-						// Also check stage field to ensure we're showing the right fixtures
 						const fixtureStage = (f.stage || "").toUpperCase();
-						const currentStageUpper = subTab.toUpperCase();
+						const hasKnownStage = knownStages.includes(fixtureStage);
 
-						// Match by month OR by explicit stage field
-						return (
-							allowedMonths.includes(month) ||
-							fixtureStage === currentStageUpper
-						);
+						if (hasKnownStage) {
+							// Explicit stage label present — must match this tab exactly.
+							return fixtureStage === currentStageUpper;
+						}
+						// No recognised stage — fall back to month-based filtering.
+						const month = f.date.split("-")[1];
+						return allowedMonths.includes(month);
 					});
 				};
 
@@ -3683,6 +3933,23 @@ Module.register("MMM-MyTeams-LeagueTable", {
 				stageToday.sort(sortByDateTime);
 				stageFuture.sort(sortByDateTime);
 
+				// Determine if the round is completed (00:01 on the day after the last kickoff)
+				const allStageFixtures = [...stageResults, ...stageToday, ...stageFuture];
+				let lastKickoffDate = "";
+				allStageFixtures.forEach((f) => {
+					if (f.date && f.date > lastKickoffDate) {
+						lastKickoffDate = f.date;
+					}
+				});
+
+				const isRoundCompleted = lastKickoffDate && todayStr > lastKickoffDate;
+
+				if (this.config.debug && isRoundCompleted) {
+					Log.info(
+						`[UEFA-COMPLETION] Round ${subTab} completed. Last kickoff: ${lastKickoffDate}, Today: ${todayStr}. Maximising results section.`
+					);
+				}
+
 				// FIX: Create split-view layout for Results and Future Fixtures
 				// Each section gets 50% height with independent scrolling
 				const splitViewContainer = document.createElement("div");
@@ -3691,7 +3958,9 @@ Module.register("MMM-MyTeams-LeagueTable", {
 				// Section 1: Results (Finished and Live matches)
 				if (stageResults.length > 0) {
 					const resultsWrapper = document.createElement("div");
-					resultsWrapper.className = "uefa-section-wrapper results-section";
+					resultsWrapper.className = `uefa-section-wrapper results-section${
+						isRoundCompleted ? " maximized-section" : ""
+					}`;
 
 					const resultsTitle = document.createElement("div");
 					resultsTitle.className = "wc-title";
@@ -3716,7 +3985,9 @@ Module.register("MMM-MyTeams-LeagueTable", {
 				// Section 3: Future Fixtures (Upcoming matches including second legs)
 				if (allUpcoming.length > 0) {
 					const futureWrapper = document.createElement("div");
-					futureWrapper.className = "uefa-section-wrapper future-section";
+					futureWrapper.className = `uefa-section-wrapper future-section${
+						isRoundCompleted ? " minimized-section" : ""
+					}`;
 
 					const futureTitle = document.createElement("div");
 					futureTitle.className = "wc-title";
