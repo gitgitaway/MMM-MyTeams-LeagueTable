@@ -15,39 +15,14 @@ A comprehensive **MagicMirror²** module that displays football league standings
 | [![Screenshot 4](./screenshots/screenshot4.png)] | [![Screenshot 5](./screenshots/screenshot5.png)] | [![Screenshot 6](./screenshots/screenshot6.png)] |
 | [![Screenshot 7](./screenshots/screenshot7.png)] |                                                  |                                                  |
 
-## 🆕 Recent Updates (v2.2.0 - 2026-02-24)
+## 🆕 Recent Updates (v2.2.3 - 2026-02-27)
 
-**Security, Accessibility & Performance:**
+**UEFA Play-off 2nd Leg Score Recovery & Stage Inference Fix:**
 
-- ♿ **Focus management (A11Y-08)** - Keyboard focus is preserved across table refreshes using `data-team-name` anchors and WCAG 2.1 SC 2.4.3 compliant restore logic
-- 🛡️ **CSP documentation (SEC-06)** - Full Content Security Policy guide added for enterprise/kiosk deployments
-- 🧪 **Security test suite (SEC-10)** - 17 automated Mocha regression tests covering DOM safety, input validation, debug guards, and more
-- ⚡ **Dynamic logo loading (PERF-09)** - `team-logo-mappings.js` (102KB) now loaded asynchronously; table renders immediately, logos populate after
-
-**Previous: v2.1.0 (Phase 4 - 2026-02-23):**
 
 **🚀 Advanced Power-User Features:**
 
-- ✨ **Configurable table density** - Choose compact, normal, or comfortable spacing
-- 🎨 **Full light/dark mode** - Auto, light, or dark themes with complete CSS variable system
-- 📅 **Fixture date filtering** - Show only today's, this week's, or custom date ranges
-- 🎨 **Team color customization** - Apply custom hex colors to specific team rows
-- ⚡ **Virtual scrolling** - Performance optimizations for tables with 30+ rows
-- 🔧 **Team name normalization** - Fixes BBC Sport truncations ("Atletico" → "Atletico Madrid")
 
-**Previous: Phase 2 & 3 (v2.0.0 - 2026-02-22):**
-
-- ⚡ **Async cache I/O** - Non-blocking disk operations for Raspberry Pi
-- 🎯 **Enhanced error messages** - User-friendly categorization with actionable suggestions
-- ♿ **WCAG 2.1 Level AAA** - High contrast mode and screen reader announcements
-- 🎨 **Skeleton loading states** - Improve perceived performance by 20-40%
-- 📊 **Stale data indicators** - Color-coded age display (green/yellow/red)
-
-**Phase 1 (v1.9.0 - 2026-02-21):**
-
-- 🔒 **Zero XSS vulnerabilities** - Eliminated all innerHTML usage
-- ♿ **WCAG 2.1 Level AA** - Full keyboard navigation and screen reader support
-- 🛡️ **Input validation** - Secure dateTimeOverride validation
 
 See [CHANGELOG.md](./CHANGELOG.md) for complete details.
 
@@ -62,6 +37,13 @@ See [CHANGELOG.md](./CHANGELOG.md) for complete details.
 - **🎨 Advanced Customization**: Light/dark themes, table density options, custom team colors, and date filtering.
 - **📊 Enhanced UX**: Skeleton loading states, stale data indicators, and categorized error messages.
 - **Auto-Cycling**: Automatically rotate between different leagues or tournament groups.
+- ✨ **Configurable table density** - Choose compact, normal, or comfortable spacing
+- 🎨 **Full light/dark mode** - Auto, light, or dark themes with complete CSS variable system
+- 📅 **Fixture date filtering** - Show only today's, this week's, or custom date ranges
+- 🎨 **Team color customization** - Apply custom hex colors to specific team rows
+- ⚡ **Virtual scrolling** - Performance optimizations for tables with 30+ rows
+- 🔧 **Team name normalization** - Fixes BBC Sport truncations ("Atletico" → "Atletico Madrid")
+
 
 ## Requirements & Dependencies
 
@@ -99,6 +81,9 @@ npm install
 cd ~/MagicMirror/modules/MMM-MyTeams-LeagueTable
 git pull
 ```
+## Documentation
+
+
 
 ## Configuration
 
@@ -111,7 +96,7 @@ To use this module, add it to the modules array in the `~/MagicMirror/config/con
   module: "MMM-MyTeams-LeagueTable",
   position: "top_right",
   config: {
-    selectedLeagues: ["SCOTLAND_PREMIERSHIP"]
+    selectedLeagues: ["SPAIN_LA_LIGA"]
   }
 },
 ```
@@ -231,9 +216,9 @@ To use this module, add it to the modules array in the `~/MagicMirror/config/con
     // Cache controls
     clearCacheButton: true,    // Allows user to clear cache from the display
     clearCacheOnStart: false, // Set to true to force-clear ALL caches (disk, fixture, logo) on every module start - useful for development and troubleshooting
-    maxTableHeight: 460 // Height in px to show 12 teams
+    maxTableHeight: 520 // Height in px to show 12 teams
    }
-  }
+  },
 ```
 
 See - **[Configuration User Guide](./documentation/Configuration_User_Guide.md)**: for further detailed configuration options.

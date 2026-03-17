@@ -49,7 +49,7 @@ Module.register("MMM-MyTeams-LeagueTable", {
 		selectedLeagues: ["SCOTLAND_PREMIERSHIP"],
 
 		// Method 2: Use legacyLeagueToggle = true to enable old config style (for backward compatibility)
-		legacyLeagueToggle: true, // If true, uses showSPFL, showEPL, etc. from config
+		legacyLeagueToggle: false, // If true, uses showSPFL, showEPL, etc. from config
 
 		// ===== NEW: Automatic button generation from selectedLeagues =====
 		autoGenerateButtons: true, // Auto-create buttons for all leagues in selectedLeagues
@@ -172,7 +172,7 @@ Module.register("MMM-MyTeams-LeagueTable", {
 		// Cache controls
 		clearCacheButton: true,
 		clearCacheOnStart: false, // Set to true to force-clear ALL caches (disk, fixture, logo) on every module start - useful for development and troubleshooting
-		maxTableHeight: 460 // Height in px to show 12 teams
+		maxTableHeight: 520 // Height in px to show 12 teams + extra room for fixtures (increased by 60px)
 	},
 
 	// Required version of MagicMirror
@@ -1204,6 +1204,10 @@ Module.register("MMM-MyTeams-LeagueTable", {
 				Log.info(`[PERF-09] Logo mappings ready: ${count} country groups loaded`);
 			}
 
+			// Allow the next getDom() call to re-render fully with resolved logos.
+			// Without this reset, _shouldSkipRender() would return a hidden placeholder
+			// if data had already been rendered before logos finished loading.
+			this._lastRenderedKey = null;
 			this.updateDom(this.config.animationSpeed);
 		}).catch((err) => {
 			Log.error(`[PERF-09] Could not load team-logo-mappings.js: ${err.message}`);
@@ -1488,6 +1492,15 @@ Module.register("MMM-MyTeams-LeagueTable", {
 
 		this.error = null;
 		this.retryCount = 0;
+
+		// Reset the render-skip guard when the currently-displayed league receives
+		// new data (cache hit OR fresh web fetch). Without this, _shouldSkipRender()
+		// would return a hidden placeholder on every update after the first render,
+		// making the module go blank — especially with a single-league config where
+		// currentLeague never changes between renders.
+		if (leagueType === this.currentLeague) {
+			this._lastRenderedKey = null;
+		}
 
 		// Announce data update to screen readers (A11Y-04)
 		const leagueName = this.config.leagueHeaders[leagueType] || leagueType;
@@ -3837,9 +3850,12 @@ Module.register("MMM-MyTeams-LeagueTable", {
 
 				const recomputedResults = allFixtures.filter((f) => {
 					const status = (f.status || "").toUpperCase();
-					if (status === "FT" || status === "PEN" || status === "AET") return true;
+					if (status === "FT" || status === "PEN" || status === "PENS" || status === "AET") return true;
 					if (f.live === true) return true;
 					if (/\d+'|HT|LIVE/i.test(status)) return true;
+					// BBC sometimes omits the FT status marker for completed fixtures.
+					// Any fixture on a past date with no live flag is treated as finished.
+					if (!status && !f.live && f.date && f.date < todayStr) return true;
 					return false;
 				});
 
@@ -3853,8 +3869,10 @@ Module.register("MMM-MyTeams-LeagueTable", {
 					if (f.date !== todayStr) return false;
 					const status = (f.status || "").toUpperCase();
 					const isFinishedOrLive =
-						status === "FT" || status === "PEN" || status === "AET" ||
+						status === "FT" || status === "PEN" || status === "PENS" || status === "AET" ||
 						status === "LIVE" || f.live || /\d+'|HT/i.test(status);
+					// A today fixture with no status and no live flag is assumed finished
+					if (!status && !f.live) return false;
 					return !isFinishedOrLive;
 				});
 
@@ -3862,7 +3880,7 @@ Module.register("MMM-MyTeams-LeagueTable", {
 					if (f.date <= todayStr) return false;
 					const status = (f.status || "").toUpperCase();
 					const isFinishedOrLive =
-						status === "FT" || status === "PEN" || status === "AET" ||
+						status === "FT" || status === "PEN" || status === "PENS" || status === "AET" ||
 						status === "LIVE" || f.live || /\d+'|HT/i.test(status);
 					return !isFinishedOrLive;
 				});
@@ -3880,13 +3898,12 @@ Module.register("MMM-MyTeams-LeagueTable", {
 				}
 
 				// Map each stage to its typical month(s) for filtering.
-				// Multiple months are listed per stage to handle season scheduling variations
-				// (e.g. Rd16 first legs occasionally fall in February).
+				// Broadened to avoid missing fixtures due to scheduling overlaps.
 				const stageMonthMap = {
-					Playoff: ["02"],        // February
-					Rd16: ["02", "03"],     // Feb (occasional first legs) and March
-					QF: ["03", "04"],       // March (occasional) and April
-					SF: ["04", "05"]        // April (occasional) and May
+					Playoff: ["01", "02", "03"],    // Jan (unlikely), Feb (main), March (rare)
+					Rd16: ["02", "03", "04"],       // Feb, March (main), April (rare)
+					QF: ["03", "04", "05"],         // March, April (main), May (rare)
+					SF: ["04", "05", "06"]          // April, May (main), June (rare)
 				};
 
 				const allowedMonths = stageMonthMap[subTab] || [];
@@ -3951,12 +3968,23 @@ Module.register("MMM-MyTeams-LeagueTable", {
 				}
 
 				// FIX: Create split-view layout for Results and Future Fixtures
-				// Each section gets 50% height with independent scrolling
+				// Sections dynamically share increased height (+60px total)
 				const splitViewContainer = document.createElement("div");
 				splitViewContainer.className = "uefa-split-view-container";
+				
+				const hasResults = stageResults.length > 0;
+				const hasUpcoming = (stageToday.length + stageFuture.length) > 0;
+				
+				if (hasResults && hasUpcoming) {
+					splitViewContainer.classList.add("dual-sections");
+				} else if (hasResults) {
+					splitViewContainer.classList.add("only-results");
+				} else if (hasUpcoming) {
+					splitViewContainer.classList.add("only-upcoming");
+				}
 
 				// Section 1: Results (Finished and Live matches)
-				if (stageResults.length > 0) {
+				if (hasResults) {
 					const resultsWrapper = document.createElement("div");
 					resultsWrapper.className = `uefa-section-wrapper results-section${
 						isRoundCompleted ? " maximized-section" : ""
@@ -4191,7 +4219,9 @@ Module.register("MMM-MyTeams-LeagueTable", {
 				} else if (
 					fix.status === "FT" ||
 					fix.status === "AET" ||
-					fix.status === "PEN"
+					fix.status === "PEN" ||
+					fix.status === "PENS" ||
+					(!fix.status && !fix.live && fix.date && fix.date < today)
 				) {
 					row.classList.add("finished");
 				} else {
@@ -4288,7 +4318,8 @@ Module.register("MMM-MyTeams-LeagueTable", {
 			} else if (
 				fix.status === "FT" ||
 				fix.status === "AET" ||
-				fix.status === "PEN"
+				fix.status === "PEN" ||
+				fix.status === "PENS"
 			) {
 				row.classList.add("finished");
 			} else {
@@ -4355,8 +4386,11 @@ Module.register("MMM-MyTeams-LeagueTable", {
 				// Determine if fixture is upcoming (not played yet) or live/finished
 				// FIX: More robust upcoming detection with multiple checks
 				const status = (fix.status || "").toUpperCase();
+				const todayDateStr = this.getCurrentDateString();
 				const isFinished =
-					status === "FT" || status === "AET" || status === "PEN";
+					status === "FT" || status === "AET" || status === "PEN" || status === "PENS" ||
+					// BBC sometimes omits FT status — treat past-date, non-live fixtures as finished.
+					(!status && !fix.live && fix.date && fix.date < todayDateStr);
 				const isLive = fix.live === true || /\d+'|HT|LIVE/i.test(status);
 
 				// A fixture is upcoming if ALL of the following are true:
@@ -4370,7 +4404,7 @@ Module.register("MMM-MyTeams-LeagueTable", {
 				// Additional safety: if fixture has time but no status, it's definitely upcoming
 				const hasKickoffTime =
 					fix.time && fix.time !== "vs" && /\d{1,2}:\d{2}/.test(fix.time);
-				const definitelyUpcoming = hasKickoffTime && !status && !hasMatchScore;
+				const definitelyUpcoming = hasKickoffTime && !status && !hasMatchScore && !isFinished;
 
 				// DEBUG: Log ALL fixtures to diagnose issues
 				if (this.config.debug) {
@@ -4640,7 +4674,7 @@ Module.register("MMM-MyTeams-LeagueTable", {
 				const fixtures = data.knockouts[stage];
 				if (fixtures && fixtures.length > 0) {
 					const hasUpcoming = fixtures.some((f) => {
-						const isFinished = /\b(FT|PEN)\b/i.test(f.score || "");
+						const isFinished = /\b(FT|PEN|PENS|AET)\b/i.test(f.score || "") || /\b(FT|PEN|PENS|AET)\b/i.test(f.status || "");
 						return !isFinished;
 					});
 					if (hasUpcoming) {

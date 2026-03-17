@@ -1,5 +1,134 @@
 # CHANGELOG
 
+## [v2.2.4] - 2026-03-17 - Minimal Config Data Not Loading Fix
+
+### Problem
+- **What was wrong**: When the module was configured with only `selectedLeagues: ["SPAIN_LA_LIGA"]` (or any single league without `autoCycle: true`), the table would display briefly then go completely blank — or never appear at all — despite valid cached data being present.
+- **Why it happened**: The `_shouldSkipRender()` optimisation stored the render key (`"currentLeague::currentSubTab"`) after the first successful DOM render, then returned a hidden `display:none` placeholder for every subsequent `getDom()` call with the same key. With a single league and no auto-cycling, the key (`"SPAIN_LA_LIGA::-"`) never changed between renders, so every re-render triggered by arriving data — including the live web-fetch response and the logo-mappings load — silently replaced the visible table with an invisible placeholder.
+- **Impact**: Module appeared blank for all minimal/single-league configurations. The bug was masked in full configs because users typically enabled `autoCycle: true`, which constantly changes `currentLeague` and therefore the render key, preventing the skip from ever firing.
+
+### Solution
+Two targeted resets of `_lastRenderedKey = null` were added:
+
+1. **`processLeagueData()`** — reset the render-skip guard whenever the currently-displayed league receives new data (whether from disk cache or a fresh web fetch). This guarantees every data update always produces a visible table.
+2. **`loadLogoMappings().then()`** — reset the guard before calling `updateDom()` after logo mappings finish loading, preventing the logo-load render from also being swallowed by the skip.
+
+### Files Modified
+- `MMM-MyTeams-LeagueTable.js` — `processLeagueData()`: added `if (leagueType === this.currentLeague) { this._lastRenderedKey = null; }` before `debouncedUpdateDom()`.
+- `MMM-MyTeams-LeagueTable.js` — `loadLogoMappings()`: added `this._lastRenderedKey = null;` before `this.updateDom()` in the `.then()` callback.
+- `repro.js` — removed unused `path` import (lint fix).
+
+---
+
+## [v2.2.3] - 2026-02-27 - UEFA Play-off 2nd Leg Score Recovery & Stage Inference Fix
+
+### Problem Summary
+Four separate issues remained after v2.2.2 when all UEFA Play-off 2nd legs completed (Feb 24–26 2026):
+
+1. **All 2nd-leg results showed "vs"** — BBC Sport displays the aggregate score in the fixture card for completed 2nd-leg ties; the individual match score is not in the block. The parser found the aggregate, stripped it from the scoring candidate text, and was left with nothing — producing `score = "vs"` for every 2nd leg across UCL, UEL, and UECL.
+2. **Fixtures with missing BBC status (`FT`) fell out of all display buckets** — BBC Sport intermittently omits the `FT` status marker on completed fixtures. Those fixtures had a past date, no live flag, and empty status, so they passed none of the `recomputedResults` / `stage1` / `stage2` / `stage3` filters and became invisible.
+3. **Newly-announced Rd16 fixtures classified as QF or SF** — the BBC bracket UI places freshly-announced ties under the bracket slot of the *future* round they feed into (e.g. Real Madrid vs Man City appeared under a "Quarter-final" header on the UCL page). `_inferUEFAStage` blindly honoured that label, so the Rd16 fixture was stored as `stage = "QF"` and never appeared on the Rd16 tab.
+4. **`PENS` penalty-shootout status not recognised as finished** — `PENS` was absent from the finished-status checks in `stage1`, `recomputedResults`, `recomputedToday`, `recomputedFuture`, `_buildFixtureRowContent`, and the row CSS classifier.
+
+All issues affect UCL, UEL, and UECL equally.
+
+---
+
+### Fix 1 — 2nd-leg score back-calculation (`BBCParser.js`)
+
+**What was wrong**: BBC displays only the aggregate score in completed 2nd-leg fixture blocks. After the parser extracted and removed aggregate text from `blockForScoring`, no score remained for `homeScore`/`awayScore`, leaving `score = "vs"`.
+
+**Why it happened**: The BBC page design intentionally emphasises the aggregate for 2nd-leg results. The "on the night" extraction patterns (`X-Y on the night`, `2nd leg: X-Y`) covered only a subset of BBC's formatting; when none matched, no fallback existed.
+
+**Solution**: Added a post-deduplication back-calculation pass in `parseUEFAFixtures`. For every fixture that has `aggregateScore` but no `homeScore`/`awayScore`, the pass locates the matching 1st leg (same two teams with home/away swapped, earlier date, has a real score) and derives the 2nd-leg match score using:
+
+```
+2nd_leg_home = aggregate_home − 1st_leg_away_goals
+2nd_leg_away = aggregate_away − 1st_leg_home_goals
+```
+
+Negative results (data inconsistency) are discarded. A `scoreSource = "calculated"` flag is attached for debugging. Results of pre-production verification (against the live cache):
+
+| League | Calculated correctly | Cannot match (corrupt BBC data) |
+|--------|---------------------|---------------------------------|
+| UCL | 6/8 | 2 (`Paris SG vs Paris Saint-Germain`, `Atlético vs Atletico Madrid`) |
+| UEL | 7/7 | 0 |
+| UECL | 6/8 | 2 (`Lausanne vs Lausanne-Sport`, `Lech vs Lech Poznań`) |
+
+The 4 unmatched cases share the same root failure: BBC's HTML parser extracted the home team's name as both home and away, making the tie unmatchable.
+
+**Files modified**: `BBCParser.js` — new back-calculation block after `_inferUEFAStage` pass (~line 1652).
+
+---
+
+### Fix 2 — Missing-status completed fixtures fall through all buckets (`BBCParser.js`, `MMM-MyTeams-LeagueTable.js`)
+
+**What was wrong**: A fixture whose BBC status field is empty (BBC omitted `FT`) and whose date is in the past appeared in none of the display buckets:
+- `recomputedResults`: required an explicit `FT`/`PEN`/`AET`/`PENS` status — empty status failed.
+- `recomputedToday`/`recomputedFuture`: excluded by date guards (past dates).
+- `stage1`: same status requirement as `recomputedResults`.
+
+**Why it happened**: BBC Sport intermittently omits the `FT` status marker on some completed fixtures (observed on 1 UCL, 3 UEL, and 1 UECL 2nd-leg fixtures on Feb 25–26 2026).
+
+**Solution**: Added a date-authoritative fallback to every finished-status check:
+> Any fixture whose date is strictly before today, whose `live` flag is false, and whose status is empty → treated as finished.
+
+Applied in:
+- `BBCParser.js` — `stage1` filter
+- `MMM-MyTeams-LeagueTable.js` — `recomputedResults`, `recomputedToday` (guard), `_buildFixtureRowContent` (`isFinished`, `definitelyUpcoming`, row CSS class)
+
+**Files modified**: `BBCParser.js` (~line 1673); `MMM-MyTeams-LeagueTable.js` (~lines 3838, 3856, 4376, 4206).
+
+---
+
+### Fix 3 — Wrong stage label from BBC bracket section headers (`BBCParser.js`)
+
+**What was wrong**: The BBC UCL/UECL bracket page places newly-announced ties under the bracket slot for the *next* round they feed into. For example, the Real Madrid vs Man City Rd16 tie (March 11 & 17) appeared under a "Quarter-final" section on the BBC page because that is where the winner will play. `_inferStageFromBlock` read "QF" from the header and stored `stage = "QF"`. `_inferUEFAStage` honoured that label without validation, so the fixture never appeared on the Rd16 tab.
+
+**Why it happened**: No date-range validation existed to catch cases where the BBC section header contradicts the fixture's actual calendar position.
+
+**Solution**: Added a **date-authoritative veto** at the top of `_inferUEFAStage`. The function now derives an expected stage from the fixture month:
+
+| Month | Expected stage |
+|-------|---------------|
+| Jan / Feb | Playoff |
+| Mar | Rd16 |
+| Apr | QF |
+| May | SF |
+| Jun | Final |
+
+If the section-header-assigned stage is *too advanced* for the fixture's month (e.g. stage = QF but month = March), the date-inferred stage overrides it. The mismatch conditions covered are:
+- `dateStage = Rd16` AND `assignedStage ∈ {QF, SF, FINAL}` → override to Rd16
+- `dateStage = QF` AND `assignedStage ∈ {SF, FINAL}` → override to QF
+- `dateStage = Playoff` AND `assignedStage ∈ {Rd16, QF, SF, FINAL}` → override to Playoff
+
+**Files modified**: `BBCParser.js` — `_inferUEFAStage` function (~line 1811).
+
+---
+
+### Fix 4 — `PENS` status not recognised as finished (`BBCParser.js`, `MMM-MyTeams-LeagueTable.js`)
+
+**What was wrong**: `PENS` (penalty shootout result) was absent from every finished-status check. Fixtures ending in penalties were excluded from results and potentially misclassified as upcoming.
+
+**Solution**: Added `PENS` alongside `FT`/`PEN`/`AET` in:
+- `BBCParser.js` — `stage1`, `stage2`, `stage3` filters
+- `MMM-MyTeams-LeagueTable.js` — `recomputedResults`, `recomputedToday`, `recomputedFuture`, `isFinished` in `_buildFixtureRowContent`, row CSS classifier
+
+**Files modified**: `BBCParser.js` (~lines 1664, 1694, 1716); `MMM-MyTeams-LeagueTable.js` (~lines 3840, 3856, 3865, 4376).
+
+---
+
+### Files Modified Summary
+
+| File | Change |
+|------|--------|
+| `BBCParser.js` | 2nd-leg score back-calculation pass; past-date no-status fallback in `stage1`/`stage2`/`stage3`; `PENS` added to finished checks; date-authoritative veto in `_inferUEFAStage` |
+| `MMM-MyTeams-LeagueTable.js` | Past-date no-status fallback in `recomputedResults`, `recomputedToday`; `PENS` added throughout; `isFinished` and `definitelyUpcoming` updated in `_buildFixtureRowContent`; row CSS class updated |
+| `README.md` | Recent Updates section updated to v2.2.3 |
+| `CHANGELOG.md` | This entry |
+
+---
+
 ## [v2.2.2] - 2026-02-26 - UEFA Fixture Display Fixes Phase 2 (UCL / UEL / UECL)
 
 ### Problem Summary
