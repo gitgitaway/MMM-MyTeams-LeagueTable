@@ -1,0 +1,143 @@
+/* Gold border for World Cup tab */
+.league-btn.gold-border {
+    border: 2px solid #FFD700 !important;
+    box-shadow: 0 0 10px rgba(255, 215, 0, 0.5) !important;
+    opacity: 1.0 !important;
+}
+
+/* World Cup Mode */
+.league-mode-wc .spfl-league-table {
+    border: 1px solid rgba(255, 215, 0, 0.2);
+}
+
+.league-mode-wc .league-title {
+    color: #FFD700;
+}
+
+/* World Cup 2026 Specific Styles */
+.wc2026-container {
+    padding: 10px;
+    animation: mtlt-fade-in var(--mtlt-transition-speed) ease-out;
+}
+
+.wc2026-groups-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 20px;
+    margin-top: 10px;
+}
+
+.wc2026-group-block {
+    background: transparent;
+    border-radius: 8px;
+    padding: 12px;
+    border: 1px solid var(--theme-border-light, rgba(255, 255, 255, 0.1));
+}
+
+.wc2026-group-title {
+    font-size: var(--mtlt-font-size-header);
+    font-weight: bold;
+    color: #FFD700; /* Gold */
+    margin-bottom: 8px;
+    text-align: center;
+    text-transform: uppercase;
+}
+
+/* WC2026 Fixture Layouts */
+.wc2026-fixtures-container {
+    margin-top: 20px;
+    border-top: 2px solid #555;
+    padding-top: 15px;
+}
+
+.wc2026-section-title {
+    font-size: var(--mtlt-font-size-header);
+    font-weight: bold;
+    color: #fff;
+    margin: 15px 0 10px 0;
+    text-transform: uppercase;
+    border-left: 4px solid #018749;
+    padding-left: 10px;
+}
+
+.wc2026-fixture-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px;
+    background: transparent;
+    margin-bottom: 5px;
+    border-bottom: 1px solid var(--theme-border-light, rgba(255, 255, 255, 0.05));
+    border-radius: 4px;
+}
+
+.wc2026-fixture-time {
+    font-size: var(--mtlt-font-size-xsmall);
+    color: #aaa;
+    width: 50px;
+}
+
+.wc2026-fixture-teams {
+    flex-grow: 1;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 10px;
+    font-weight: 500;
+}
+
+.wc2026-fixture-score {
+    font-weight: bold;
+    color: #FFD700;
+    min-width: 40px;
+    text-align: center;
+}
+
+/* Multi-tab View (Sub-tabs for Groups/Knockouts) */
+.wc-subtabs-container {
+    display: flex;
+    gap: 4px; /* Reduced gap */
+    margin-bottom: 12px;
+    flex-wrap: nowrap; /* Ensure they stay on one line */
+    overflow-x: auto; /* Allow horizontal scroll if still too many */
+    scrollbar-width: none; /* Hide scrollbar for cleaner look */
+    justify-content: flex-start; /* Start from left */
+    padding: 2px 0;
+}
+
+.wc-subtabs-container::-webkit-scrollbar {
+    display: none;
+}
+
+.wc-btn {
+    background: transparent !important; /* P-08: Remove background color */
+    border: 1px solid rgba(255, 255, 255, 0.15); /* Thin default border */
+    color: #888;
+    padding: 2px 5px; /* Further reduced padding for compact fit */
+    font-size: var(--mtlt-font-size-mini); /* Further reduced font size to ensure single row fit */
+    border-radius: 3px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-weight: 500;
+    flex-shrink: 0; /* Prevent buttons from shrinking */
+}
+
+.wc-btn:hover {
+    background: rgba(255, 255, 255, 0.05) !important;
+    color: #fff;
+    border-color: rgba(255, 255, 255, 0.4);
+}
+
+.wc-btn.active {
+    color: #fff;
+    font-weight: bold;
+    border-width: 1.5px !important;
+}
+
+/* League-specific thin border colors for sub-tabs (P-08) */
+.spfl-league-table[data-league="WORLD_CUP_2026"] .wc-btn.active {
+    border-color: #FFD700 !important; /* Gold */
+    color: #FFD700;
+}
+
+.league-mode-wc .wc-btn { border-color: rgba(255, 215, 0, 0.2); }

@@ -1,0 +1,197 @@
+/* Different colors for each league button when active */
+/* Legacy codes */
+.league-btn[data-league="SPFL"].active {
+    background: rgba(0, 135, 73, 0.7); /* Celtic green */
+}
+
+.league-btn[data-league="UCL"].active,
+.league-btn[data-league="UEFA_CHAMPIONS_LEAGUE"].active {
+    background: rgba(30, 144, 255, 0.7); /* Champions League blue */
+}
+
+.league-btn[data-league="UEL"].active,
+.league-btn[data-league="UEFA_EUROPA_LEAGUE"].active {
+    background: rgba(255, 140, 0, 0.7); /* Europa League orange */
+}
+
+.league-btn[data-league="ECL"].active,
+.league-btn[data-league="UEFA_EUROPA_CONFERENCE_LEAGUE"].active {
+    background: rgba(50, 205, 50, 0.7); /* Conference League green */
+}
+
+.league-btn[data-league="EPL"].active {
+    background: rgba(63, 16, 126, 0.7); /* Premier League purple */
+}
+
+.league-btn[data-league="SPFLC"].active {
+    background: rgba(220, 20, 60, 0.7); /* Scottish Championship red */
+}
+
+/* New league codes with country-based colors */
+/* Scotland */
+.league-btn[data-league="SCOTLAND_PREMIERSHIP"].active,
+.league-btn[data-league="SCOTLAND_CHAMPIONSHIP"].active {
+    background: rgba(0, 135, 73, 0.7); /* Scottish green */
+}
+
+/* England */
+.league-btn[data-league="ENGLAND_PREMIER_LEAGUE"].active {
+    background: rgba(63, 16, 126, 0.7); /* Premier League purple */
+}
+
+/* Germany */
+.league-btn[data-league="GERMANY_BUNDESLIGA"].active {
+    background: rgba(200, 16, 46, 0.7); /* German red */
+}
+
+/* France */
+.league-btn[data-league="FRANCE_LIGUE1"].active {
+    background: rgba(0, 85, 164, 0.7); /* French blue */
+}
+
+/* Spain */
+.league-btn[data-league="SPAIN_LA_LIGA"].active {
+    background: rgba(255, 196, 0, 0.7); /* Spanish gold */
+}
+
+/* Italy */
+.league-btn[data-league="ITALY_SERIE_A"].active {
+    background: rgba(0, 87, 184, 0.7); /* Italian blue */
+}
+
+/* Netherlands */
+.league-btn[data-league="NETHERLANDS_EREDIVISIE"].active {
+    background: rgba(255, 112, 67, 0.7); /* Dutch orange */
+}
+
+/* Belgium */
+.league-btn[data-league="BELGIUM_PRO_LEAGUE"].active {
+    background: rgba(255, 197, 0, 0.7); /* Belgian yellow */
+}
+
+/* Portugal */
+.league-btn[data-league="PORTUGAL_PRIMEIRA_LIGA"].active {
+    background: rgba(0, 119, 55, 0.7); /* Portuguese green */
+}
+
+/* Greece */
+.league-btn[data-league="GREECE_SUPER_LEAGUE"].active {
+    background: rgba(0, 112, 192, 0.7); /* Greek blue */
+}
+
+/* Turkey */
+.league-btn[data-league="TURKEY_SUPER_LIG"].active {
+    background: rgba(206, 17, 38, 0.7); /* Turkish red */
+}
+
+/* Ukraine */
+.league-btn[data-league="UKRAINE_PREMIER_LEAGUE"].active {
+    background: rgba(0, 91, 187, 0.7); /* Ukrainian blue */
+}
+
+/* Romania */
+.league-btn[data-league="ROMANIA_LIGA_I"].active {
+    background: rgba(0, 150, 136, 0.7); /* Romanian teal */
+}
+
+/* Croatia */
+.league-btn[data-league="CROATIA_HNL"].active {
+    background: rgba(255, 0, 0, 0.7); /* Croatian red */
+}
+
+/* Serbia */
+.league-btn[data-league="SERBIA_SUPER_LIGA"].active {
+    background: rgba(0, 56, 147, 0.7); /* Serbian blue */
+}
+
+/* Austria */
+.league-btn[data-league="AUSTRIA_BUNDESLIGA"].active {
+    background: rgba(237, 27, 36, 0.7); /* Austrian red */
+}
+
+/* Czech Republic */
+.league-btn[data-league="CZECH_LIGA"].active {
+    background: rgba(17, 35, 126, 0.7); /* Czech blue */
+}
+
+/* Hungary */
+.league-btn[data-league="HUNGARY_NBI"].active {
+    background: rgba(206, 17, 38, 0.7); /* Hungarian red */
+}
+
+/* Poland */
+.league-btn[data-league="POLAND_EKSTRAKLASA"].active {
+    background: rgba(255, 0, 0, 0.7); /* Polish red */
+}
+
+/* Switzerland */
+.league-btn[data-league="SWITZERLAND_SUPER_LEAGUE"].active {
+    background: rgba(255, 0, 0, 0.7); /* Swiss red */
+}
+
+/* Sweden */
+.league-btn[data-league="SWEDEN_ALLSVENSKAN"].active {
+    background: rgba(0, 85, 152, 0.7); /* Swedish blue */
+}
+
+/* Norway */
+.league-btn[data-league="NORWAY_ELITESERIEN"].active {
+    background: rgba(186, 12, 47, 0.7); /* Norwegian red */
+}
+
+/* Denmark */
+.league-btn[data-league="DENMARK_SUPERLIGAEN"].active {
+    background: rgba(196, 0, 0, 0.7); /* Danish red */
+}
+
+/* Table body styling */
+/* ----------------------------- */
+/* Mode-Specific Refinements (P-02) */
+/* ----------------------------- */
+
+/* National League Mode */
+.league-mode-national .team-cell {
+    font-weight: 500;
+}
+
+/* Row coloring based on league position */
+.team-row.promotion-zone {
+    background-color: rgba(0, 135, 73, 0.15);
+}
+
+.team-row.uefa-zone {
+    background-color: rgba(30, 144, 255, 0.15);
+}
+
+.team-row.relegation-zone {
+    background-color: rgba(220, 20, 60, 0.15);
+}
+
+.team-row.highlighted {
+    background-color: rgba(255, 215, 0, 0.15) !important;
+    font-weight: bold;
+}
+
+/* Split-league group separator rows */
+.split-group-separator {
+    background-color: rgba(255, 255, 255, 0.08);
+}
+
+.split-group-label {
+    text-align: center;
+    font-size: 0.72em;
+    font-weight: bold;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: rgba(255, 255, 255, 0.65);
+    padding: 4px 6px 3px;
+    border-top: 1px solid rgba(255, 255, 255, 0.12);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+/* Subtle alternate background for the second (and later) groups */
+.team-row.split-group-alt {
+    background-color: rgba(255, 255, 255, 0.03);
+}
+
+

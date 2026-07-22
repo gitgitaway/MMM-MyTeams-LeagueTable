@@ -1,0 +1,438 @@
+/* INNOV-03: Next Match Countdown Widget */
+.next-match-countdown {
+    background: var(--mtlt-color-bg-light);
+    border: 1px solid var(--mtlt-color-border);
+    border-radius: 8px;
+    margin: 10px 0;
+    padding: 10px;
+    text-align: center;
+    font-size: var(--mtlt-font-size-small);
+}
+
+.next-match-countdown .countdown-header {
+    font-weight: bold;
+    color: var(--mtlt-color-accent);
+    margin-bottom: 5px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.next-match-countdown .countdown-teams {
+    font-size: var(--mtlt-font-size-header);
+    margin-bottom: 5px;
+}
+
+.next-match-countdown .countdown-timer {
+    font-family: monospace;
+    font-size: 1.2em;
+    color: #fff;
+    background: rgba(0, 0, 0, 0.3);
+    padding: 2px 8px;
+    border-radius: 4px;
+}
+
+.next-match-countdown .countdown-venue {
+    font-style: italic;
+    color: #888;
+    margin-top: 5px;
+}
+
+/* Fixtures Header Container */
+.fixtures-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+    padding: 5px 0;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.fixtures-title {
+    font-size: var(--mtlt-font-size-header);
+    font-weight: 700;
+    color: #fff;
+    text-transform: uppercase;
+}
+
+/* Enhanced 3-Column Centered Fixture Layout (P-05) */
+.fixtures-list {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.fixture-day-block {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.fixture-date-header {
+    font-size: var(--mtlt-font-size-xsmall);
+    color: #888;
+    text-transform: uppercase;
+    font-weight: 600;
+    letter-spacing: 1px;
+    margin-bottom: 4px;
+    padding-left: 4px;
+    border-left: 2px solid #555;
+}
+
+/* The Core Centered Container */
+.fixture-row {
+    display: grid;
+    grid-template-columns: 1fr 60px 1fr; /* Equal space for teams, fixed center for score/time */
+    align-items: center;
+    padding: 8px 4px;
+    background: rgba(255, 255, 255, 0.02);
+    border-radius: 4px;
+    transition: background 0.3s ease;
+}
+
+.fixture-row:hover {
+    background: rgba(255, 255, 255, 0.05);
+}
+
+/* Home Team (Right Aligned) */
+.home-team {
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    gap: 8px;
+    text-align: right;
+    font-size: var(--mtlt-font-size-table);
+}
+
+/* Away Team (Left Aligned) */
+.away-team {
+    display: flex;
+    justify-content: flex-start;
+    align-items: center;
+    gap: 8px;
+    text-align: left;
+    font-size: var(--mtlt-font-size-table);
+}
+
+/* Centered Score or Time */
+.fixture-status {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+
+.fixture-score, .fixture-time {
+    font-weight: bold;
+    font-size: var(--mtlt-font-size-table);
+    padding: 2px 6px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 3px;
+    min-width: 45px;
+    text-align: center;
+}
+
+.fixture-score {
+    color: #FFD700; /* Gold for scores */
+}
+
+.fixture-time {
+    color: #aaa;
+    font-weight: 500;
+}
+
+/* Live Indicator */
+.live-badge {
+    font-size: var(--mtlt-font-size-micro);
+    color: #ff3333;
+    font-weight: bold;
+    margin-top: 2px;
+    animation: mtlt-pulse 1.5s infinite;
+}
+
+/* Aggregate Score */
+.agg-score {
+    font-size: var(--mtlt-font-size-xsmall);
+    color: #666;
+    margin-top: 2px;
+}
+
+/* Venue/Stadium Info */
+.fixture-venue {
+    font-size: var(--mtlt-font-size-xsmall);
+    color: #555;
+    font-style: italic;
+    grid-column: 1 / span 3; /* Spans full width */
+    text-align: center;
+    margin-top: 4px;
+}
+
+/* Responsive adjustments for fixtures */
+@media (max-width: 400px) {
+    .fixture-row {
+        grid-template-columns: 1fr 50px 1fr;
+    }
+    .home-team, .away-team {
+        font-size: var(--mtlt-font-size-small);
+    }
+}
+
+/* New 8-Column Tabulated Grid for Fixtures */
+:root {
+    --mtlt-fixture-date-width: 14%;
+    --mtlt-fixture-time-width: 8%;
+    --mtlt-fixture-team-width: 18%;
+    --mtlt-fixture-logo-width: 4%;
+    --mtlt-fixture-score-width: 12%;
+    --mtlt-fixture-location-width: 22%;
+    
+    --mtlt-fixture-font-size: var(--mtlt-font-size-badge); /* Reduced from table size (13-16px) */
+    --mtlt-fixture-header-font-size: var(--mtlt-font-size-legend); /* Reduced from xsmall size (10-13px) */
+    
+    --mtlt-fixture-date-align: left;
+    --mtlt-fixture-time-align: center;
+    --mtlt-fixture-home-team-align: right;
+    --mtlt-fixture-home-logo-align: center;
+    --mtlt-fixture-score-align: center;
+    --mtlt-fixture-away-logo-align: center;
+    --mtlt-fixture-away-team-align: left;
+    --mtlt-fixture-location-align: left;
+}
+
+.fixtures-container {
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    margin: 10px 0;
+}
+
+/* Container for the sticky header and scrollable body */
+.fixtures-wrapper-v2 {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    max-height: 490px; /* Increased from 450px to match overall module height increase */
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+/* Header container - always visible */
+.fixtures-header-container {
+    flex: 0 0 auto;
+    background: rgba(34, 34, 34, 0.95);
+    z-index: 10;
+    border-bottom: 2px solid #444;
+}
+
+/* Scrollable body container */
+.fixtures-body-scroll {
+    flex: 1 1 auto;
+    overflow-y: auto;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(255, 255, 255, 0.2) transparent;
+}
+
+.fixtures-scroll-container {
+    max-height: 490px;
+    overflow-y: auto;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(255, 255, 255, 0.2) transparent;
+}
+
+/* Restricted height for specific tournament rounds (Tasks 3 & 4) */
+.fixtures-body-scroll.restricted-height {
+    max-height: 320px; /* Increased from 280px - Approximately 8-10 fixtures */
+}
+
+.fixtures-body-scroll::-webkit-scrollbar {
+    width: 6px;
+    background: transparent; /* Chrome/Safari: transparent track */
+}
+
+.fixtures-body-scroll::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.fixtures-body-scroll::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.2); /* Visible with 0.2 transparency */
+    border-radius: 3px;
+}
+
+.wc-fixtures-table-v2 th {
+    font-size: var(--mtlt-fixture-header-font-size);
+    color: #888;
+    text-transform: uppercase;
+    padding: 6px 4px;
+    text-align: center;
+}
+
+/* Reduced header padding for UEFA split-view sections to maximize fixture display space */
+.uefa-section-scroll .wc-fixtures-table-v2 th {
+    padding: 5px 4px; /* Reduced from 10px 4px */
+    font-size: var(--mtlt-font-size-mini); /* Reduced from 10px */
+}
+
+.fixture-row-v2 {
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    transition: background 0.3s ease;
+}
+
+.fixture-row-v2.current-fixture {
+    background: rgba(255, 215, 0, 0.05); /* Subtle gold highlight for current match */
+}
+
+.fixture-row-v2:hover {
+    background: rgba(255, 255, 255, 0.03);
+}
+
+.fixture-row-v2 td {
+    padding: 6px 4px;
+    vertical-align: middle;
+    font-size: var(--mtlt-fixture-font-size);
+}
+
+/* Reduced row padding for UEFA split-view sections to fit exactly 4 fixtures */
+.uefa-section-scroll .fixture-row-v2 td {
+    padding: 6px 4px; /* Reduced from 8px 4px to fit 4 fixtures per section */
+}
+
+/* Column Widths & Alignment */
+.fixture-date-v2, .fixture-header-date {
+    text-align: var(--mtlt-fixture-date-align);
+    width: var(--mtlt-fixture-date-width);
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.fixture-time-v2, .fixture-header-time {
+    text-align: var(--mtlt-fixture-time-align);
+    width: var(--mtlt-fixture-time-width);
+}
+
+.fixture-home-team-v2, .fixture-header-home-team {
+    text-align: var(--mtlt-fixture-home-team-align);
+    width: var(--mtlt-fixture-team-width);
+    font-weight: 500;
+}
+
+.fixture-home-logo-v2, .fixture-header-home-logo {
+    text-align: var(--mtlt-fixture-home-logo-align);
+    width: var(--mtlt-fixture-logo-width);
+}
+
+.fixture-score-v2, .fixture-header-score {
+    text-align: var(--mtlt-fixture-score-align);
+    width: var(--mtlt-fixture-score-width);
+    font-weight: bold;
+}
+
+.fixture-away-team-v2, .fixture-header-away-team {
+    text-align: var(--mtlt-fixture-away-team-align);
+    width: var(--mtlt-fixture-team-width);
+    font-weight: 500;
+}
+
+.fixture-away-logo-v2, .fixture-header-away-logo {
+    text-align: var(--mtlt-fixture-away-logo-align);
+    width: var(--mtlt-fixture-logo-width);
+}
+
+.fixture-location-v2, .fixture-header-location, .fixture-header-venue {
+    text-align: var(--mtlt-fixture-location-align);
+    width: var(--mtlt-fixture-location-width);
+    font-size: var(--mtlt-fixture-font-size);
+    color: #aaa;
+}
+
+/* Location Column */
+.fixture-location-v2, .fixture-header-location {
+    text-align: var(--mtlt-fixture-location-align);
+    width: var(--mtlt-fixture-location-width);
+}
+
+.fixture-logo-v2 {
+    width: 20px;
+    height: 20px;
+    object-fit: contain;
+    display: inline-block;
+    vertical-align: middle;
+}
+
+.score-wrapper-v2 {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 2px;
+}
+
+.main-score-v2 {
+    font-weight: bold;
+    color: #FFD700; /* Gold */
+    white-space: nowrap;
+}
+
+.main-score-v2.bright {
+    color: #fff;
+    text-shadow: 0 0 5px rgba(255, 255, 255, 0.5);
+}
+
+.aggregate-score-v2 {
+    font-size: 0.85em;
+    font-style: italic;
+    color: #aaa;
+}
+
+/* Fixture status coloring and indicators (Task: Coloured Indicators) */
+.fixture-row-v2.live .main-score-v2 {
+    color: #fff;
+    text-shadow: 0 0 8px rgba(255, 51, 51, 0.8);
+}
+
+.fixture-status-tag-v2 {
+    font-size: 0.8em;
+    padding: 1px 4px;
+    border-radius: 2px;
+    font-weight: bold;
+}
+
+.fixture-status-tag-v2.live-tag {
+    color: #fff;
+    background-color: #ff3333; /* BBC Red for live minutes */
+    animation: livePulse 2s infinite;
+}
+
+.fixture-row-v2.finished .main-score-v2 {
+    color: #fff;
+    font-weight: bold;
+}
+
+.fixture-row-v2.upcoming .main-score-v2 {
+    color: #666;
+    font-weight: normal;
+}
+
+.fixture-row-v2.upcoming .fixture-time-v2 {
+    color: #fff;
+    font-weight: bold;
+}
+
+@keyframes livePulse {
+    0% { opacity: 1; }
+    50% { opacity: 0.6; }
+    100% { opacity: 1; }
+}
+
+/* Responsive adjustments for the new grid */
+@media (max-width: 600px) {
+    .fixture-date-v2 {
+        font-size: 0.9em;
+    }
+    .fixture-location-v2 {
+        display: none; /* Hide location on small screens to save space */
+    }
+    .fixture-header-location {
+        display: none;
+    }
+}
+

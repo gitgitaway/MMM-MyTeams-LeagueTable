@@ -1,0 +1,152 @@
+/* UEFA Mode */
+.league-mode-uefa .team-row.uefa-zone {
+    background-color: rgba(30, 144, 255, 0.15);
+}
+
+.team-row.uefa-elimination-zone {
+    background-color: rgba(255, 215, 0, 0.15) !important;
+}
+
+/* UEFA view wrapper must act as a flex column so that the nested
+   .league-body-scroll child can shrink/expand inside the constrained
+   .league-content-container (max-height: --mtlt-max-table-height).
+   Without this, the table grows past the container and is just clipped,
+   leaving users with no way to scroll to the remaining teams. */
+.league-mode-uefa .uefa-view {
+    display: flex;
+    flex-direction: column;
+    flex: 1 1 auto;
+    min-height: 0;
+}
+
+.league-mode-uefa .uefa-view .sub-tab-navigation {
+    flex: 0 0 auto;
+}
+
+.spfl-league-table[data-league="UEFA_CHAMPIONS_LEAGUE"] .wc-btn.active,
+.spfl-league-table[data-league="UCL"] .wc-btn.active {
+    border-color: #1e90ff !important; /* Blue */
+    color: #1e90ff;
+}
+
+.spfl-league-table[data-league="UEFA_EUROPA_LEAGUE"] .wc-btn.active,
+.spfl-league-table[data-league="UEL"] .wc-btn.active {
+    border-color: #ff8c00 !important; /* Orange */
+    color: #ff8c00;
+}
+
+.spfl-league-table[data-league="UEFA_EUROPA_CONFERENCE_LEAGUE"] .wc-btn.active,
+.spfl-league-table[data-league="ECL"] .wc-btn.active {
+    border-color: #32cd32 !important; /* Green */
+    color: #32cd32;
+}
+.league-mode-uefa .wc-btn { border-color: rgba(255, 255, 255, 0.15); }
+
+/* UEFA Split-View Layout - Equal height allocation for Results and Future Fixtures */
+/* Container holds both results and upcoming sections with independent scrolling.
+   Height increased from 500px to 560px to accommodate additional dynamic allocation (+60px). */
+.uefa-split-view-container {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    height: auto;
+    min-height: 240px;
+    max-height: 620px; /* Increased from 580px to accommodate taller fixture sections */
+    gap: 15px;
+    margin-bottom: 10px;
+}
+
+/* Each section wrapper contains title + scrollable content.
+   Baseline height increased from 270px to 300px to ensure 6 fixtures fit without scrolling. */
+.uefa-section-wrapper {
+    display: flex;
+    flex-direction: column;
+    height: 300px; /* Increased from 270px */
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 4px;
+    overflow: hidden;
+    background: rgba(34, 34, 34, 0.3);
+}
+
+/* Completion states: Maximized/Minimized heights for UEFA sections
+   When only one section is populated, it takes the full allocation (600px). */
+.uefa-section-wrapper.maximized-section {
+    height: 600px; /* Increased from 540px */
+}
+
+.uefa-section-wrapper.minimized-section {
+    height: 0;
+    border: none;
+    margin: 0;
+    padding: 0;
+}
+
+/* Specific overrides based on container state for precise height control */
+.uefa-split-view-container.dual-sections .uefa-section-wrapper {
+    height: 300px;
+}
+
+.uefa-split-view-container.only-results .results-section,
+.uefa-split-view-container.only-upcoming .future-section {
+    height: 600px;
+}
+
+/* Title for each section - reduced padding and font size to maximize fixture space */
+.uefa-section-wrapper .wc-title {
+    flex: 0 0 auto;
+    padding: 4px 8px; /* Reduced from 8px 10px to save space */
+    font-size: var(--mtlt-font-size-badge); /* Reduced font size */
+    background: rgba(34, 34, 34, 0.95);
+    border-bottom: 2px solid #444;
+    text-align: center;
+    font-weight: bold;
+    letter-spacing: 1px;
+}
+
+/* Scrollable content area for each section */
+.uefa-section-scroll {
+    flex: 1 1 auto;
+    overflow-y: auto;
+    overflow-x: hidden;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(255, 255, 255, 0.2) transparent;
+}
+
+.uefa-section-scroll::-webkit-scrollbar {
+    width: 6px;
+    background: transparent;
+}
+
+.uefa-section-scroll::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.uefa-section-scroll::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 3px;
+}
+
+.uefa-section-scroll::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.4);
+}
+
+/* Fixed sizing for sections to show up to ~8-9 fixtures with scrolling */
+.uefa-section-wrapper.results-section {
+    height: 300px;
+}
+
+.uefa-section-wrapper.future-section {
+    height: 300px;
+}
+
+/* Reduced header padding for UEFA split-view sections to maximize fixture display space */
+.uefa-section-scroll .wc-fixtures-table-v2 th {
+    padding: 5px 4px; /* Reduced from 10px 4px */
+    font-size: var(--mtlt-font-size-mini); /* Reduced from 10px */
+}
+
+/* Reduced row padding for UEFA split-view sections to fit exactly 4 fixtures */
+.uefa-section-scroll .fixture-row-v2 td {
+    padding: 6px 4px; /* Reduced from 8px 4px to fit 4 fixtures per section */
+}
+
