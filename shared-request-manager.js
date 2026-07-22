@@ -208,14 +208,12 @@ class SharedRequestManager {
 	}
 
 	/**
-	 * Start the queue processor
+	 * Start the queue processor (Legacy polling removed in favor of event-driven wake)
 	 */
 	startQueueProcessor() {
-		setInterval(() => {
-			if (!this.processing && this.queue.length > 0) {
-				this.processNextRequest();
-			}
-		}, this.config.queueCheckInterval);
+		this.log("Queue processor initialized (event-driven)");
+		// Initial trigger in case items are already in queue
+		this.processQueue();
 	}
 
 	/**
@@ -225,7 +223,11 @@ class SharedRequestManager {
 		// Trigger immediate processing if not already processing
 		if (!this.processing && this.queue.length > 0) {
 			// Use setImmediate to avoid blocking the caller
-			setImmediate(() => this.processNextRequest());
+			if (typeof setImmediate !== "undefined") {
+				setImmediate(() => this.processNextRequest());
+			} else {
+				setTimeout(() => this.processNextRequest(), 0);
+			}
 		}
 	}
 
@@ -251,7 +253,9 @@ class SharedRequestManager {
 				const jitter = baseDelay * this.config.jitterFactor * Math.random();
 				const delay = Math.round(baseDelay + jitter);
 				this.log(
-					`Global throttle: waiting ${delay}ms (including ${Math.round(jitter)}ms jitter) before processing request from ${request.moduleId}`
+					`Global throttle: waiting ${delay}ms (including ${Math.round(
+						jitter
+					)}ms jitter) before processing request from ${request.moduleId}`
 				);
 				await this.sleep(delay);
 			}
@@ -265,7 +269,9 @@ class SharedRequestManager {
 				const jitter = baseDelay * this.config.jitterFactor * Math.random();
 				const delay = Math.round(baseDelay + jitter);
 				this.log(
-					`Domain throttle (${domain}): waiting ${delay}ms (including ${Math.round(jitter)}ms jitter)`
+					`Domain throttle (${domain}): waiting ${delay}ms (including ${Math.round(
+						jitter
+					)}ms jitter)`
 				);
 				await this.sleep(delay);
 			}
@@ -287,6 +293,10 @@ class SharedRequestManager {
 			this.log(`Request processing error: ${error.message}`, "error");
 		} finally {
 			this.processing = false;
+			// PERF-05: Event-driven wake - process next item immediately if queue not empty
+			if (this.queue.length > 0) {
+				this.processQueue();
+			}
 		}
 	}
 

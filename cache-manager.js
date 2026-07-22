@@ -21,29 +21,37 @@ class CacheManager {
 		this.defaultTTL = 24 * 60 * 60 * 1000; // 24 hours default
 		this.maxCacheAge = 7 * 24 * 60 * 60 * 1000; // 7 days max before deletion
 		this.debug = false;
+		this.SCHEMA_VERSION = 1; // CACHE-01: Cache schema version for migration support
 
 		// Ensure cache directory exists
 		this.ensureCacheDir();
 	}
 
 	/**
-	 * Ensure cache directory exists
+	 * CACHE-05: Scale maxMemoryEntries to number of enabled leagues
+	 * @param {number} count - Number of enabled leagues
 	 */
+	setMaxMemoryEntries(count) {
+		const newMax = Math.max(20, count + 5); // Minimum 20, or leagues + buffer
+		if (this.debug) {
+			console.log(
+				` CacheManager: Scaling maxMemoryEntries from ${this.maxMemoryEntries} to ${newMax}`
+			);
+		}
+		this.maxMemoryEntries = newMax;
+	}
+
 	ensureCacheDir() {
+		console.log(` CacheManager: ensureCacheDir checking ${this.cacheDir}`);
 		if (!fs.existsSync(this.cacheDir)) {
 			try {
 				fs.mkdirSync(this.cacheDir, { recursive: true });
-				if (this.debug) {
-					console.log(
-						` CacheManager: Created cache directory at ${this.cacheDir}`
-					);
-				}
+				console.log(` CacheManager: Created cache directory at ${this.cacheDir}`);
 			} catch (error) {
-				console.error(
-					" CacheManager: Failed to create cache directory:",
-					error
-				);
+				console.error(" CacheManager: Failed to create cache directory:", error);
 			}
+		} else {
+			console.log(` CacheManager: Cache directory already exists at ${this.cacheDir}`);
 		}
 	}
 
@@ -66,13 +74,16 @@ class CacheManager {
 		// Check memory cache first
 		const memCacheEntry = this.memoryCache.get(leagueType);
 		if (memCacheEntry && !this.isExpired(memCacheEntry)) {
-			if (this.debug) {
-				console.log(` CacheManager: Cache HIT (memory) for ${leagueType}`);
+			// CACHE-01: Schema version check
+			if (memCacheEntry.version === this.SCHEMA_VERSION) {
+				if (this.debug) {
+					console.log(` CacheManager: Cache HIT (memory) for ${leagueType}`);
+				}
+				// LRU: Refresh entry position in Map
+				this.memoryCache.delete(leagueType);
+				this.memoryCache.set(leagueType, memCacheEntry);
+				return memCacheEntry.data;
 			}
-			// LRU: Refresh entry position in Map
-			this.memoryCache.delete(leagueType);
-			this.memoryCache.set(leagueType, memCacheEntry);
-			return memCacheEntry.data;
 		}
 
 		// Check disk cache
@@ -91,6 +102,16 @@ class CacheManager {
 		try {
 			const fileContent = await fsPromises.readFile(cacheFile, "utf8");
 			const cacheEntry = JSON.parse(fileContent);
+
+			// CACHE-01: Schema version check
+			if (cacheEntry.version !== this.SCHEMA_VERSION) {
+				if (this.debug) {
+					console.log(
+						` CacheManager: Schema mismatch for ${leagueType} (${cacheEntry.version} vs ${this.SCHEMA_VERSION}) - ignoring cache`
+					);
+				}
+				return null;
+			}
 
 			if (this.isExpired(cacheEntry)) {
 				if (this.debug) {
@@ -133,11 +154,11 @@ class CacheManager {
 				timestamp: Date.now(),
 				ttl: ttl || this.defaultTTL,
 				data: data,
-				version: 1 // For future migrations
+				version: this.SCHEMA_VERSION // CACHE-01
 			};
 
 			const cacheFile = this.getCacheFilePath(leagueType);
-			
+
 			// Update memory cache immediately (synchronous for instant availability)
 			if (this.memoryCache.has(leagueType)) {
 				this.memoryCache.delete(leagueType);
@@ -152,11 +173,18 @@ class CacheManager {
 			this.memoryCache.set(leagueType, cacheEntry);
 
 			// Write to disk asynchronously (non-blocking)
-			await fsPromises.writeFile(cacheFile, JSON.stringify(cacheEntry, null, 2), "utf8");
+			// CACHE-02: Remove whitespace from disk JSON writes for space efficiency
+			await fsPromises.writeFile(
+				cacheFile,
+				JSON.stringify(cacheEntry),
+				"utf8"
+			);
 
 			if (this.debug) {
 				console.log(
-					` CacheManager: Cache SET for ${leagueType} (${data.teams?.length || 0} teams)`
+					` CacheManager: Cache SET for ${leagueType} (${
+						data.teams?.length || 0
+					} teams)`
 				);
 			}
 
@@ -259,16 +287,26 @@ class CacheManager {
 	 * @returns {Promise<object>} Cache statistics
 	 */
 	async getStats() {
+		// CACHE-03: Rate-limit getStats() calls (max once per 30 seconds)
+		const now = Date.now();
+		if (this._lastStats && this._lastStatsTime && now - this._lastStatsTime < 30000) {
+			if (this.debug) console.log(" CacheManager: Returning cached stats");
+			return this._lastStats;
+		}
+
 		try {
 			try {
 				await fsPromises.access(this.cacheDir);
 			} catch {
-				return {
+				const stats = {
 					cacheDir: this.cacheDir,
 					totalFiles: 0,
 					memoryEntries: this.memoryCache.size,
 					entries: []
 				};
+				this._lastStats = stats;
+				this._lastStatsTime = now;
+				return stats;
 			}
 
 			const files = await fsPromises.readdir(this.cacheDir);
@@ -306,7 +344,7 @@ class CacheManager {
 				}
 			}
 
-			return {
+			const stats = {
 				cacheDir: this.cacheDir,
 				totalFiles: files.filter((f) => f.endsWith(".json")).length,
 				memoryEntries: this.memoryCache.size,
@@ -314,6 +352,10 @@ class CacheManager {
 					a.leagueType.localeCompare(b.leagueType)
 				)
 			};
+			
+			this._lastStats = stats;
+			this._lastStatsTime = now;
+			return stats;
 		} catch (error) {
 			console.error(" CacheManager: Error getting stats:", error.message);
 			return null;

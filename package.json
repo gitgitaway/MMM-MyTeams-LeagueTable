@@ -36,6 +36,7 @@
 	},
 	"devDependencies": {
 		"clean-css-cli": "^5.6.0",
+		"esbuild": "^0.28.0",
 		"eslint": "^8.0.0",
 		"mocha": "^10.0.0",
 		"prettier": "^2.0.0"
@@ -45,8 +46,7 @@
 		"test:security": "mocha tests/security.test.js --timeout 10000",
 		"lint": "eslint *.js",
 		"format": "prettier --write *.js *.json *.md",
-		"minify-css": "cleancss -o MMM-MyTeams-LeagueTable.min.css MMM-MyTeams-LeagueTable.css",
-		"build": "npm run minify-css",
+		"build": "npx esbuild src/index.js --bundle --outfile=MMM-MyTeams-LeagueTable.js",
 		"audit": "npm audit --audit-level=moderate",
 		"audit:fix": "npm audit fix"
 	},

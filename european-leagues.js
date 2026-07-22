@@ -41,7 +41,7 @@ const EUROPEAN_LEAGUES = {
 		enabled: false
 	},
 
-	FINLAND_VEIKKALIGA: {
+	FINLAND_VEIKKAUSLIIGA: {
 		name: "Veikkausliiga",
 		country: "Finland",
 		countryCode: "FI",
@@ -141,7 +141,7 @@ const EUROPEAN_LEAGUES = {
 		tier: 1,
 		enabled: false
 	},
-	DENMARK_SUPERLIGAEN: {
+	DENMARK_SUPERLIGA: {
 		name: "Superligaen",
 		country: "Denmark",
 		countryCode: "DK",
@@ -215,7 +215,7 @@ const EUROPEAN_LEAGUES = {
 		tier: 1,
 		enabled: false
 	},
-	NORTH MACEDONIA_FIRST_LEAGUE: {
+	NORTH_MACEDONIA_FIRST_LEAGUE: {
 		name: "First League",
 		country: "North Macedonia",
 		countryCode: "MK",
@@ -384,16 +384,7 @@ const EUROPEAN_LEAGUES = {
 		tier: 1,
 		enabled: false
 	},
-	SERBIA_SUPER_LIGA: {
-		name: "Serbian Super Liga",
-		country: "Serbia",
-		countryCode: "RS",
-		countryFolder: "Serbia",
-		url: "https://www.bbc.co.uk/sport/football/serbian-super-lig/table",
-		tier: 1,
-		enabled: false
-	},
-
+	
 	// Mediterranean/Balkan
 	GREECE_SUPER_LEAGUE: {
 		name: "Greek Super League",
@@ -459,6 +450,15 @@ const EUROPEAN_LEAGUES = {
 		url: "https://www.bbc.co.uk/sport/football/premier-league/table",
 		tier: 1,
 		enabled: false
+	},
+	CYMRU_PREMIER_LEAGUE: {
+		name: "Cymru Premier",
+		country: "Wales",
+		countryCode: "WAL",
+		countryFolder: "Wales",
+		url: "https://www.bbc.co.uk/sport/football/cymru-premier/table",
+		tier: 1,
+		enabled: false
 	}
 };
 
@@ -469,8 +469,8 @@ const LEAGUE_REGIONS = {
 	Scandinavia: [
 		"NORWAY_ELITESERIEN",
 		"SWEDEN_ALLSVENSKAN",
-		"DENMARK_SUPERLIGAEN",
-		"FINLAND_VEIKKALIGA",
+		"DENMARK_SUPERLIGA",
+		"FINLAND_VEIKKAUSLIIGA",
 		"ICELAND_URVALSDEILD",
 		"LATVIA_VIRSLIGA",
 	],
@@ -516,7 +516,8 @@ const LEAGUE_REGIONS = {
 		"SCOTLAND_PREMIERSHIP",
 		"SCOTLAND_CHAMPIONSHIP",
 		"ENGLAND_PREMIER_LEAGUE",
-		"ENGLAND_CHAMPIONSHIP"
+		"ENGLAND_CHAMPIONSHIP",
+		"CYMRU_PREMIER_LEAGUE"
 	]
 };
 

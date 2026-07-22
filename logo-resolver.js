@@ -79,7 +79,7 @@ class LogoResolver {
 	 */
 	normalize(str) {
 		if (!str) return "";
-		
+
 		// 1. Resolve aliases if defined (use the raw name first, trimmed and lowercase)
 		const lookupKey = str.trim().toLowerCase();
 		if (this.teamAliases && this.teamAliases[lookupKey]) {
@@ -94,7 +94,7 @@ class LogoResolver {
 			this.normalizedNameCache.set(str, cached);
 			return cached;
 		}
-		
+
 		// Perform normalization
 		const normalized = this.removeDiacritics(str)
 			.toLowerCase()
@@ -105,7 +105,7 @@ class LogoResolver {
 			.replace(/\s+/g, " ")
 			.trim()
 			.replace(/[.,]/g, "");
-		
+
 		// Add to cache with LRU eviction
 		if (this.normalizedNameCache.size >= this.maxNormalizedCacheSize) {
 			// Remove oldest entry (first in Map)
@@ -113,7 +113,7 @@ class LogoResolver {
 			this.normalizedNameCache.delete(oldestKey);
 		}
 		this.normalizedNameCache.set(str, normalized);
-		
+
 		return normalized;
 	}
 
