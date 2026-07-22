@@ -1,5 +1,5 @@
 {
-  "LOADING": "Loading SPFL table...",
+  "LOADING": "Loading table...",
   "ERROR": "Error loading SPFL data",
   "RETRYING": "Retrying...",
   "NO_DATA": "No league data available",
@@ -74,5 +74,18 @@
   "UZBEKISTAN": "Uzbekistan",
   "WALES": "Wales",
   "HIDE_LEAGUE_TABLE": "Hide League Table",
-  "SHOW_LEAGUE_TABLE": "Show League Table"
+  "SHOW_LEAGUE_TABLE": "Show League Table",
+  "PLAYOFF": "Playoff",
+  "ROUND_OF_16": "Rd16",
+  "QUARTER_FINAL": "QF",
+  "SEMI_FINAL": "SF",
+  "FINAL": "Final",
+  "WIN": "Win",
+  "DRAW": "Draw",
+  "LOSS": "Loss",
+  "MISSING": "No result",
+  "PROMOTION_ZONE": "Promotion zone",
+  "ELIMINATION_ZONE": "Elimination zone",
+  "UEFA_ZONE": "UEFA qualification zone",
+  "RELEGATION_ZONE": "Relegation zone"
 }
