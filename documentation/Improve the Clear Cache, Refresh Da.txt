@@ -1,0 +1,69 @@
+The MMM-MyTeams-Fixture module`s Refresh Data, Clear Cache, and Pin buttons are not rendering as intentended. Check if the issues is related to stale duplicate CSS rules  (.clear-cache-btn and .pin-btn) from an older version of the file as if these are still present the CSS applies rules in order, and these could override button styles defined earlier. If not improve the buttons by giving each of them a distinctive icon such as FA icons (fa-refresh, fa-trash, fa-thumb-tack) rather than the present simple rectangle. These should be placed inside dedicated <i> elements effectively inside each button. Once complete rebuild the modules minified CSS and js files.  
+
+
+
+Index: MMM-MyTeams-Fixtures.css
+===================================================================
+--- MMM-MyTeams-Fixtures.css	Before
++++ MMM-MyTeams-Fixtures.css	After
+@@ -216,20 +216,23 @@
+ 
+ /* REFRESH — circular shape */
+ .myteams-fixtures .refresh-btn {
+   border-radius: 50%;
++  background-color: rgba(0, 150, 255, 0.15); /* Slight blue tint */
+ }
+ 
+ /* CLEAR CACHE — sharp square */
+ .myteams-fixtures .clear-cache-btn {
+   border-radius: 0;
+   border-style: dashed;
++  background-color: rgba(255, 100, 100, 0.15); /* Slight red tint */
+ }
+ 
+ /* PIN — rotated square (diamond) */
+ .myteams-fixtures .pin-btn {
+   border-radius: 4px;
+   transform: rotate(45deg);
++  background-color: rgba(255, 200, 0, 0.15); /* Slight gold tint */
+ }
+ .myteams-fixtures .pin-btn i {
+   transform: rotate(-45deg);
+ }
+
+
+
+
+--------
+
+
+Index: MMM-MyTeams-Fixtures.css
+===================================================================
+--- MMM-MyTeams-Fixtures.css	Before
++++ MMM-MyTeams-Fixtures.css	After
+@@ -244,16 +244,19 @@
+   border-width: 3px;
+ }
+ 
+ /* Hover states */
+-.myteams-fixtures .refresh-btn:hover,
++.myteams-fixtures .refresh-btn:hover {
++  background-color: rgba(0, 150, 255, 0.3);
++  border-color: #0096ff;
++}
+ .myteams-fixtures .clear-cache-btn:hover {
+-  background-color: rgba(255, 255, 255, 0.22);
+-  border-color: #fff;
++  background-color: rgba(255, 100, 100, 0.3);
++  border-color: #ff6464;
+ }
+ .myteams-fixtures .pin-btn:hover {
+-  background-color: rgba(255, 255, 255, 0.22);
+-  border-color: #fff;
++  background-color: rgba(255, 200, 0, 0.3);
++  border-color: #ffc800;
+ }
+ 
+ /* Press / click animation */
+ .myteams-fixtures .refresh-btn:active,
+

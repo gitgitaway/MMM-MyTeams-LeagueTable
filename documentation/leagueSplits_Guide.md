@@ -129,6 +129,15 @@ The module handles split-league seasons using the `LEAGUE_SPLITS` configuration 
 
 When the module detects that Phase 1 is complete (games played ≥ `regularSeasonGames`) but no split group headings have been found yet (the league has not yet published Phase 2 assignments), it sets an `awaitingSplit` flag on the data object. The UI then displays an **⏳ AWAITING SPLIT** badge in the header instead of showing a data error.
 
+### Parsing Robustness (v2.6.0 Update)
+
+To handle the complexity of modern sports sites (especially BBC Sport), the parsing engine includes several resilience features:
+
+- **2000-Character Heading Lookback**: The parser scans up to 2000 characters of HTML preceding a table to find group labels, ensuring labels are found even when buried behind complex navigation menus or ARIA wrappers.
+- **Strategy Supplementing**: If traditional HTML `<table>` elements only provide partial data (common in Belgium), the module automatically supplements the results by scanning for modern div-based ARIA row structures.
+- **Size-Based Partitioning**: As a final fallback, if heading detection fails but the total number of teams found matches the expected split configuration exactly (e.g., 6+6+4 for Belgium), the module partitions the teams sequentially based on configured group sizes.
+- **Form-Token Bypass**: Split-phase data is marked as complete even if it lacks form tokens (W/D/L bubbles), as many providers omit these on Phase 2 sub-pages.
+
 ---
 
 ## 6. Promotion/Relegation Play-offs
@@ -201,4 +210,4 @@ While the bottom team is relegated directly, Austria uses the split to give bott
 
 ---
 
-*Last updated: 2026-04-10 — reflects module v2.5.x and above.*
+*Last updated: 2026-04-16 — reflects module v2.6.x and above.*

@@ -74,38 +74,24 @@ The 2026 FIFA World Cup will be the first edition to feature **48 nations**, org
 
 The following table details the 48 participants as organized by their respective groups.
 
-| Group | Team 1                   | Team 2       | Team 3       | Team 4              |
-| :---: | :----------------------- | :----------- | :----------- | :------------------ |
-| **A** | Mexico (Host)            | South Africa | South Korea  | _Play-Off D Winner_ |
-| **B** | Canada (Host)            | Qatar        | Switzerland  | _Play-Off A Winner_ |
-| **C** | Brazil                   | Morocco      | Haiti        | Scotland            |
-| **D** | United States (Host)     | Paraguay     | Australia    | _Play-Off C Winner_ |
-| **E** | Germany                  | Curaçao      | Ivory Coast  | Ecuador             |
-| **F** | Netherlands              | Japan        | Tunisia      | _Play-Off B Winner_ |
-| **G** | Belgium                  | Egypt        | IR Iran      | New Zealand         |
-| **H** | Spain                    | Cape Verde   | Saudi Arabia | Uruguay             |
-| **I** | France                   | Senegal      | Norway       | _Play-Off 2 Winner_ |
-| **J** | Argentina (Title Holder) | Algeria      | Austria      | Jordan              |
-| **K** | Portugal                 | Uzbekistan   | Colombia     | _Play-Off 1 Winner_ |
-| **L** | England                  | Croatia      | Ghana        | Panama              |
+| Group | Team 1                   | Team 2             | Team 3       | Team 4                 |
+| :---: | :----------------------- | :----------------- | :----------- | :--------------------- |
+| **A** | Mexico (Host)            | South Africa       | South Korea  | Czech Republic         |
+| **B** | Canada (Host)            | Bosnia-Herzegovina | Qatar        | Switzerland            |
+| **C** | Brazil                   | Morocco            | Haiti        | Scotland               |
+| **D** | United States (Host)     | Paraguay           | Australia    | Turkey                 |
+| **E** | Germany                  | Curaçao            | Ivory Coast  | Ecuador                |
+| **F** | Netherlands              | Japan              | Sweden       | Tunisia                |
+| **G** | Belgium                  | Egypt              | Iran         | New Zealand            |
+| **H** | Spain                    | Cape Verde         | Saudi Arabia | Uruguay                |
+| **I** | France                   | Senegal            | Iraq         | Norway                 |
+| **J** | Argentina (Title Holder) | Algeria            | Austria      | Jordan                 |
+| **K** | Portugal                 | Congo DR           | Uzbekistan   | Colombia               |
+| **L** | England                  | Croatia            | Ghana        | Panama                 |
 
 ## Inter-Confederation Play-offs
 
-Six slots in the final tournament are subject to qualification via the inter-confederation play-offs. These slots are represented by placeholders in the group tables above. 
-Playoff qualifies will be updated on completion of the playoff phase.
-
-
-
-| Placeholder    | Playoff Pathways     | Participating Countries                                                        | Successor Group | Qualification Date |
-| :------------- | :------------------- | :----------------------------------------------------------------------------- | :-------------: | :----------------- |
-| **Play-Off A** | CONCACAF / OFC / AFC | Jamaica, New Caledonia, Iraq                                                   |   **Group B**   | March 2026         |
-| **Play-Off B** | CONMEBOL / CAF / AFC | Bolivia, DR Congo, Iraq                                                        |   **Group F**   | March 2026         |
-| **Play-Off C** | CONCACAF / CONMEBOL  | Jamaica, Bolivia, Suriname                                                     |   **Group D**   | March 2026         |
-| **Play-Off D** | CAF / AFC / OFC      | DR Congo, Iraq, New Caledonia                                                  |   **Group A**   | March 2026         |
-| **Play-Off 1** | UEFA Path 1          | Italy, Wales, Sweden, Poland, Turkey, Hungary, Ukraine, Greece                 |   **Group K**   | March 2026         |
-| **Play-Off 2** | UEFA Path 2          | Denmark, Serbia, Romania, Slovenia, Czech Republic, Slovakia, Albania, Finland |   **Group I**   | March 2026         |
-
-_Note: The inter-confederation play-off tournament will involve six teams (one from each confederation except UEFA, plus one additional team from the host confederation CONCACAF)._
+The inter-confederation play-offs are now complete and all 48 slots in the final tournament are confirmed. The Group Table above has been updated to reflect the final qualifiers.
 
 ## Module Features for World Cup 2026
 
@@ -143,12 +129,12 @@ Live scores and upcoming fixtures are updated automatically according to your `u
 
 ## Summary of Qualified Nations by Confederation
 
-- **AFC (8.5 Slots)**: Australia, Iran, Japan, Jordan, Qatar, Saudi Arabia, South Korea, Uzbekistan.
-- **CAF (9.5 Slots)**: Algeria, Cape Verde, Egypt, Ghana, Ivory Coast, Morocco, Senegal, South Africa, Tunisia.
-- **CONCACAF (6.5 Slots)**: Canada (Host), Mexico (Host), United States (Host), Curaçao, Haiti, Panama.
-- **CONMEBOL (6.5 Slots)**: Argentina, Brazil, Colombia, Ecuador, Paraguay, Uruguay.
-- **OFC (1.5 Slots)**: New Zealand.
-- **UEFA (16 Slots)**: Austria, Belgium, Croatia, England, France, Germany, Netherlands, Norway, Portugal, Scotland, Spain, Switzerland.
+- **AFC (9 Slots)**: Australia, Iran, Japan, Jordan, Qatar, Saudi Arabia, South Korea, Uzbekistan, Iraq.
+- **CAF (10 Slots)**: Algeria, Cape Verde,  DR Congo, Egypt, Ghana, Ivory Coast, Morocco, Senegal, South Africa, Tunisia,
+- **CONCACAF (6 Slots)**: Canada (Host), Mexico (Host), United States (Host), Curaçao, Haiti, Panama.
+- **CONMEBOL (6 Slots)**: Argentina, Brazil, Colombia, Ecuador, Paraguay, Uruguay.
+- **OFC (1 Slots)**: New Zealand.
+- **UEFA (16 Slots)**: Austria, Belgium, Bosnia and Herzegovina, Croatia, Czech Republic, England, France, Germany, Netherlands, Norway, Portugal, Scotland, Spain, Sweden, Switzerland, Turkey.
 
 ---
 

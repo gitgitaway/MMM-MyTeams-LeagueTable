@@ -10,7 +10,7 @@ This guide helps you resolve common issues with the **MMM-MyTeams-LeagueTable** 
     *   Check your internet connection.
     *   Check the MagicMirror logs (`pm2 logs` or npm start output) for "FETCH_ERROR".
     *   Ensure the league you selected is currently active (some leagues don't have tables in the off-season).
-    *   Try clearing the cache by clicking the trash icon in the module header (if enabled).
+    *   Try clearing the cache by clicking the **square (dashed border)** trash icon in the module header (if enabled).
 
 ### 2. Team Logos are Missing (404 Not Found)
 *   **Cause**: The module cannot find the image file for a specific team.
@@ -77,6 +77,26 @@ This guide helps you resolve common issues with the **MMM-MyTeams-LeagueTable** 
     *   If the primary source is missing groups, the module automatically escalates to Wikipedia.
     *   Ensure your `wikipediaUrlMap` in `MMM-MyTeams-LeagueTable.js` is correct for the current season.
     *   Check for `[Multi-group]` logs in the terminal to verify Wikipedia parsing success.
+
+### 11. Module Fails to Load with `TypeError: Cannot read properties of undefined (reading 'length')`
+*   **Status**: ✅ **FIXED in v2.5.2** (2026-04-14)
+*   **Cause**: The `this.currentLeague` assignment in `start()` referenced `this.enabledLeagueCodes.length` before `determineEnabledLeagues()` had been called to populate the array.
+*   **Solution**: Fixed in v2.5.2. If you see this error, ensure you are on the latest version (`git pull`).
+
+### 12. `UnhandledPromiseRejectionWarning: ReferenceError: chainInfo is not defined` in Terminal
+*   **Status**: ✅ **FIXED in v2.5.2** (2026-04-14)
+*   **Cause**: A variable `chainInfo` used in a debug log statement inside `fetchLeagueData()` in `node_helper.js` was never declared — a leftover from a prior refactor. This caused repeated unhandled rejections on every data fetch cycle.
+*   **Solution**: Fixed in v2.5.2. Update to the latest version.
+
+### 13. Module Silently Loads but Displays No Data / Console Shows `Uncaught SyntaxError`
+*   **Status**: ✅ **FIXED in v2.5.2** (2026-04-14)
+*   **Cause**: A space in the object key `NORTH MACEDONIA_FIRST_LEAGUE` (should be `NORTH_MACEDONIA_FIRST_LEAGUE`) in `european-leagues.js` caused the entire script to fail to parse, silently breaking module initialisation.
+*   **Solution**: Fixed in v2.5.2. Check the browser console (F12) for `Uncaught SyntaxError` errors pointing to `european-leagues.js` if you suspect this issue.
+
+### 14. League Shows "Could not find URL for league code: DENMARK_SUPERLIGA" (or FINLAND_VEIKKAUSLIIGA)
+*   **Status**: ✅ **FIXED in v2.5.2** (2026-04-14)
+*   **Cause**: The internal URL provider maps used inconsistent keys (`DENMARK_SUPERLIGAEN`, `FINLAND_PREMIER_LEAGUE`) that did not match the canonical codes expected by the config system (`DENMARK_SUPERLIGA`, `FINLAND_VEIKKAUSLIIGA`).
+*   **Solution**: Fixed in v2.5.2. All five provider maps now use identical canonical keys. Update to the latest version.
 
 ## Diagnostic Steps
 

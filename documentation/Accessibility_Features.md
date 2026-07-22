@@ -81,7 +81,19 @@ enhancedIndicatorShapes: false, // Text-only with colored letters
 
 ---
 
-### 6. Security & Safe Content (Enhanced in v1.9.0)
+### 6. Shape-coded Header Controls (A11Y-11)
+
+In v3.1.1, the header action buttons (Refresh, Clear Cache, Pin) have been redesigned to use shape-based differentiation, satisfying WCAG 2.1 Criterion 1.4.1 (Use of Color). This ensures that users with color vision deficiencies can distinguish between core module actions without relying on color alone:
+
+- **Refresh (Data)** — **Circular** shape with a solid border
+- **Clear Cache** — **Sharp Square** shape with a dashed border
+- **Pin (Pause)** — **Diamond** shape (rotated 45°) with a solid border (thickens when active)
+
+These shapes are supplemented by distinctive Font Awesome icons (`fa-refresh`, `fa-trash`, `fa-thumb-tack`) and high-contrast `bright` (100% opacity) styling.
+
+---
+
+### 7. Security & Safe Content (Enhanced in v1.9.0)
 
 **XSS Prevention**:
 *   **Zero innerHTML Usage**: All dynamic content uses safe DOM manipulation methods

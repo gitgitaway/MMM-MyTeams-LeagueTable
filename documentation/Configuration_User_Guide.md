@@ -103,8 +103,9 @@ The **MMM-MyTeams-LeagueTable** module is highly configurable. This guide covers
 The module's header has been enhanced for better usability on both large displays and smaller MagicMirror regions:
 
 - **Horizontal League Switcher**: When more leagues are enabled than can fit in the header, a thin, styled horizontal scrollbar is automatically displayed. This allows you to navigate through all your selected leagues without cluttering the screen.
-- **Improved Header Controls**: The **Refresh**, **Clear Cache**, and **Pin** (pause auto-cycle) buttons have been redesigned for high visibility and consistent styling across all themes.
-- **Pin Animation**: When the **Pin** button is active (pausing auto-cycling), the thumbtack icon tilts and changes color to clearly indicate the module's state.
+- **Improved Header Controls**: The **Refresh**, **Clear Cache**, and **Pin** (pause auto-cycle) buttons are arranged in a logical sequence (Refresh → Clear → Pin) and use **shape-coded differentiation** (Circle, Square, Diamond) for maximum visibility and accessibility.
+- **Enhanced Interactions**: All header buttons feature high-visibility styling (100% opacity), interactive scale-up on hover (1.2x), and a tactile scale-down on press (0.9x).
+- **Pin Active State**: When the **Pin** button is active (pausing auto-cycling), the button fills with solid color and its border thickens to clearly indicate the module's state.
 
 ---
 

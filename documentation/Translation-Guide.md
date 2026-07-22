@@ -8,15 +8,40 @@ This folder contains translation files for the MMM-MyTeams-LeagueTable module.
 
 | Language | Code | Example |
 |----------|------|---------|
-| :scotland: Scottish Gaelic | `gd` | `language: "gd"` |
-| :ireland: Irish Gaelic | `ga` | `language: "ga"` |
+| 🇦🇱 Albanian | `sq` | `language: "sq"` |
+| 🇿🇦 Afrikaans | `af` | `language: "af"` |
+| 🇸🇦 Arabic | `ar` | `language: "ar"` |
+| 🇭🇷 Croatian | `hr` | `language: "hr"` |
+| 🇨🇿 Czech | `cs` | `language: "cs"` |
+| 🇩🇰 Danish | `da` | `language: "da"` |
+| 🇳🇱 Dutch | `nl` | `language: "nl"` |
 | 🇬🇧 English | `en` | `language: "en"` |
-| 🇪🇸 Spanish | `es` | `language: "es"` |
+| 🇮🇷 Persian (Farsi) | `fa` | `language: "fa"` |
+| 🇫🇮 Finnish | `fi` | `language: "fi"` |
 | 🇫🇷 French | `fr` | `language: "fr"` |
 | 🇩🇪 German | `de` | `language: "de"` |
+| 🇬🇷 Greek | `el` | `language: "el"` |
+| 🇭🇹 Haitian Creole | `ht` | `language: "ht"` |
+| 🇭🇺 Hungarian | `hu` | `language: "hu"` |
+| 🇮🇪 Irish Gaelic | `ga` | `language: "ga"` |
 | 🇮🇹 Italian | `it` | `language: "it"` |
-| 🇳🇱 Dutch | `nl` | `language: "nl"` |
+| 🇯🇵 Japanese | `ja` | `language: "ja"` |
+| 🇰🇷 Korean | `ko` | `language: "ko"` |
+| 🇳🇿 Maori | `mi` | `language: "mi"` |
+| 🇳🇴 Norwegian | `no` | `language: "no"` |
+| 🇵🇱 Polish | `pl` | `language: "pl"` |
 | 🇵🇹 Portuguese | `pt` | `language: "pt"` |
+| 🇷🇴 Romanian | `ro` | `language: "ro"` |
+| 🏴󠁧󠁢󠁳󠁣󠁴󠁿 Scottish Gaelic | `gd` | `language: "gd"` |
+| 🇷🇸 Serbian | `sr` | `language: "sr"` |
+| 🇸🇰 Slovak | `sk` | `language: "sk"` |
+| 🇸🇮 Slovenian | `sl` | `language: "sl"` |
+| 🇪🇸 Spanish | `es` | `language: "es"` |
+| 🇸🇪 Swedish | `sv` | `language: "sv"` |
+| 🇹🇷 Turkish | `tr` | `language: "tr"` |
+| 🇺🇦 Ukrainian | `uk` | `language: "uk"` |
+| 🇺🇿 Uzbek | `uz` | `language: "uz"` |
+| 🏴󠁧󠁢󠁷󠁬󠁳󠁿 Welsh | `cy` | `language: "cy"` |
 
 
 ## File Structure
@@ -40,10 +65,19 @@ All translation files are located in the `translations/` directory. Each file is
 - `GOAL_DIFFERENCE`: Column header for GD.
 - `POINTS`: Column header for points.
 - `FORM`: Column header for the form guide.
+- `HIDE_LEAGUE_TABLE`: Accessibility label for hiding the table.
+- `SHOW_LEAGUE_TABLE`: Accessibility label for showing the table.
+
+### Tournament & Knockout Keys
+- `PLAYOFF`: Label for Playoff round.
+- `ROUND_OF_16`: Label for Round of 16.
+- `QUARTER_FINAL`: Label for Quarter Final.
+- `SEMI_FINAL`: Label for Semi Final.
+- `FINAL`: Label for Final.
 
 ### Country Keys
 These are used for grouping and headers in tournament views like the World Cup.
-Example: `SCOTLAND`, `ENGLAND`, `FRANCE`, etc.
+Example: `SCOTLAND`, `ENGLAND`, `FRANCE`, `BRAZIL`, etc. (Check `en.json` for full list).
 
 
 ## Contributing Translations
@@ -52,8 +86,8 @@ Example: `SCOTLAND`, `ENGLAND`, `FRANCE`, etc.
 
 1. **Create a new JSON file** named with the ISO 639-1 language code (e.g., `cy.json` for Welsh)
 2. **Copy the structure** from `en.json`
-3. **Translate all 17 keys** to your language
-4. **Update the module** by adding your language to the `getTranslations()` method in `MMM-MyTeams-Fixtures.js`:
+3. **Translate all keys** to your language
+4. **Update the module** by adding your language to the `getTranslations()` method in `MMM-MyTeams-LeagueTable.js`:
 
 ```javascript
 getTranslations() {
@@ -125,7 +159,7 @@ Each translation file must be valid JSON:
 1. **Add to config.js**:
 ```javascript
 {
-  module: "MMM-MyTeams-Fixtures",
+  module: "MMM-MyTeams-LeagueTable",
   config: {
     language: "gd",  // Your language code
     debug: true      // Enable debug logging
@@ -169,4 +203,4 @@ If you have questions about contributing translations, please:
 2. Review existing translation files for examples
 3. Open an issue on GitHub for clarification
 
-Thank you for helping make MMM-MyTeams-LeaugeTable accessible to more users! 🌍
+Thank you for helping make MMM-MyTeams-LeagueTable accessible to more users! 🌍
