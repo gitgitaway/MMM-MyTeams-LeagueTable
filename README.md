@@ -18,6 +18,8 @@ A comprehensive **MagicMirror²** module that displays football league standings
 
 ## 🆕 Recent Updates (v3.1.1 - 2026-04-22)
 
+**Updated for season 2026-27, nb Europa Conference League data not available untill end of Aug 2026:**
+
 **Enhanced Header Controls & Iconography:**
 
 - **Shape-coded Action Buttons**: Redesigned header buttons for Refresh, Clear Cache, and Pin to use distinctive shapes (Circle, Square, Diamond) for improved accessibility without relying solely on color.
