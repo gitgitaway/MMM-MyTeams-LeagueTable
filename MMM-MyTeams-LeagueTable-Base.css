@@ -1,0 +1,1756 @@
+/*    MMM-MyTeams-LeagueTableCSS Styles
+ * 
+ * This file contains all the styling for the Football League Table module
+ * Includes responsive design, color coding for different league positions,
+ * and support for multiple leagues (SPFL, UCL, UEL, ECL)
+ */
+
+:root {
+    /* Responsive font sizes using clamp for fluid typography */
+    --mtlt-font-size-title: clamp(15px, 1.6vw, 19px);
+    --mtlt-font-size-header: clamp(13px, 1.3vw, 17px);
+    --mtlt-font-size-table: clamp(13px, 1.2vw, 16px);
+    --mtlt-font-size-small: clamp(11px, 1.0vw, 14px);
+    --mtlt-font-size-xsmall: clamp(10px, 0.9vw, 13px);
+    
+    /* DES-04: Fixed font sizes for specific use cases */
+    --mtlt-font-size-button: 16px;
+    --mtlt-font-size-comfortable: 15px;
+    --mtlt-font-size-medium: 14px;
+    --mtlt-font-size-small-fixed: 12px;
+    --mtlt-font-size-badge: 11px;
+    --mtlt-font-size-legend: 10px;
+    --mtlt-font-size-mini: 9px;
+    --mtlt-font-size-micro: 8px;
+    --mtlt-font-size-icon-lg: 24px;
+    --mtlt-font-size-icon-md: 20px;
+
+    /* Palette colors */
+    --mtlt-color-win: #2ecc71;
+    --mtlt-color-draw: #95a5a6;
+    --mtlt-color-loss: #e74c3c;
+    --mtlt-color-accent: #3498db;
+    --mtlt-color-border: rgba(255, 255, 255, 0.18);
+    --mtlt-color-bg-light: rgba(255, 255, 255, 0.08);
+    
+    /* DES-05: Data age severity colors */
+    --mtlt-color-fresh: #2ecc71;   /* Same as win green */
+    --mtlt-color-moderate: #f1c40f; /* Muted yellow/amber */
+    --mtlt-color-stale: #e67e22;    /* Muted orange */
+    --mtlt-color-error: #e74c3c;    /* Same as loss red */
+    
+    /* Animation timing */
+    --mtlt-transition-speed: 0.4s;
+
+    /* Table height - reduced to ensure footer visibility */
+    --mtlt-max-table-height: 450px;
+}
+
+/* INNOV-06: Sortable table headers */
+th[role="columnheader"][aria-sort] {
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+th[role="columnheader"][aria-sort]:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+}
+
+th[role="columnheader"][aria-sort="ascending"]::after {
+    content: " ▲";
+    font-size: 0.8em;
+}
+
+th[role="columnheader"][aria-sort="descending"]::after {
+    content: " ▼";
+    font-size: 0.8em;
+}
+/* Main container styling */
+.spfl-league-table {
+    display: flex;
+    flex-direction: column;
+    color: #fff;
+    line-height: 1.0;
+    font-size: var(--mtlt-font-size-table);
+    position: relative;
+    width: 100%;
+    max-width: 575px; /* Added max-width to prevent table from expanding too much */
+    min-width: 320px; /* Reduced from 500px to allow better fit in side regions */
+    margin: 0 auto 30px auto; /* Reduced from 120px (DES-03) */
+    contain: content; /* P-06: Improve browser reflow performance */
+    overflow: hidden; /* Prevent horizontal scrollbars at module level */
+}
+
+/* League header container with buttons */
+.league-header-container {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+    padding-bottom: 5px;
+    border-bottom: 2px solid #555;
+    max-width: 575px; /* Added max-width to prevent header from expanding too much */
+}
+
+/* League title styling */
+.league-title {
+    font-size: var(--mtlt-font-size-header);
+    font-weight: 500;
+    color: #ccc;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 60%; /* Prevent title from taking too much space */
+}
+
+/* Meta info styling (Last Updated and Refresh) */
+.league-meta-info {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-left: auto;
+    flex-shrink: 0;
+    justify-content: flex-end;
+}
+
+.last-updated-badge {
+    font-size: var(--mtlt-font-size-badge);
+    background: var(--mtlt-color-bg-light);
+    border: 1px solid var(--mtlt-color-border);
+    padding: 1px 6px;
+    border-radius: 10px;
+    color: #bbb;
+    display: inline-flex;
+    align-items: center;
+    font-weight: 500;
+}
+
+/* DES-05: Data age severity classes */
+.stale-warning {
+    padding: 2px 8px;
+    border-radius: 3px;
+    font-weight: bold;
+    margin-left: 8px;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.stale-warning[data-severity="fresh"] {
+    color: var(--mtlt-color-fresh);
+    border: 1px solid var(--mtlt-color-fresh);
+}
+
+.stale-warning[data-severity="moderate"] {
+    color: var(--mtlt-color-moderate);
+    border: 1px solid var(--mtlt-color-moderate);
+}
+
+.stale-warning[data-severity="stale"] {
+    color: var(--mtlt-color-stale);
+    border: 1px solid var(--mtlt-color-stale);
+}
+
+.stale-warning[data-severity="error"] {
+    color: var(--mtlt-color-error);
+    border: 1px solid var(--mtlt-color-error);
+}
+
+/* DES-06: Form token legend styles */
+.form-legend {
+    font-size: var(--mtlt-font-size-legend);
+    padding: 2px 0;
+    opacity: 0.8;
+}
+
+.form-token-sample {
+    width: 12px;
+    height: 12px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: var(--mtlt-font-size-micro);
+    font-weight: bold;
+    color: #fff;
+    border-radius: 2px;
+}
+
+.form-token-sample.form-win { background-color: var(--mtlt-color-win); border-radius: 50%; }
+.form-token-sample.form-draw { background-color: var(--mtlt-color-draw); }
+.form-token-sample.form-loss { 
+    background-color: var(--mtlt-color-loss);
+    clip-path: polygon(50% 0%, 0% 100%, 100% 100%);
+    width: 14px;
+    height: 12px;
+}
+
+.last-updated {
+    font-size: var(--mtlt-font-size-xsmall);
+    font-weight: 400;
+    font-style: italic;
+    color: #FFFFFF !important;      /* Force white text even if dimmed */
+    opacity: 1 !important;          /* Ensure full opacity */
+}
+
+/* Shared base styling for all three header action buttons.
+   Explicit color and background ensure they are always visible. */
+.refresh-btn,
+.clear-cache-btn,
+.pin-btn {
+    color: rgba(255, 255, 255, 0.8);
+    font-size: 16px; /* Increased font-size for visibility */
+    padding: 5px;
+    background: rgba(255, 255, 255, 0.12);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    cursor: pointer;
+    margin-left: 10px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    outline: none;
+    width: 30px;
+    height: 30px;
+    box-sizing: border-box;
+}
+
+/* Bright class for maximum visibility */
+.bright {
+    opacity: 1.0 !important;
+    color: #ffffff !important;
+}
+
+/* Shape-based differentiation */
+.refresh-btn {
+    border-radius: 50%;
+    border-style: solid;
+    background-color: rgba(0, 150, 255, 0.15); /* Slight blue tint */
+}
+
+.clear-cache-btn {
+    border-radius: 0;
+    border-style: dashed;
+    background-color: rgba(255, 100, 100, 0.15); /* Slight red tint */
+}
+
+.pin-btn {
+    transform: rotate(45deg);
+    border-style: solid;
+    background-color: rgba(255, 200, 0, 0.15); /* Slight gold tint */
+}
+
+/* Counter-rotate the icon inside the diamond pin button */
+.pin-btn i {
+    transform: rotate(-45deg);
+    transition: transform 0.25s ease;
+}
+
+/* Interaction Enhancement */
+.refresh-btn:hover {
+    transform: scale(1.2);
+    background: rgba(0, 150, 255, 0.3) !important;
+    border-color: #0096ff;
+    z-index: 10;
+}
+
+.clear-cache-btn:hover {
+    transform: scale(1.2);
+    background: rgba(255, 100, 100, 0.3) !important;
+    border-color: #ff6464;
+    z-index: 10;
+}
+
+.pin-btn:hover {
+    transform: rotate(45deg) scale(1.2);
+    background: rgba(255, 200, 0, 0.3) !important;
+    border-color: #ffc800;
+    z-index: 10;
+}
+
+/* Press effect */
+.refresh-btn:active,
+.clear-cache-btn:active,
+.pin-btn:active {
+    transform: scale(0.9);
+}
+
+.pin-btn:active {
+    transform: rotate(45deg) scale(0.9);
+}
+
+/* Pin active state: fills and thickens border */
+.pin-btn.active {
+    background: #ffffff !important;
+    border-width: 3px;
+    border-color: #ffffff !important;
+}
+
+.pin-btn.active i {
+    color: #222 !important;
+}
+
+/* Spin animations for icons */
+.refresh-btn i.fa-spin,
+.clear-cache-btn i.fa-spin {
+    color: #ffffff !important;
+}
+
+
+/* League tabs wrapper for horizontal scroll indicators */
+.league-tabs-wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+    width: 100%;
+    margin-bottom: 5px;
+}
+
+/* League buttons container.
+   When more leagues are configured than fit on screen the container
+   scrolls horizontally.  A thin styled scrollbar is always shown so
+   the user knows more content is available without needing to hover. */
+.league-buttons-container {
+    display: flex;
+    gap: 5px;
+    overflow-x: auto;
+    overflow-y: hidden;
+    padding: 5px 0 7px 0; /* extra bottom padding gives the scrollbar room */
+    scrollbar-width: thin; /* Firefox: show a thin scrollbar */
+    scrollbar-color: rgba(255, 255, 255, 0.35) rgba(255, 255, 255, 0.07);
+    -webkit-overflow-scrolling: touch;
+    width: 100%;
+    scroll-behavior: smooth;
+}
+
+/* Thin horizontal scrollbar for Chrome, Safari, and Opera */
+.league-buttons-container::-webkit-scrollbar {
+    height: 3px;
+    display: block;
+}
+
+.league-buttons-container::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.07);
+    border-radius: 2px;
+}
+
+.league-buttons-container::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.35);
+    border-radius: 2px;
+    transition: background 0.2s ease;
+}
+
+.league-buttons-container::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.65);
+}
+
+/* Scroll indicator arrow buttons (previous / next).
+   Positioned absolutely inside the .league-tabs-wrapper (which is
+   position: relative).  They start hidden and fade in only when
+   the container actually has hidden content in that direction.
+   Positioned at the inner edges (not negative offsets) so they
+   remain visible even when the module is flush with the screen edge. */
+.tab-scroll-btn {
+    background: rgba(30, 30, 30, 0.75);
+    border: 1px solid rgba(255, 255, 255, 0.25);
+    color: #fff;
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: var(--mtlt-font-size-mini);
+    z-index: 10;
+    transition: opacity 0.2s ease, background 0.2s ease, transform 0.15s ease;
+    opacity: 0;
+    visibility: hidden;
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+}
+
+.tab-scroll-btn.visible {
+    opacity: 1;
+    visibility: visible;
+}
+
+.tab-scroll-btn:hover {
+    background: rgba(0, 0, 0, 0.9);
+    border-color: rgba(255, 255, 255, 0.5);
+    transform: translateY(-50%) scale(1.15);
+}
+
+/* Keep arrows inside the wrapper boundary (not at negative offsets) */
+.tab-scroll-btn.prev {
+    left: 2px;
+}
+
+.tab-scroll-btn.next {
+    right: 2px;
+}
+
+/* League button styling */
+.league-btn {
+    background: rgba(255, 255, 255, 0.1);
+    border: none;
+    color: #ccc;
+    padding: 4px 8px;
+    font-size: var(--mtlt-font-size-small);
+    border-radius: 3px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-weight: 500;
+    opacity: 0.7; /* Inactive buttons have reduced opacity */
+}
+
+.league-btn:hover {
+    background: rgba(255, 255, 255, 0.2);
+    transform: scale(1.05);
+}
+
+.league-btn.active {
+    color: #fff;
+    font-weight: bold;
+    box-shadow: 0 0 8px rgba(255, 255, 255, 0.3);
+    opacity: 1.0; /* Active buttons fully opaque */
+    /* background-color: #999999 !important; /* Active buttons use light green background - !important overrides league-specific colors */
+}
+
+/* Flag image styling - replaces emoji flags with actual PNG images */
+.league-btn .flag-image {
+    width: 16px;
+    height: 12px;
+    display: inline-block;
+    object-fit: contain;
+    margin: 0;
+    padding: 0;
+    border-radius: 2px;
+    pointer-events: none; /* Ensure clicks pass through to the button */
+}
+
+/* 50% size increase for World Cup and UEFA competition tab images (P-08) */
+.league-btn[data-league="WORLD_CUP_2026"] .flag-image,
+.league-btn[data-league="UEFA_CHAMPIONS_LEAGUE"] .flag-image,
+.league-btn[data-league="UEFA_EUROPA_LEAGUE"] .flag-image,
+.league-btn[data-league="UEFA_EUROPA_CONFERENCE_LEAGUE"] .flag-image,
+.league-btn[data-league="UCL"] .flag-image,
+.league-btn[data-league="UEL"] .flag-image,
+.league-btn[data-league="ECL"] .flag-image {
+    width: 32px;
+    height: 24px;
+}
+
+/* Fallback for emoji flags (if image fails to load) */
+.league-btn .flag-emoji {
+    font-size: var(--mtlt-font-size-button);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    line-height: 1;
+    pointer-events: none; /* Ensure clicks pass through to the button */
+}
+
+/* 50% size increase for World Cup and UEFA competition tab emojis (P-08) */
+.league-btn[data-league="WORLD_CUP_2026"] .flag-emoji,
+.league-btn[data-league="UEFA_CHAMPIONS_LEAGUE"] .flag-emoji,
+.league-btn[data-league="UEFA_EUROPA_LEAGUE"] .flag-emoji,
+.league-btn[data-league="UEFA_EUROPA_CONFERENCE_LEAGUE"] .flag-emoji,
+.league-btn[data-league="UCL"] .flag-emoji,
+.league-btn[data-league="UEL"] .flag-emoji,
+.league-btn[data-league="ECL"] .flag-emoji {
+    font-size: var(--mtlt-font-size-icon-lg);
+}
+
+/* League abbreviation text */
+.league-btn .league-abbr {
+    font-size: var(--mtlt-font-size-xsmall);
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    display: inline-block;
+    pointer-events: none; /* Ensure clicks pass through to the button */
+}
+
+/* Back to top button control container - sticky at bottom of scroll area */
+.back-to-top-controls {
+    flex: 0 0 auto;                 /* Don't grow or shrink */
+    position: sticky;               /* Ensure it sticks to bottom of module */
+    bottom: 0;
+    display: none !important;       /* Hidden by default; shown only when scrolled down */
+    justify-content: center !important; /* Center items */
+    align-items: center !important;
+    padding: 4px 8px !important;    /* Reduced padding */
+    background: rgba(0, 0, 0, 0.8) !important; /* Darker background for readability */
+    border-top: 1px solid rgba(255, 255, 255, 0.1) !important; /* subtle top border */
+    z-index: 50 !important;         /* above table content, below header */
+    transition: opacity 0.2s ease-in-out !important;
+    pointer-events: auto !important; /* always clickable */
+    color: #FFFFFF !important;      /* Force white text */
+    gap: 10px;                      /* Space between text and button */
+}
+
+/* Show footer when user has scrolled down into the overflow area */
+.back-to-top-controls.visible {
+    display: flex !important;
+}
+
+/* Back to top button - styled to match original but positioned within scroll container */
+.back-to-top-btn {
+    background: #018749;            /* Celtic green */
+    color: #fff;
+    border: 1px solid rgba(255, 255, 255, 0.25);
+    border-radius: 4px;
+    padding: 6px 8px;
+    font-size: var(--mtlt-font-size-badge);
+    line-height: 1.0;
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 3px 8px rgba(0, 0, 0, 0.4);
+}
+
+.back-to-top-btn:hover {
+    opacity: 1;                     /* full opacity on hover */
+    transform: translateY(-3px);    /* lift effect on hover */
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5);
+}
+
+/* Content container for scrollable table */
+.league-content-container {
+    max-height: var(--mtlt-max-table-height, 450px); /* Limited to 450px to show 12 teams */
+    max-width: 575px; /* Added max-width to prevent container from expanding too much */
+    overflow-y: hidden; /* Prevent double scrollbars - scrolling happens in league-body-scroll */
+    overflow-x: hidden; /* Remove horizontal scrollbar */
+    position: relative;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(255, 255, 255, 0.2) rgba(0, 0, 0, 0.1);
+    scroll-behavior: smooth; /* Enable smooth scrolling */
+    display: flex;
+    flex-direction: column;
+    animation: mtlt-fade-in var(--mtlt-transition-speed) ease-out;
+    contain: content; /* P-06: Optimize browser reflows/repaints */
+}
+
+@keyframes mtlt-fade-in {
+    from { opacity: 0; transform: translateY(5px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* Table header styling */
+.spfl-header {
+    font-size: var(--mtlt-font-size-header);
+    font-weight: bold;
+    text-align: left;
+    margin-bottom: 10px;
+    color: #ccc;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    border-bottom: 2px solid #555;
+    padding-bottom: 5px;
+}
+
+/* Table body styling */
+.league-split-separator {
+    background: rgba(255, 255, 255, 0.05);
+    color: #FFD700;
+    font-weight: bold;
+    text-transform: uppercase;
+    text-align: center;
+    padding: 6px 0;
+    margin: 10px 0 5px 0;
+    font-size: var(--mtlt-font-size-xsmall);
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    letter-spacing: 2px;
+}
+
+.spfl-table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0 2px;
+    table-layout: auto; /* Allow columns to fit content */
+}
+
+.spfl-table th {
+    font-size: var(--mtlt-font-size-small);
+    color: #888;
+    text-transform: uppercase;
+    font-weight: bold;
+    padding: 8px 4px;
+    border-bottom: 1px solid #333;
+}
+
+.spfl-table td {
+    padding: 4px 2px;
+    vertical-align: middle;
+    height: 32px;
+    box-sizing: border-box;
+}
+
+/* Fixed position/team column alignment */
+.pos-cell {
+    text-align: center;
+    width: 25px;
+    font-weight: bold;
+    color: #aaa;
+}
+
+.team-cell {
+    text-align: left;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    min-width: 120px;
+}
+
+/* Team logo styling */
+.team-logo {
+    width: 18px;
+    height: 18px;
+    margin-right: 4px;
+    vertical-align: middle;
+    object-fit: contain;
+}
+
+/* Stats columns */
+.played-cell, .won-cell, .drawn-cell, .lost-cell, 
+.gf-cell, .ga-cell, .gd-cell, .points-cell {
+    text-align: center;
+    width: 30px;
+}
+
+.gd-cell.positive { color: #00ff00; }
+.gd-cell.negative { color: #ff0000; }
+.gd-cell.neutral { color: #aaa; }
+
+.points-cell {
+    font-weight: bold;
+    color: #fff;
+}
+
+/* Form tokens */
+.form-cell {
+    text-align: left;
+    width: 100px;
+    padding-left: 10px !important;
+}
+
+.form-tokens {
+    display: flex;
+    gap: 8px;
+    justify-content: center;
+}
+
+.form-tokens span {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 18px;
+    height: 18px; /* Square tokens for better vertical alignment */
+    box-sizing: border-box; /* Ensure border doesn't change dimensions */
+    padding: 0;
+    border-radius: 2px;
+    font-size: var(--mtlt-font-size-xsmall);
+    font-weight: bold;
+    color: #fff;
+    line-height: 1;
+}
+
+.form-win { 
+    background-color: #018749; 
+    border: 1px solid #016a3a;
+    color: #fff;
+}
+.form-draw { 
+    background-color: #666; 
+    border: 1px solid #444;
+    color: #fff;
+}
+.form-loss { 
+    background-color: #ff3333; 
+    border: 1px solid #cc0000;
+    color: #fff;
+}
+.form-missing { color: #555; background-color: transparent; }
+
+/* Tooltip styling for form tokens */
+.form-tokens .has-tooltip {
+    position: relative;
+    cursor: help;
+}
+
+.form-tokens .has-tooltip::after {
+    content: attr(data-tooltip);
+    position: absolute;
+    bottom: 125%;
+    left: 50%;
+    transform: translateX(-50%);
+    background-color: rgba(0, 0, 0, 0.9);
+    color: #fff;
+    padding: 5px 8px;
+    border-radius: 4px;
+    font-size: var(--mtlt-font-size-legend);
+    white-space: nowrap;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.3s;
+    z-index: 100;
+    pointer-events: none;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    box-shadow: 0 2px 5px rgba(0,0,0,0.5);
+}
+
+.form-tokens .has-tooltip:hover::after {
+    opacity: 1;
+    visibility: visible;
+}
+
+/* Tooltip arrow */
+.form-tokens .has-tooltip::before {
+    content: "";
+    position: absolute;
+    top: -5px;
+    left: 50%;
+    transform: translateX(-50%);
+    border-width: 5px;
+    border-style: solid;
+    border-color: rgba(0, 0, 0, 0.9) transparent transparent transparent;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.3s;
+    z-index: 100;
+    pointer-events: none;
+}
+
+.form-tokens .has-tooltip:hover::before {
+    opacity: 1;
+    visibility: visible;
+}
+
+/* Scroll button styling */
+.scroll-controls {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    padding: 5px;
+    margin-top: 5px;
+}
+
+.scroll-btn {
+    background: #333;
+    border: none;
+    color: #fff;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: var(--mtlt-font-size-small-fixed);
+}
+
+
+
+/* Stale Data Warning Styling */
+.stale-data-warning {
+    color: #ff9800; /* Orange color for warning */
+    margin-right: 5px;
+    cursor: help;
+    animation: mtlt-pulse 2s infinite;
+}
+
+@keyframes mtlt-pulse {
+    0% { opacity: 1; }
+    50% { opacity: 0.5; }
+    100% { opacity: 1; }
+}
+
+/* Fade in for sub-content */
+.sub-content-fade-in {
+    animation: mtlt-fade-in 0.5s ease-out;
+}
+
+/* Scroll Control Buttons (Header/Footer) */
+.scroll-btn-container {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+.scroll-nav-btn {
+    background: rgba(255, 255, 255, 0.1);
+    border: none;
+    color: #ccc;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: var(--mtlt-font-size-legend);
+    transition: all 0.2s ease;
+}
+
+.scroll-nav-btn:hover:not(:disabled) {
+    background: rgba(255, 255, 255, 0.2);
+    color: #fff;
+}
+
+.scroll-nav-btn:disabled {
+    opacity: 0.3;
+    cursor: default;
+}
+/* Error and Retry State Styling */
+.error-state, .retry-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 30px 20px;
+    gap: 12px;
+    text-align: center;
+    width: 100%;
+}
+
+.error-icon {
+    font-size: var(--mtlt-font-size-icon-lg);
+    color: #ff4444;
+}
+
+.retry-icon {
+    font-size: var(--mtlt-font-size-icon-md);
+    color: #018749;
+}
+
+.retry-btn-error {
+    background: #444;
+    color: #fff;
+    border: 1px solid #666;
+    border-radius: 4px;
+    padding: 6px 12px;
+    font-size: var(--mtlt-font-size-badge);
+    cursor: pointer;
+    margin-top: 8px;
+    transition: all 0.3s ease;
+}
+
+.retry-btn-error:hover {
+    background: #018749;
+    border-color: #01a85c;
+}
+
+/* Hide/Show toggle icon - positioned at bottom left of module */
+.LeagueTable-toggle-icon {
+  position: relative; /* Changed from absolute to work within source footer flexbox */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent; /* Changed from #000 */
+  color: #888; /* Changed from #fff */
+  border: none; /* Changed from 0px solid #018749 */
+  border-radius: 0; /* Square shape */
+  font-size: var(--mtlt-font-size-medium); /* Increased from 10px */
+  cursor: pointer;
+  opacity: 1.0;
+  visibility: hidden;
+  pointer-events: none;
+  transition: opacity 0.2s ease, background 0.2s ease, transform 0.3s ease, color 0.2s ease;
+  z-index: 100;
+  padding: 0;
+  width: 24px; /* Square size slightly bigger than arrow */
+  height: 24px;
+  outline: none;
+  margin-left: 10px;
+}
+
+/* Visible when content is hidden OR when scrolling */
+.LeagueTable-toggle-icon.visible {
+  opacity: 1.0; /* Increased visibility */
+  visibility: visible;
+  pointer-events: auto;
+}
+
+/* Center at bottom middle when table is hidden */
+.content-hidden {
+  min-height: 40px;
+}
+
+.LeagueTable-toggle-icon:hover {
+  opacity: 1;
+  background: #018749;
+  color: #fff;
+}
+
+.LeagueTable-toggle-icon:active {
+  transform: scale(0.95);
+}
+
+.toggle-label {
+    margin-left: 6px;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+/* League Table Sticky Header & Scrollable Body */
+.league-table-wrapper-v2 {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    max-height: var(--mtlt-max-table-height, 490px); /* Changed from 750px to match overall module height default */
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+.league-header-sticky {
+    flex: 0 0 auto;
+    background: rgba(34, 34, 34, 0.95);
+    z-index: 10;
+    border-bottom: 2px solid #555;
+    overflow-y: scroll; /* Match body scrollbar gutter */
+    scrollbar-width: thin;
+    scrollbar-color: rgba(255, 255, 255, 0.2) transparent;
+}
+
+.league-header-sticky::-webkit-scrollbar {
+    width: 6px;
+    background: transparent;
+}
+
+.league-header-sticky::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.2);
+}
+
+.league-body-scroll {
+    flex: 1 1 auto;
+    overflow-y: auto;
+    overflow-x: hidden; /* Remove horizontal scrollbar */
+    scrollbar-width: thin;
+    scrollbar-color: rgba(255, 255, 255, 0.2) transparent;
+}
+
+.league-body-scroll::-webkit-scrollbar {
+    width: 6px;
+}
+
+.league-body-scroll::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.league-body-scroll::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.2); /* Visible with 0.2 transparency */
+    border-radius: 3px;
+}
+
+.wc-sticky-top {
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    background: var(--theme-bg-primary, #000);
+    padding-bottom: 5px;
+}
+
+/* ==========================================
+   HIGH CONTRAST MODE SUPPORT (A11Y-03)
+   WCAG 2.1 Level AAA: 7:1 contrast ratio
+   ========================================== */
+
+@media (prefers-contrast: high) {
+    :root {
+        /* High contrast color palette - 7:1 minimum contrast */
+        --hc-text-primary: #FFFFFF;
+        --hc-text-secondary: #FFFF00;  /* Yellow for emphasis */
+        --hc-background: #000000;
+        --hc-border: #FFFFFF;
+        --hc-accent: #00FF00;  /* Green for positive indicators */
+        --hc-alert: #FF0000;   /* Red for negative indicators */
+        --hc-neutral: #CCCCCC;
+    }
+
+    .spfl-league-table {
+        background-color: var(--hc-background);
+        color: var(--hc-text-primary);
+        border: 2px solid var(--hc-border);
+    }
+
+    /* Headers and titles */
+    .league-title,
+    .league-header-container,
+    .wc-subtabs-container,
+    .league-buttons-container {
+        color: var(--hc-text-primary);
+        border-color: var(--hc-border);
+    }
+
+    /* Tables */
+    .standings-table,
+    .team-row,
+    .table-header-row {
+        border: 2px solid var(--hc-border);
+        background-color: var(--hc-background);
+    }
+
+    .team-row:nth-child(even) {
+        background-color: #111111;
+    }
+
+    .team-row:hover {
+        background-color: #222222;
+        border: 2px solid var(--hc-text-secondary);
+    }
+
+    /* Table cells */
+    .team-row td,
+    .table-header-row th {
+        color: var(--hc-text-primary);
+        border: 1px solid var(--hc-border);
+    }
+
+    /* Form indicators with high contrast */
+    .form-token {
+        border: 2px solid var(--hc-border);
+        font-weight: bold;
+    }
+
+    .form-win,
+    .form-token.W {
+        background-color: var(--hc-accent) !important;
+        color: var(--hc-background) !important;
+    }
+
+    .form-loss,
+    .form-token.L {
+        background-color: var(--hc-alert) !important;
+        color: var(--hc-text-primary) !important;
+    }
+
+    .form-draw,
+    .form-token.D {
+        background-color: var(--hc-text-secondary) !important;
+        color: var(--hc-background) !important;
+    }
+
+    /* Buttons */
+    button,
+    .league-btn,
+    .wc-btn,
+    .refresh-btn,
+    .pin-btn,
+    .clear-cache-btn {
+        background-color: var(--hc-background);
+        color: var(--hc-text-primary);
+        border: 2px solid var(--hc-border);
+    }
+
+    button:hover,
+    .league-btn:hover,
+    .wc-btn:hover {
+        background-color: var(--hc-text-primary);
+        color: var(--hc-background);
+    }
+
+    button.active,
+    .league-btn.active,
+    .wc-btn.active {
+        background-color: var(--hc-text-secondary);
+        color: var(--hc-background);
+        border: 3px solid var(--hc-border);
+    }
+
+    /* Live indicators */
+    .live-indicator,
+    .live-tag,
+    .fixture-status-tag-v2.live-tag {
+        background-color: var(--hc-alert) !important;
+        color: var(--hc-text-primary) !important;
+        border: 2px solid var(--hc-border);
+    }
+
+    /* Position indicators */
+    .position-change-up {
+        color: var(--hc-accent);
+    }
+
+    .position-change-down {
+        color: var(--hc-alert);
+    }
+
+    /* Stale data warning */
+    .stale-badge,
+    .stale-warning {
+        background-color: var(--hc-text-secondary);
+        color: var(--hc-background);
+        border: 2px solid var(--hc-border);
+    }
+
+    /* Loading and error states */
+    .loading-state,
+    .error-state,
+    .retry-state {
+        color: var(--hc-text-primary);
+        background-color: var(--hc-background);
+        border: 2px solid var(--hc-border);
+    }
+
+    .error-icon {
+        color: var(--hc-alert);
+    }
+
+    /* Ensure all text meets contrast requirements */
+    .dimmed {
+        color: var(--hc-neutral) !important;
+    }
+
+    /* Team logos - add border for visibility */
+    .team-logo,
+    .fixture-logo,
+    .fixture-logo-v2 {
+        border: 1px solid var(--hc-border);
+        background-color: var(--hc-text-primary);
+        padding: 2px;
+    }
+
+    /* Highlighted teams */
+    .highlighted-team {
+        background-color: #1a1a1a;
+        border: 3px solid var(--hc-text-secondary);
+    }
+
+    /* Position-based coloring with high contrast */
+    .first-place {
+        background-color: #003300;
+        border-left: 4px solid var(--hc-accent);
+    }
+
+    .uefa-zone {
+        background-color: #000033;
+        border-left: 4px solid #0066FF;
+    }
+
+    .relegation-zone {
+        background-color: #330000;
+        border-left: 4px solid var(--hc-alert);
+    }
+}
+
+/* Optional: Support for Windows High Contrast Mode */
+@media (forced-colors: active) {
+    .spfl-league-table {
+        forced-color-adjust: none;
+        border: 2px solid CanvasText;
+    }
+
+    .team-row,
+    button {
+        border: 1px solid CanvasText;
+    }
+
+    .form-token {
+        border: 2px solid CanvasText;
+        font-weight: bold;
+    }
+}
+
+/* ==========================================
+   SKELETON LOADING STATES (DES-05)
+   Improves perceived performance
+   ========================================== */
+
+.skeleton-loader {
+    width: 100%;
+    padding: 10px 0;
+}
+
+.skeleton-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.skeleton-row {
+    display: flex;
+    gap: 10px;
+    padding: 8px 5px;
+    align-items: center;
+}
+
+.skeleton-cell {
+    background: linear-gradient(
+        90deg,
+        rgba(255, 255, 255, 0.05) 0%,
+        rgba(255, 255, 255, 0.15) 50%,
+        rgba(255, 255, 255, 0.05) 100%
+    );
+    background-size: 200% 100%;
+    animation: shimmer 1.5s infinite;
+    border-radius: 4px;
+    height: 16px;
+}
+
+/* Different widths for different columns */
+.skeleton-cell.position {
+    width: 30px;
+}
+
+.skeleton-cell.logo {
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+}
+
+.skeleton-cell.team {
+    flex: 1;
+    max-width: 150px;
+}
+
+.skeleton-cell.stat {
+    width: 30px;
+}
+
+.skeleton-cell.form {
+    width: 120px;
+}
+
+@keyframes shimmer {
+    0% {
+        background-position: -200% 0;
+    }
+    100% {
+        background-position: 200% 0;
+    }
+}
+
+/* Skeleton header */
+.skeleton-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+}
+
+.skeleton-title {
+    background: linear-gradient(
+        90deg,
+        rgba(255, 255, 255, 0.1) 0%,
+        rgba(255, 255, 255, 0.2) 50%,
+        rgba(255, 255, 255, 0.1) 100%
+    );
+    background-size: 200% 100%;
+    animation: shimmer 1.5s infinite;
+    width: 200px;
+    height: 24px;
+    border-radius: 4px;
+}
+
+.skeleton-meta {
+    background: linear-gradient(
+        90deg,
+        rgba(255, 255, 255, 0.05) 0%,
+        rgba(255, 255, 255, 0.15) 50%,
+        rgba(255, 255, 255, 0.05) 100%
+    );
+    background-size: 200% 100%;
+    animation: shimmer 1.5s infinite;
+    width: 120px;
+    height: 14px;
+    border-radius: 4px;
+}
+
+/* Fade transition from skeleton to real content */
+.content-fade-in {
+    animation: fadeIn 0.5s ease-in;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}
+
+/* Ensure no layout shift */
+.skeleton-loader {
+    min-height: 400px;
+}
+
+/* ==========================================
+   DES-02: FULL LIGHT/DARK MODE SUPPORT
+   Comprehensive theme support with CSS variables
+   ========================================== */
+
+/* CSS Variables for Light Theme */
+.spfl-league-table.theme-light {
+    /* Base colors */
+    --theme-bg-primary: #f5f5f5;
+    --theme-bg-secondary: #ffffff;
+    --theme-bg-hover: #e8e8e8;
+    --theme-text-primary: #222222;
+    --theme-text-secondary: #666666;
+    --theme-text-muted: #999999;
+    --theme-border: #cccccc;
+    --theme-border-light: #e0e0e0;
+    
+    /* Semantic colors */
+    --theme-accent: #0066cc;
+    --theme-success: #28a745;
+    --theme-warning: #ffc107;
+    --theme-danger: #dc3545;
+    --theme-info: #17a2b8;
+    
+    /* Position indicators */
+    --theme-first-place: rgba(212, 175, 55, 0.2); /* Gold tint */
+    --theme-uefa-zone: rgba(0, 123, 255, 0.15); /* Blue tint */
+    --theme-relegation-zone: rgba(220, 53, 69, 0.15); /* Red tint */
+    
+    /* Form indicators */
+    --theme-form-win: #28a745;
+    --theme-form-draw: #ffc107;
+    --theme-form-loss: #dc3545;
+    
+    /* Buttons */
+    --theme-button-bg: #ffffff;
+    --theme-button-text: #333333;
+    --theme-button-hover-bg: #0066cc;
+    --theme-button-hover-text: #ffffff;
+    --theme-button-active-bg: #0052a3;
+    
+    /* Live indicators */
+    --theme-live-bg: #dc3545;
+    --theme-live-text: #ffffff;
+    
+    /* Stale data warning */
+    --theme-stale-fresh: #28a745;
+    --theme-stale-moderate: #ffc107;
+    --theme-stale-old: #dc3545;
+}
+
+/* Apply light theme colors */
+.spfl-league-table.theme-light,
+@media (prefers-color-scheme: light) {
+    .spfl-league-table.theme-auto {
+        --theme-bg-primary: #f5f5f5;
+        --theme-bg-secondary: #ffffff;
+        --theme-bg-hover: #e8e8e8;
+        --theme-text-primary: #222222;
+        --theme-text-secondary: #666666;
+        --theme-text-muted: #999999;
+        --theme-border: #cccccc;
+        --theme-border-light: #e0e0e0;
+        --theme-accent: #0066cc;
+        --theme-success: #28a745;
+        --theme-warning: #ffc107;
+        --theme-danger: #dc3545;
+        --theme-info: #17a2b8;
+        --theme-first-place: rgba(212, 175, 55, 0.2);
+        --theme-uefa-zone: rgba(0, 123, 255, 0.15);
+        --theme-relegation-zone: rgba(220, 53, 69, 0.15);
+        --theme-form-win: #28a745;
+        --theme-form-draw: #ffc107;
+        --theme-form-loss: #dc3545;
+        --theme-button-bg: #ffffff;
+        --theme-button-text: #333333;
+        --theme-button-hover-bg: #0066cc;
+        --theme-button-hover-text: #ffffff;
+        --theme-button-active-bg: #0052a3;
+        --theme-live-bg: #dc3545;
+        --theme-live-text: #ffffff;
+        --theme-stale-fresh: #28a745;
+        --theme-stale-moderate: #ffc107;
+        --theme-stale-old: #dc3545;
+        background-color: var(--theme-bg-primary);
+        color: var(--theme-text-primary);
+    }
+}
+.spfl-league-table.theme-light {
+    background-color: var(--theme-bg-primary);
+    color: var(--theme-text-primary);
+}
+
+.spfl-league-table.theme-light .standings-table {
+    background-color: var(--theme-bg-secondary);
+    border-color: var(--theme-border);
+}
+
+.spfl-league-table.theme-light .team-row {
+    color: var(--theme-text-primary);
+    border-bottom-color: var(--theme-border-light);
+}
+
+.spfl-league-table.theme-light .team-row:hover {
+    background-color: var(--theme-bg-hover);
+}
+
+.spfl-league-table.theme-light .table-header-row th {
+    color: var(--theme-text-secondary);
+    border-bottom-color: var(--theme-border);
+}
+
+.spfl-league-table.theme-light .league-btn {
+    background-color: var(--theme-button-bg);
+    color: var(--theme-button-text);
+    border-color: var(--theme-border);
+}
+
+.spfl-league-table.theme-light .league-btn:hover {
+    background-color: var(--theme-button-hover-bg);
+    color: var(--theme-button-hover-text);
+}
+
+.spfl-league-table.theme-light .league-btn.active {
+    background-color: var(--theme-button-active-bg);
+    color: var(--theme-button-hover-text);
+}
+
+/* CSS Variables for Dark Theme */
+.spfl-league-table.theme-dark,
+.spfl-league-table.theme-auto {
+    /* Base colors */
+    --theme-bg-primary: #000000;
+    --theme-bg-secondary: #111111;
+    --theme-bg-hover: #222222;
+    --theme-text-primary: #ffffff;
+    --theme-text-secondary: #aaaaaa;
+    --theme-text-muted: #666666;
+    --theme-border: #333333;
+    --theme-border-light: #222222;
+    
+    /* Semantic colors */
+    --theme-accent: #4d94ff;
+    --theme-success: #5cb85c;
+    --theme-warning: #f0ad4e;
+    --theme-danger: #d9534f;
+    --theme-info: #5bc0de;
+    
+    /* Position indicators */
+    --theme-first-place: rgba(255, 215, 0, 0.2); /* Gold tint */
+    --theme-uefa-zone: rgba(77, 148, 255, 0.2); /* Blue tint */
+    --theme-relegation-zone: rgba(217, 83, 79, 0.2); /* Red tint */
+    
+    /* Form indicators */
+    --theme-form-win: #5cb85c;
+    --theme-form-draw: #f0ad4e;
+    --theme-form-loss: #d9534f;
+    
+    /* Buttons */
+    --theme-button-bg: #3a3a3a;
+    --theme-button-text: #f0f0f0;
+    --theme-button-hover-bg: #4d94ff;
+    --theme-button-hover-text: #ffffff;
+    --theme-button-active-bg: #3a7bd5;
+    
+    /* Live indicators */
+    --theme-live-bg: #d9534f;
+    --theme-live-text: #ffffff;
+    
+    /* Stale data warning */
+    --theme-stale-fresh: #5cb85c;
+    --theme-stale-moderate: #f0ad4e;
+    --theme-stale-old: #d9534f;
+    
+    background-color: var(--theme-bg-primary);
+    color: var(--theme-text-primary);
+}
+
+/* Apply dark theme colors */
+.spfl-league-table.theme-dark .standings-table,
+.spfl-league-table.theme-auto .standings-table {
+    background-color: var(--theme-bg-secondary);
+    border-color: var(--theme-border);
+}
+
+.spfl-league-table.theme-dark .team-row,
+.spfl-league-table.theme-auto .team-row {
+    color: var(--theme-text-primary);
+    border-bottom-color: var(--theme-border-light);
+}
+
+.spfl-league-table.theme-dark .team-row:hover,
+.spfl-league-table.theme-auto .team-row:hover {
+    background-color: var(--theme-bg-hover);
+}
+
+.spfl-league-table.theme-dark .table-header-row th,
+.spfl-league-table.theme-auto .table-header-row th {
+    color: var(--theme-text-secondary);
+    border-bottom-color: var(--theme-border);
+}
+
+.spfl-league-table.theme-dark .league-btn,
+.spfl-league-table.theme-auto .league-btn {
+    background-color: var(--theme-button-bg);
+    color: var(--theme-button-text);
+    border-color: var(--theme-border);
+}
+
+.spfl-league-table.theme-dark .league-btn:hover,
+.spfl-league-table.theme-auto .league-btn:hover {
+    background-color: var(--theme-button-hover-bg);
+    color: var(--theme-button-hover-text);
+}
+
+.spfl-league-table.theme-dark .league-btn.active,
+.spfl-league-table.theme-auto .league-btn.active {
+    background-color: var(--theme-button-active-bg);
+    color: var(--theme-button-hover-text);
+}
+
+/* Auto theme - respects system preference */
+@media (prefers-color-scheme: dark) {
+    .spfl-league-table.theme-auto {
+        /* Inherit dark theme variables */
+        --theme-bg-primary: #1a1a1a;
+        --theme-bg-secondary: #2d2d2d;
+        --theme-bg-hover: #3a3a3a;
+        --theme-text-primary: #f0f0f0;
+        --theme-text-secondary: #b0b0b0;
+        --theme-text-muted: #808080;
+        --theme-border: #444444;
+        --theme-border-light: #3a3a3a;
+        --theme-accent: #4d94ff;
+        --theme-success: #5cb85c;
+        --theme-warning: #f0ad4e;
+        --theme-danger: #d9534f;
+        --theme-form-win: #5cb85c;
+        --theme-form-draw: #f0ad4e;
+        --theme-form-loss: #d9534f;
+        --theme-button-bg: #3a3a3a;
+        --theme-button-text: #f0f0f0;
+        --theme-button-hover-bg: #4d94ff;
+        --theme-button-active-bg: #3a7bd5;
+        
+        background-color: var(--theme-bg-primary);
+        color: var(--theme-text-primary);
+    }
+}
+/* ==========================================
+   UX-07: OFFLINE MODE INDICATOR
+   Display when internet connection is lost
+   ========================================== */
+
+.offline-indicator {
+    background: linear-gradient(135deg, #ffa500 0%, #ff6b00 100%);
+    color: #fff;
+    padding: 8px 12px;
+    border-radius: 4px;
+    margin-bottom: 10px;
+    font-size: var(--mtlt-font-size-small);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    animation: pulse 2s ease-in-out infinite;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+@keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.7; }
+}
+
+.offline-indicator i {
+    font-size: var(--mtlt-font-size-medium);
+}
+
+/* ==========================================
+   A11Y-09: REDUCED MOTION SUPPORT
+   Respect user's motion preferences
+   ========================================== */
+
+@media (prefers-reduced-motion: reduce) {
+    * {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+        scroll-behavior: auto !important;
+    }
+    
+    /* Disable animations */
+    .offline-indicator {
+        animation: none;
+    }
+    
+    .skeleton-shimmer::before {
+        animation: none;
+    }
+    
+    /* Disable transforms */
+    .refresh-btn:hover {
+        transform: none;
+    }
+    
+    .league-button:hover {
+        transform: none;
+    }
+    
+    /* Disable transitions */
+    .team-row,
+    .fixture-row,
+    .league-button,
+    .refresh-btn,
+    .spfl-league-table {
+        transition: none !important;
+    }
+}
+/* ==========================================
+   UX-04: CONFIGURABLE TABLE DENSITY
+   Provides compact, normal, and comfortable spacing options
+   ========================================== */
+
+/* Compact density - minimal padding for maximum information density */
+.spfl-league-table.density-compact .team-row td,
+.spfl-league-table.density-compact .table-header-row th {
+    padding: 3px 2px;
+    line-height: 1.1;
+}
+
+.spfl-league-table.density-compact .team-name {
+    font-size: var(--mtlt-font-size-badge);
+}
+
+.spfl-league-table.density-compact .team-logo,
+.spfl-league-table.density-compact .fixture-logo,
+.spfl-league-table.density-compact .fixture-logo-v2 {
+    width: 16px;
+    height: 16px;
+}
+
+.spfl-league-table.density-compact .form-token {
+    width: 14px;
+    height: 14px;
+    font-size: var(--mtlt-font-size-mini);
+    margin: 0 1px;
+}
+
+.spfl-league-table.density-compact .fixture-row-v2 td {
+    padding: 4px 3px;
+}
+
+/* Normal density - default balanced spacing (already defined in base styles) */
+.spfl-league-table.density-normal .team-row td,
+.spfl-league-table.density-normal .table-header-row th {
+    padding: 6px 4px;
+}
+
+/* Comfortable density - generous padding for better readability */
+.spfl-league-table.density-comfortable .team-row td,
+.spfl-league-table.density-comfortable .table-header-row th {
+    padding: 10px 6px;
+    line-height: 1.4;
+}
+
+.spfl-league-table.density-comfortable .team-name {
+    font-size: var(--mtlt-font-size-comfortable);
+}
+
+.spfl-league-table.density-comfortable .team-logo,
+.spfl-league-table.density-comfortable .fixture-logo,
+.spfl-league-table.density-comfortable .fixture-logo-v2 {
+    width: 24px;
+    height: 24px;
+}
+
+.spfl-league-table.density-comfortable .form-token {
+    width: 20px;
+    height: 20px;
+    font-size: var(--mtlt-font-size-small-fixed);
+    margin: 0 2px;
+}
+
+.spfl-league-table.density-comfortable .fixture-row-v2 td {
+    padding: 8px 6px;
+}
+
+
+/* ==========================================
+   A11Y-10: ENHANCED FORM INDICATOR SHAPES
+   Visual differentiation beyond color
+   Active when config enhancedIndicatorShapes: true
+   ========================================== */
+
+/* Shape differentiation - scoped to enhanced mode only */
+.form-tokens--enhanced .form-win {
+    clip-path: circle(50%); /* Circular shape for wins */
+}
+
+.form-tokens--enhanced .form-draw {
+    /* Square shape (default rectangle) for draws */
+    clip-path: none;
+}
+
+.form-tokens--enhanced .form-loss {
+    clip-path: polygon(50% 0%, 100% 100%, 0% 100%); /* Triangle shape for losses */
+}
+
+/* High contrast mode patterns - enhanced mode only */
+@media (prefers-contrast: high) {
+    .form-tokens--enhanced .form-win {
+        background-image: repeating-linear-gradient(
+            45deg,
+            transparent,
+            transparent 2px,
+            rgba(255, 255, 255, 0.3) 2px,
+            rgba(255, 255, 255, 0.3) 4px
+        );
+    }
+
+    .form-tokens--enhanced .form-loss {
+        background-image: repeating-linear-gradient(
+            -45deg,
+            transparent,
+            transparent 2px,
+            rgba(255, 255, 255, 0.3) 2px,
+            rgba(255, 255, 255, 0.3) 4px
+        );
+    }
+
+    .form-tokens--enhanced .form-draw {
+        background-image: repeating-linear-gradient(
+            90deg,
+            transparent,
+            transparent 2px,
+            rgba(255, 255, 255, 0.2) 2px,
+            rgba(255, 255, 255, 0.2) 4px
+        );
+    }
+}
+
+/* ==========================================
+   FLAT FORM INDICATOR MODE
+   Active when config enhancedIndicatorShapes: false
+   No background; colored text only
+   ========================================== */
+
+.form-tokens--flat span {
+    background-color: transparent;
+    border: none;
+}
+
+.form-tokens--flat span.form-win {
+    background-color: transparent;
+    border: none;
+    color: #018749;
+}
+
+.form-tokens--flat span.form-draw {
+    background-color: transparent;
+    border: none;
+    color: #888888;
+}
+
+.form-tokens--flat span.form-loss {
+    background-color: transparent;
+    border: none;
+    color: #ff3333;
+}
+
+
+
