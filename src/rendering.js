@@ -605,16 +605,36 @@ export const rendering = {
 
 		const thead = document.createElement("thead");
 		const headerRow = document.createElement("tr");
-		headerRow.appendChild(this.createTableHeader("#", "pos-cell"));
+		
+		// Conditionally add headers based on config
+		if (this.config.showPosition !== false) {
+			headerRow.appendChild(this.createTableHeader("#", "pos-cell"));
+		}
 		headerRow.appendChild(this.createTableHeader("Team", "team-cell"));
-		headerRow.appendChild(this.createTableHeader("P", "played-cell"));
-		headerRow.appendChild(this.createTableHeader("W", "won-cell"));
-		headerRow.appendChild(this.createTableHeader("D", "drawn-cell"));
-		headerRow.appendChild(this.createTableHeader("L", "lost-cell"));
-		headerRow.appendChild(this.createTableHeader("F", "gf-cell"));
-		headerRow.appendChild(this.createTableHeader("A", "ga-cell"));
-		headerRow.appendChild(this.createTableHeader("GD", "gd-cell"));
-		headerRow.appendChild(this.createTableHeader("Pts", "points-cell"));
+		if (this.config.showPlayedGames !== false) {
+			headerRow.appendChild(this.createTableHeader("P", "played-cell"));
+		}
+		if (this.config.showWon !== false) {
+			headerRow.appendChild(this.createTableHeader("W", "won-cell"));
+		}
+		if (this.config.showDrawn !== false) {
+			headerRow.appendChild(this.createTableHeader("D", "drawn-cell"));
+		}
+		if (this.config.showLost !== false) {
+			headerRow.appendChild(this.createTableHeader("L", "lost-cell"));
+		}
+		if (this.config.showGoalsFor !== false) {
+			headerRow.appendChild(this.createTableHeader("F", "gf-cell"));
+		}
+		if (this.config.showGoalsAgainst !== false) {
+			headerRow.appendChild(this.createTableHeader("A", "ga-cell"));
+		}
+		if (this.config.showGoalDifference !== false) {
+			headerRow.appendChild(this.createTableHeader("GD", "gd-cell"));
+		}
+		if (this.config.showPoints !== false) {
+			headerRow.appendChild(this.createTableHeader("Pts", "points-cell"));
+		}
 		if (this.config.showForm) {
 			headerRow.appendChild(this.createTableHeader("Form", "form-cell"));
 		}
@@ -622,7 +642,12 @@ export const rendering = {
 		table.appendChild(thead);
 
 		const tbody = document.createElement("tbody");
-		const standings = data.standings && data.standings.table ? data.standings.table : (Array.isArray(data.standings) ? data.standings : (data.teams || []));
+		let standings = data.standings && data.standings.table ? data.standings.table : (Array.isArray(data.standings) ? data.standings : (data.teams || []));
+		
+		// Apply maxTeams limit (0 = show all)
+		if (this.config.maxTeams && this.config.maxTeams > 0) {
+			standings = standings.slice(0, this.config.maxTeams);
+		}
 		
 		standings.forEach((team, idx) => {
 			const tr = document.createElement("tr");
@@ -635,7 +660,10 @@ export const rendering = {
 				tr.classList.add("highlighted");
 			}
 
-			tr.appendChild(this.createTableCell(team.position, "pos-cell"));
+			// Conditionally add cells based on config
+			if (this.config.showPosition !== false) {
+				tr.appendChild(this.createTableCell(team.position, "pos-cell"));
+			}
 			
 			const teamCell = this.createTableCell("", "team-cell");
 			
@@ -647,7 +675,7 @@ export const rendering = {
 				logoUrl = this.file(`images/${logoUrl}`);
 			}
 
-			if (logoUrl && this.config.showTeamLogos) {
+			if (logoUrl && this.config.showTeamLogos !== false) {
 				const img = document.createElement("img");
 				img.className = "team-logo";
 				img.alt = "";
@@ -660,14 +688,30 @@ export const rendering = {
 			teamCell.appendChild(nameSpan);
 			tr.appendChild(teamCell);
 
-			tr.appendChild(this.createTableCell(team.played, "played-cell"));
-			tr.appendChild(this.createTableCell(team.won, "won-cell"));
-			tr.appendChild(this.createTableCell(team.drawn, "drawn-cell"));
-			tr.appendChild(this.createTableCell(team.lost, "lost-cell"));
-			tr.appendChild(this.createTableCell(team.gf || team.goalsFor, "gf-cell"));
-			tr.appendChild(this.createTableCell(team.ga || team.goalsAgainst, "ga-cell"));
-			tr.appendChild(this.createTableCell(team.gd || team.goalDifference, "gd-cell"));
-			tr.appendChild(this.createTableCell(team.points, "points-cell highlight"));
+			if (this.config.showPlayedGames !== false) {
+				tr.appendChild(this.createTableCell(team.played, "played-cell"));
+			}
+			if (this.config.showWon !== false) {
+				tr.appendChild(this.createTableCell(team.won, "won-cell"));
+			}
+			if (this.config.showDrawn !== false) {
+				tr.appendChild(this.createTableCell(team.drawn, "drawn-cell"));
+			}
+			if (this.config.showLost !== false) {
+				tr.appendChild(this.createTableCell(team.lost, "lost-cell"));
+			}
+			if (this.config.showGoalsFor !== false) {
+				tr.appendChild(this.createTableCell(team.gf || team.goalsFor, "gf-cell"));
+			}
+			if (this.config.showGoalsAgainst !== false) {
+				tr.appendChild(this.createTableCell(team.ga || team.goalsAgainst, "ga-cell"));
+			}
+			if (this.config.showGoalDifference !== false) {
+				tr.appendChild(this.createTableCell(team.gd || team.goalDifference, "gd-cell"));
+			}
+			if (this.config.showPoints !== false) {
+				tr.appendChild(this.createTableCell(team.points, "points-cell highlight"));
+			}
 
 			if (this.config.showForm) {
 				const formCell = this.createTableCell("", "form-cell");
@@ -680,11 +724,20 @@ export const rendering = {
 
 		table.appendChild(tbody);
 		
-		const tableWrapper = document.createElement("div");
-		tableWrapper.className = "league-body-scroll";
-		tableWrapper.appendChild(table);
-		return tableWrapper;
+		// Conditionally wrap in scroll container based on scrollable config
+		if (this.config.scrollable !== false) {
+			const tableWrapper = document.createElement("div");
+			tableWrapper.className = "league-body-scroll";
+			if (this.config.maxTableHeight) {
+				tableWrapper.style.maxHeight = this.config.maxTableHeight + "px";
+			}
+			tableWrapper.appendChild(table);
+			return tableWrapper;
+		} else {
+			return table;
+		}
 	},
+
 
 	_renderFooterControls() {
 		const footer = document.createElement("div");
@@ -971,7 +1024,7 @@ export const rendering = {
 		const container = document.createElement("div");
 		container.className = "wc-group-container";
 		
-		const groupData = data.groups && data.groups[group] ? data.groups[group] : (data.standings && data.standings[group] ? data.standings[group] : []);
+		let groupData = data.groups && data.groups[group] ? data.groups[group] : (data.standings && data.standings[group] ? data.standings[group] : []);
 		if (groupData.length === 0) {
 			const noData = document.createElement("div");
 			noData.className = "no-data small dimmed";
@@ -980,39 +1033,49 @@ export const rendering = {
 			return container;
 		}
 
+		// Apply maxTeams limit (0 = show all)
+		if (this.config.maxTeams && this.config.maxTeams > 0) {
+			groupData = groupData.slice(0, this.config.maxTeams);
+		}
+
 		const table = document.createElement("table");
 		table.className = "spfl-table wc-table small";
 		
 		const thead = document.createElement("thead");
 		const hr = document.createElement("tr");
-		["#", "Team", "P", "W", "D", "L", "F", "A", "GD", "Pts"].forEach(h => {
+		
+		// Conditionally add headers based on config
+		const headers = [];
+		if (this.config.showPosition !== false) headers.push({ text: "#", className: "pos-cell" });
+		headers.push({ text: "Team", className: "team-cell" });
+		if (this.config.showPlayedGames !== false) headers.push({ text: "P", className: "played-cell" });
+		if (this.config.showWon !== false) headers.push({ text: "W", className: "won-cell" });
+		if (this.config.showDrawn !== false) headers.push({ text: "D", className: "drawn-cell" });
+		if (this.config.showLost !== false) headers.push({ text: "L", className: "lost-cell" });
+		if (this.config.showGoalsFor !== false) headers.push({ text: "F", className: "gf-cell" });
+		if (this.config.showGoalsAgainst !== false) headers.push({ text: "A", className: "ga-cell" });
+		if (this.config.showGoalDifference !== false) headers.push({ text: "GD", className: "gd-cell" });
+		if (this.config.showPoints !== false) headers.push({ text: "Pts", className: "points-cell" });
+		if (this.config.showForm) headers.push({ text: "Form", className: "form-cell" });
+		
+		headers.forEach(h => {
 			const th = document.createElement("th");
-			th.textContent = h;
-			if (h === "#") th.className = "pos-cell";
-			if (h === "Team") th.className = "team-cell";
-			if (h === "P") th.className = "played-cell";
-			if (h === "W") th.className = "won-cell";
-			if (h === "D") th.className = "drawn-cell";
-			if (h === "L") th.className = "lost-cell";
-			if (h === "F") th.className = "gf-cell";
-			if (h === "A") th.className = "ga-cell";
-			if (h === "GD") th.className = "gd-cell";
-			if (h === "Pts") th.className = "points-cell";
+			th.textContent = h.text;
+			th.className = h.className;
 			hr.appendChild(th);
 		});
-		if (this.config.showForm) {
-			const th = document.createElement("th");
-			th.textContent = "Form";
-			th.className = "form-cell";
-			hr.appendChild(th);
-		}
+		
 		thead.appendChild(hr);
 		table.appendChild(thead);
 
 		const tbody = document.createElement("tbody");
 		groupData.forEach(team => {
 			const tr = document.createElement("tr");
-			tr.appendChild(this.createTableCell(team.position, "pos-cell"));
+			
+			// Conditionally add cells based on config
+			if (this.config.showPosition !== false) {
+				tr.appendChild(this.createTableCell(team.position, "pos-cell"));
+			}
 			
 			const teamCell = this.createTableCell("", "team-cell");
 			
@@ -1024,7 +1087,7 @@ export const rendering = {
 				logoUrl = this.file(`images/${logoUrl}`);
 			}
 
-			if (logoUrl && this.config.showTeamLogos) {
+			if (logoUrl && this.config.showTeamLogos !== false) {
 				const img = document.createElement("img");
 				img.className = "team-logo";
 				img.alt = "";
@@ -1036,14 +1099,30 @@ export const rendering = {
 			teamCell.appendChild(span);
 			tr.appendChild(teamCell);
 
-			tr.appendChild(this.createTableCell(team.played, "played-cell"));
-			tr.appendChild(this.createTableCell(team.won, "won-cell"));
-			tr.appendChild(this.createTableCell(team.drawn, "drawn-cell"));
-			tr.appendChild(this.createTableCell(team.lost, "lost-cell"));
-			tr.appendChild(this.createTableCell(team.goalsFor !== undefined ? team.goalsFor : team.gf, "gf-cell"));
-			tr.appendChild(this.createTableCell(team.goalsAgainst !== undefined ? team.goalsAgainst : team.ga, "ga-cell"));
-			tr.appendChild(this.createTableCell(team.goalDifference !== undefined ? team.goalDifference : team.gd, "gd-cell"));
-			tr.appendChild(this.createTableCell(team.points, "points-cell highlight"));
+			if (this.config.showPlayedGames !== false) {
+				tr.appendChild(this.createTableCell(team.played, "played-cell"));
+			}
+			if (this.config.showWon !== false) {
+				tr.appendChild(this.createTableCell(team.won, "won-cell"));
+			}
+			if (this.config.showDrawn !== false) {
+				tr.appendChild(this.createTableCell(team.drawn, "drawn-cell"));
+			}
+			if (this.config.showLost !== false) {
+				tr.appendChild(this.createTableCell(team.lost, "lost-cell"));
+			}
+			if (this.config.showGoalsFor !== false) {
+				tr.appendChild(this.createTableCell(team.goalsFor !== undefined ? team.goalsFor : team.gf, "gf-cell"));
+			}
+			if (this.config.showGoalsAgainst !== false) {
+				tr.appendChild(this.createTableCell(team.goalsAgainst !== undefined ? team.goalsAgainst : team.ga, "ga-cell"));
+			}
+			if (this.config.showGoalDifference !== false) {
+				tr.appendChild(this.createTableCell(team.goalDifference !== undefined ? team.goalDifference : team.gd, "gd-cell"));
+			}
+			if (this.config.showPoints !== false) {
+				tr.appendChild(this.createTableCell(team.points, "points-cell highlight"));
+			}
 
 			if (this.config.showForm) {
 				const formCell = this.createTableCell("", "form-cell");
