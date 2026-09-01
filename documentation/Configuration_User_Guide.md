@@ -6,53 +6,48 @@ The **MMM-MyTeams-LeagueTable** module is highly configurable. This guide covers
 
 ### Core Options
 
-| Option                    | Default                    | Description                                                                             |
-| :------------------------ | :------------------------- | :-------------------------------------------------------------------------------------- |
-| `updateInterval`          | `1800000` (30m)            | How often to refresh data (milliseconds).                                               |
-| `retryDelay`              | `15000`                    | Delay between retry attempts after a fetch error (ms).                                  |
-| `maxRetries`              | `3`                        | Maximum fetch retry attempts before giving up.                                          |
-| `provider`                | `"auto"`                   | Data source: `"auto"`, `"bbc"`, `"google"`, `"espn"`, `"soccerway"`, or `"wikipedia"`.             |
-| `animationSpeed`          | `2000`                     | DOM update animation speed (ms).                                                        |
-| `fadeSpeed`               | `4000`                     | Fade transition speed (ms).                                                             |
-| `selectedLeagues`         | `["SCOTLAND_PREMIERSHIP"]` | Array of league codes to display.                                                       |
-| `highlightTeams`          | `["Celtic", "Hearts"]`     | Team names to visually emphasize.                                                       |
-| `maxTeams`                | `36`                       | Maximum teams per table (0 = all).                                                      |
-| `scrollable`              | `true`                     | Enable vertical scrolling when max height is exceeded.                                  |
-| `maxTableHeight`          | `460`                      | Pixel height before vertical scrolling activates.                                       |
-| `autoGenerateButtons`     | `true`                     | Auto-create league switcher buttons from `selectedLeagues`.                             |
-| `showLeagueButtons`       | `true`                     | Show or hide league switcher tabs in the header.                                        |
-| `autoFocusRelevantSubTab` | `true`                     | Automatically focus the tab showing live or upcoming matches.                           |
-| `legacyLeagueToggle`      | `true`                     | If `true`, uses legacy `showSPFL` / `showEPL` toggles instead of `selectedLeagues`.    |
-| `clearCacheButton`        | `true`                     | Display the Clear Cache button on the module.                                           |
-| `clearCacheOnStart`       | `false`                    | Force-clear all caches on every module start (useful for troubleshooting).              |
-| `debug`                   | `false`                    | Enable verbose console logging. Disable in production on Raspberry Pi.                  |
-| `dateTimeOverride`        | `null`                     | Override system date/time for testing. ISO format e.g. `"2026-06-15T14:00:00Z"`.       |
-
-> **Legacy league toggles** — only used when `legacyLeagueToggle: true`. Set each to `true` or `false`: `showSPFL`, `showSPFLC`, `showEPL`, `showUCL`, `showUEL`, `showECL`.
+| Option                    | Default                    | Description                                                         |
+| :--------------------------------------------------------------------------------------------------------------------------- |
+| `updateInterval`          | `1800000` (30m)            | How often to refresh data milliseconds.                            |
+| `retryDelay`              | `15000`                    | Delay between retry attempts after a fetch error (ms).               |
+| `maxRetries`              | `3`                        | Maximum fetch retry attempts before giving up.                      |
+| `provider`                | `"auto"`                   | Data source: `"auto"`, `"bbc"`, `"google"`, `"espn"`, `"soccerway"`, or `"wikipedia"`.| 
+| `animationSpeed`          | `2000`                     | DOM update animation speed (ms).                                     |
+| `fadeSpeed`               | `4000`                     | Fade transition speed (ms).                                          |
+| `selectedLeagues`         | `["SCOTLAND_PREMIERSHIP"]` | Array of league codes to display.                                    |
+| `highlightTeams`          | `["Celtic","Hearts"]`      | Team names to visually emphasize.                                    |
+| `maxTeams`                | `36`                       | Maximum teams per table (0 =   all).                                 |
+| `scrollable`              | `true`                     | Enable vertical scrolling when max height is exceeded.               |
+| `maxTableHeight`          | `460`                      | Pixel height before vertical scrolling activates.                    |
+| `autoGenerateButtons`     | `true`                     | Auto-create league switcher buttons from `selectedLeagues`.          |
+| `showLeagueButtons`       | `true`                     | Show or hide league switcher tabs in the header.                     |
+| `autoFocusRelevantSubTab` | `true`                     | Automatically focus the tab showing live or upcoming matches.        |
+| `legacyLeagueToggle`      | `true`                     | If `true`, uses legacy `showSPFL` / `showEPL` toggles instead of `selectedLeagues`.|
+| `clearCacheButton`        | `true`                     | Display the Clear Cache button on the module.                        |
+| `clearCacheOnStart`       | `false`                    | Force-clear all caches on every module start (useful for troubleshooting).|
+| `debug`                   | `false`                    | Enable verbose console logging. Disable in production on Raspberry Pi. |
+| `dateTimeOverride`        | `null`                     | Override system date/time for testing. ISO format e.g. `"2026-06-15T14:00:00Z"`.|
 
 ---
 
 ### Display Toggles & Display Options
 
-| Option               | Default                   | Description                                                         |
-| :------------------- | :------------------------ | :------------------------------------------------------------------ |
-| `showPosition`       | `true`                    | Show league rank column.                                            |
-| `showTeamLogos`      | `true`                    | Show team crest images.                                             |
-| `showPlayedGames`    | `true`                    | Show games played column.                                           |
-| `showWon`            | `true`                    | Show wins column.                                                   |
-| `showDrawn`          | `true`                    | Show draws column.                                                  |
-| `showLost`           | `true`                    | Show losses column.                                                 |
-| `showGoalsFor`       | `true`                    | Show goals for column.                                              |
-| `showGoalsAgainst`   | `true`                    | Show goals against column.                                          |
-| `showGoalDifference` | `true`                    | Show goal difference column.                                        |
-| `showPoints`         | `true`                    | Show points column.                                                 |
-| `showForm`           | `true`                    | Show recent form tokens (W/D/L).                                    |
-| `formMaxGames`       | `6`                       | Number of recent games shown in the form column.                    |
-| `colored`            | `true`                    | Color-code rows by zone (promotion / UEFA / relegation).            |
-| `highlightedColor`   | `"rgba(255,255,255,0.1)"` | Background color applied to highlighted team rows.                  |
-| `fontColorOverride`  | `"#FFFFFF"`               | Override all font colors. Set to `null` to use existing CSS scheme. |
-| `darkMode`           | `null`                    | `null` = auto, `true` = force dark, `false` = force light.          |
-| `opacityOverride`    | `null`                    | Override table opacity. Set to `1.0` for full opacity.              |
+Control which columns appear in league tables. All options default to `true` (column visible).
+
+| Option               | Default | Description                        | Implementation Notes                                         |
+| -------------------- | ------- | ----------------------------------------------------------- | ----------------------------------- |
+| `showPosition`       | `true`  | Show position/rank column (#).     | Set to `false` to hide. Applies to all table types.          |
+| `showTeamLogos`      | `true`  | Show team logo images.             | Set to `false` to hide logos (text-only team names).         |
+| `showPlayedGames`    | `true`  | Show games played column (P).      | Set to `false` to hide. Header and cells both removed.       |
+| `showWon`            | `true`  | Show wins column (W).              | Set to `false` to hide. Header and cells both removed.       |
+| `showDrawn`          | `true`  | Show draws column (D).             | Set to `false` to hide. Header and cells both removed.       |
+| `showLost`           | `true`  | Show losses column (L).            | Set to `false` to hide. Header and cells both removed.       |
+| `showGoalsFor`       | `true`  | Show goals for column (F).         | Set to `false` to hide. Header and cells both removed.       |
+| `showGoalsAgainst`   | `true`  | Show goals against column (A).     | Set to `false` to hide. Header and cells both removed.       |
+| `showGoalDifference` | `true`  | Show goal difference column (GD).  | Set to `false` to hide. Header and cells both removed.       |
+| `showPoints`         | `true`  | Show points column (Pts).          | Set to `false` to hide. Header and cells both removed.       |
+| `showForm`           | `true`  | Show recent form tokens (W/D/L).    | Set to `false` to hide entire Form column.                  |
+| `formMaxGames`       | `6`     | Maximum number of form tokens to display (1-10 recommended) | Only applies when `showForm: true`. |
 
 ---
 
@@ -78,22 +73,22 @@ The **MMM-MyTeams-LeagueTable** module is highly configurable. This guide covers
 
 ### Tournament Specific (World Cup 2026)
 
-| Option                 | Default                                                | Description                                                |
-| :--------------------- | :----------------------------------------------------- | :--------------------------------------------------------- |
-| `showWC2026`           | `false`                                                | Show World Cup 2026 in the league switcher.                |
-| `onlyShowWorldCup2026` | `false`                                                | Force the module into dedicated World Cup-only mode.       |
-| `showWC2026Groups`     | `["A","B","C","D","E","F","G","H","I","J","K","L"]`    | Array of group letters to display.                         |
-| `showWC2026Knockouts`  | `["Rd32","Rd16","QF","SF","TP","Final"]`               | Knockout rounds to show.                                   |
-| `defaultWCSubTab`      | `"A"`                                                  | Tab to focus on at start-up (e.g. `"A"`, `"Final"`).      |
-| `displayAllTabs`       | `false`                                                | Show all tabs regardless of stage completion.              |
-| `useMockData`          | `false`                                                | Use built-in mock data for testing (World Cup 2026 only).  |
+| Option                 | Default                                 | Description                             |
+| :--------------------- | :---------------------------------------| :-------------------------------------- |     
+| `showWC2026`           | `false`                                   | Show World Cup 2026 in the league witcher.|
+| `onlyShowWorldCup2026` | `false`                                 | Force the module into dedicated World Cup-only mode.  |
+| `showWC2026Groups`     | `["A","B","C","D","E","F",K","L"]`      | Array of group letters to display.      |
+| `showWC2026Knockouts`  | `["Rd32","Rd16","QF","SF","TP","Final"]`| Knockout rounds to show.                |
+| `defaultWCSubTab`      | `"A"`                                   | Tab to focus on at start-up (e.g. `"A"`,`"Final"`). |
+| `displayAllTabs`       | `false`                                 | Show all tabs regardless of stage completion.|
+| `useMockData`          | `false`                                 | Use built-in mock data for testing (World Cup 2026 only).|
 
 ---
 
 ### Accessibility Options
 
-| Option                    | Default | Description                                                                                                                                        |
-| :------------------------ | :------ | :------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Option                    | Default | Description                                                            |
+| :------------------------ | :-------| :--------------------------------------------------------------------- |
 | `enhancedIndicatorShapes` | `true`  | `true` = shape-coded form tokens (circle = W, square = D, triangle = L). `false` = no background; colored text only (W = green, D = grey, L = red). |
 
 ---
