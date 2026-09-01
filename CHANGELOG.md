@@ -1,5 +1,56 @@
 # CHANGELOG
 
+## [v3.3.2] - 2026-09-01 - Config Toggle Implementation Fix
+
+### Problem
+
+- **Config Toggles Not Working**: Display toggle options (`showPlayedGames`, `showWon`, `showDrawn`, `showLost`, `showGoalsFor`, `showGoalsAgainst`, `showGoalDifference`, `showPoints`, `showPosition`, `showTeamLogos`) had no effect on the rendered table — all columns were always shown regardless of config values.
+- **maxTeams Limit Ignored**: Setting `maxTeams` to limit the number of displayed teams had no effect — all teams in the standings were always rendered.
+- **scrollable Option Ignored**: The `scrollable` config option (to enable/disable vertical scrolling) was not implemented — tables were always wrapped in scroll containers.
+- **Only tableDensity Worked**: Of all the display config options, only `tableDensity` was actually being read and applied by the rendering code.
+
+### Root Cause
+
+The rendering code in `src/rendering.js` was hard-coded unconditionally:
+
+- `createTable()` method always appended headers and cells for all columns (P/W/D/L/F/A/GD/Pts) without checking config toggles.
+- `_createWC2026GroupTable()` method had the same issue for World Cup group tables.
+- The `standings` array was never sliced based on `maxTeams`.
+- Tables were always wrapped in `.league-body-scroll` containers regardless of the `scrollable` setting.
+- Only `showForm` and `tableDensity` were actually checked in the rendering logic.
+
+### Solution
+
+- **Conditional Column Rendering**: Updated both `createTable()` and `_createWC2026GroupTable()` to conditionally render headers and cells based on config toggles:
+  - Each column (Position, Played, Won, Drawn, Lost, Goals For, Goals Against, Goal Difference, Points) is now only added if its corresponding `show*` config option is not `false`.
+  - Team logos are only rendered if `showTeamLogos !== false`.
+  - Headers and cells stay aligned because the same conditional logic applies to both.
+
+- **maxTeams Implementation**: Added `standings.slice(0, this.config.maxTeams)` to limit the number of teams displayed:
+  - Applied in both `createTable()` and `_createWC2026GroupTable()`.
+  - `maxTeams: 0` or `maxTeams: undefined` shows all teams (no limit).
+  - Any positive number limits the display to that many teams.
+
+- **scrollable Implementation**: Made scroll container wrapping conditional:
+  - When `scrollable !== false` (default): table is wrapped in `.league-body-scroll` div with `maxTableHeight` applied.
+  - When `scrollable === false`: table is returned directly without scroll wrapper.
+
+- **Consistent Defaults**: All toggle options default to `!== false` checks, meaning they're enabled by default unless explicitly set to `false`.
+
+### Files Modified
+
+- `src/rendering.js` (lines 600-687): Rewrote `createTable()` method with conditional column logic and `maxTeams`/`scrollable` implementation. (lines 600-739). 
+- `src/rendering.js` (lines 970-1066): Rewrote `_createWC2026GroupTable()` method with same conditional logic.
+- `CHANGELOG.md` updated to v3.3.2
+- Updated `documentation/Configuration_User_Guide.md`: Updated with implementation notes and examples.
+
+### Impact
+
+- **User Experience**: All documented config options now work as expected.
+- **Backward Compatibility**: Fully maintained — all options default to `true` (enabled) so existing configs see no change.
+- **Flexibility**: Users can now create minimal tables (e.g., just Team + Points) or limit display to top 10 teams.
+- **Performance**: Disabling `scrollable` on small tables reduces DOM complexity.
+
 ## [v3.3.1] - 2026-07-16 - UEFA League Table Vertical Scrollbar Fix
 
 ### Problem
